@@ -1,0 +1,9 @@
+{
+  "background_color": "black",
+  "description": "Design with globs.",
+  "display": "fullscreen",
+  "icons": [],
+  "name": "Globs",
+  "short_name": "Globs",
+  "start_url": "index.html"
+}

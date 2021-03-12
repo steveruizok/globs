@@ -1,0 +1,73 @@
+html,
+* {
+  padding: 0;
+  margin: 0;
+  box-sizing: border-box;
+}
+
+html {
+  overflow: hidden;
+  overscroll-behavior: none;
+}
+
+body {
+  overflow: hidden;
+  overscroll-behavior: none;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen,
+    Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif;
+}
+
+svg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  touch-action: none;
+}
+
+a {
+  color: black;
+}
+
+a:hover {
+  color: dodgerblue;
+}
+
+.container {
+  position: fixed;
+  top: 0;
+  width: 100%;
+  height: 100vh;
+  overflow: hidden;
+}
+
+.author {
+  user-select: none;
+  position: absolute;
+  top: 0;
+  right: 0;
+  padding: 24px 16px;
+}
+
+.author a {
+  padding: 8px;
+  border-radius: 4px;
+  text-decoration: none;
+  user-select: none;
+}
+
+.author a:hover {
+  background-color: rgba(144, 144, 144, 0.1);
+  color: black;
+}
+
+.about {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  background-color: rgba(255, 255, 255, 0.9);
+  padding: 24px 16px;
+  user-select: none;
+}
