@@ -1,10 +1,16 @@
 // Includes a lot of extras here.
-import { angle, lrp, dist, sub, len, add, mul, per } from "./vector"
+import * as svg from "./svg"
+import { IGlob, INode, IVector } from "./types"
+import { tangent, angle, lrp, dist, sub, len, add, mul, per } from "./vec"
 
 // A helper for getting tangents.
-export function getCircleTangentsToPoint(A: number[], P: number[]) {
+export function getCircleTangentToPoint(
+  A: number[],
+  r0: number,
+  P: number[],
+  side: number
+) {
   const B = lrp(A, P, 0.5),
-    r0 = A[2],
     r1 = dist(A, B),
     delta = sub(B, A),
     d = len(delta)
@@ -19,8 +25,9 @@ export function getCircleTangentsToPoint(A: number[], P: number[]) {
     h = Math.sqrt(r0 * r0 - a * a),
     k = mul(per(delta), h * n)
 
-  return [add(p, k), sub(p, k)]
+  return side === 0 ? add(p, k) : sub(p, k)
 }
+
 export function circleCircleIntersections(a: number[], b: number[]) {
   var R = a[2],
     r = b[2],
@@ -33,15 +40,20 @@ export function circleCircleIntersections(a: number[], b: number[]) {
   dy /= d
   return [
     [a[0] + dx * x - dy * y, a[1] + dy * x + dx * y],
-    [a[0] + dx * x + dy * y, a[1] + dy * x - dx * y]
+    [a[0] + dx * x + dy * y, a[1] + dy * x - dx * y],
   ]
 }
 
-export function getClosestPointOnCircle(C: number[], P: number[], padding = 0) {
+export function getClosestPointOnCircle(
+  C: number[],
+  r: number,
+  P: number[],
+  padding = 0
+) {
   var dx = P[0] - C[0]
   var dy = P[1] - C[1]
   var dist = Math.hypot(dx, dy) - padding
-  return [C[0] + (dx * C[2]) / dist, C[1] + (dy * C[2]) / dist]
+  return [C[0] + (dx * r) / dist, C[1] + (dy * r) / dist]
 }
 
 export function projectPoint(p0: number[], a: number, d: number) {
@@ -88,7 +100,7 @@ export function getBezierCurveSegments(points: number[][], tension = 0.4) {
       p1[1] + ny * dn * tension,
       // normal
       nx,
-      ny
+      ny,
     ]
   }
 
@@ -125,7 +137,7 @@ export function getBezierCurveSegments(points: number[][], tension = 0.4) {
       end: points[i].slice(0, 2),
       tangentEnd: cpoints[i].slice(0, 2),
       normalEnd: cpoints[i].slice(4, 6),
-      pressureEnd: 2 + (i % 2 === 0 ? 1.5 : 0)
+      pressureEnd: 2 + (i % 2 === 0 ? 1.5 : 0),
     })
   }
 
@@ -254,7 +266,7 @@ export function getSpline(pts: number[][], k = 0.5, closed = false) {
       p2[0] - ((p3[0] - p1[0]) / 6) * k,
       p2[1] - ((p3[1] - p1[1]) / 6) * k,
       pts[i][0],
-      pts[i][1]
+      pts[i][1],
     ])
   }
 
@@ -320,7 +332,7 @@ export function getCurvePoints(
       // Control points
       res.push([
         c1 * _pts[i][0] + c2 * _pts[i + 1][0] + c3 * t1x + c4 * t2x,
-        c1 * _pts[i][1] + c2 * _pts[i + 1][1] + c3 * t1y + c4 * t2y
+        c1 * _pts[i][1] + c2 * _pts[i + 1][1] + c3 * t1y + c4 * t2y,
       ])
     }
   }
@@ -361,21 +373,124 @@ export function rotatePoint(
   return [nx + cx, ny + cy]
 }
 
-export function getArcLength(A: number[], B: number[], C: number[]) {
-  const sweep = Math.abs(angleDelta(angle(C, A), angle(C, B)))
-  return C[2] * (2 * Math.PI) * (sweep / (2 * Math.PI))
-}
-
-export function getTangentPoint(C: number[], P: number[], side: number) {
-  const pts = getCircleTangentsToPoint(C, P)
-  if (!pts) throw Error("Could not get tangent points for glob.")
-  return side === -1 ? pts[0] : pts[1]
-}
-
 export function degreesToRadians(d: number) {
   return (d * Math.PI) / 180
 }
 
 export function radiansToDegrees(r: number) {
   return (r * 180) / Math.PI
+}
+
+export function getArcLength(C: number[], r: number, A: number[], B: number[]) {
+  const sweep = getSweep(C, A, B)
+  return r * (2 * Math.PI) * (sweep / (2 * Math.PI))
+}
+
+export function getArcDashOffset(
+  C: number[],
+  r: number,
+  A: number[],
+  B: number[],
+  step: number
+) {
+  const del0 = getSweep(C, A, B)
+  const len0 = getArcLength(C, r, A, B)
+  const off0 = del0 < 0 ? len0 : 2 * Math.PI * C[2] - len0
+  return -off0 / 2 + step
+}
+
+export function getEllipseDashOffset(A: number[], step: number) {
+  const c = 2 * Math.PI * A[2]
+  return -c / 2 + -step
+}
+
+export function getSweep(C: number[], A: number[], B: number[]) {
+  return angleDelta(angle(C, A), angle(C, B))
+}
+
+export function getGlobPath(glob: IGlob, start: INode, end: INode) {
+  const { D, Dp, a, b, ap, bp } = glob.options
+  const { point: C0, radius: r0 } = start
+  const { point: C1, radius: r1 } = end
+  const { E0, E0p, F0, F0p, E1, E1p, F1, F1p } = getGlob(
+    C0,
+    r0,
+    C1,
+    r1,
+    D,
+    Dp,
+    a,
+    b,
+    ap,
+    bp
+  )
+  return [
+    svg.moveTo(E0),
+    start.cap === "round" ? svg.arcTo(C0, r0, E0, E0p) : svg.lineTo(E0p),
+    svg.bezierTo(F0p, F1p, E1p),
+    end.cap === "round" ? svg.arcTo(C1, r1, E1p, E1) : svg.lineTo(E1),
+    svg.bezierTo(F1, F0, E0),
+  ].join(" ")
+}
+
+export function getGlob(
+  C0: number[],
+  r0: number,
+  C1: number[],
+  r1: number,
+  D: number[],
+  Dp: number[],
+  a: number,
+  b: number,
+  ap: number,
+  bp: number
+) {
+  // Get end points
+  const E0 = getCircleTangentToPoint(C0, r0, D, 0),
+    E0p = getCircleTangentToPoint(C0, r0, Dp, 1),
+    E1 = getCircleTangentToPoint(C1, r1, D, 1),
+    E1p = getCircleTangentToPoint(C1, r1, Dp, 0)
+
+  // Get control points
+  const F0 = lrp(E0, D, a),
+    F1 = lrp(E1, D, b),
+    F0p = lrp(E0p, Dp, ap),
+    F1p = lrp(E1p, Dp, bp)
+
+  // Get inner / outer normal points
+  let N0 = tangent(C0, lrp(E0, E0p, 0.5)),
+    N0p = mul(N0, -1),
+    N1 = tangent(lrp(E1, E1p, 0.5), C1),
+    N1p = mul(N1, -1)
+
+  if (getSweep(C0, E0, E0p) > 0) {
+    ;[N0, N0p] = [N0p, N0]
+  }
+
+  if (getSweep(C1, E1, E1p) > 0) {
+    ;[N1, N1p] = [N1p, N1]
+  }
+
+  return {
+    C0,
+    r0,
+    C1,
+    r1,
+    E0,
+    E0p,
+    E1,
+    E1p,
+    F0,
+    F0p,
+    F1,
+    F1p,
+    N0,
+    N0p,
+    N1,
+    N1p,
+  }
+}
+
+export function deepCompare<T>(a: T, b: T) {
+  return JSON.stringify(a) === JSON.stringify(b)
 }
