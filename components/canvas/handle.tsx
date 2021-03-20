@@ -1,3 +1,4 @@
+import { getTouchDisplay } from "lib/utils"
 import Dot from "./dot"
 
 interface Props {
@@ -13,6 +14,7 @@ export default function Handle({
   radius: R = 8,
   onSelect,
 }: Props) {
+  if (getTouchDisplay()) R *= 1.5
   return (
     <g
       transform={`translate(${position[0] - R} ${position[1] - R})`}

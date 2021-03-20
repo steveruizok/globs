@@ -19,7 +19,7 @@ export default function ContentPanel() {
   }
 
   return (
-    <PanelContainer style={{ width: mvWidth }}>
+    <PanelContainer style={{ width: mvWidth }} data-bp-desktop>
       <PanelInnerContainer>
         <NodeList />
         <GlobList />

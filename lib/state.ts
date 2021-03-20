@@ -10,6 +10,7 @@ import {
   getGlob,
   getGlobPath,
   getOuterTangents,
+  getTouchDisplay,
   rectContainsRect,
 } from "utils"
 import { initialData } from "./data"
@@ -114,7 +115,8 @@ const state = createState({
                 POINTED_CANVAS: [
                   "clearSelection",
                   {
-                    if: "hasSpace",
+                    wait: 0.01,
+                    ifAny: ["hasSpace", "isMultitouch"],
                     to: "canvasPanning",
                     else: {
                       to: "brushSelecting",
@@ -253,6 +255,9 @@ const state = createState({
     },
     hasSpace() {
       return keys[" "]
+    },
+    isMultitouch(data) {
+      return pointer.points.size > 1
     },
     hoveringHasChanged(data, payload, result: { ids: string[] }) {
       return (

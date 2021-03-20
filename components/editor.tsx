@@ -106,6 +106,7 @@ const EditorContainer = styled.div`
     bottom: 0;
     left: 0;
     z-index: 1;
+    touch-action: none;
   }
 `
 
@@ -117,8 +118,16 @@ const Layout = styled.div`
     "tool    tool    tool"
     "content main    main"
     "status  status  status";
-  grid-template-columns: auto 1fr;
+  grid-template-columns: 200px auto 1fr;
   grid-template-rows: 40px 1fr 32px;
+
+  @media (max-width: 768px) {
+    grid-template-columns: 0px auto 1fr;
+
+    & > *[data-bp-desktop="true"] {
+      visibility: hidden;
+    }
+  }
 
   & > * {
     pointer-events: all;
