@@ -49,6 +49,9 @@ const state = createState({
       if: "hasSelectedNodes",
       to: "linkingNodes",
     },
+    SET_NODES_X: "setSelectedNodesPointX",
+    SET_NODES_Y: "setSelectedNodesPointY",
+    SET_NODES_RADIUS: "setSelectedNodesRadius",
   },
   onEnter: ["setup"],
   states: {
@@ -147,7 +150,11 @@ const state = createState({
             pointingNodes: {
               on: {
                 WHEELED: "moveSelectedMixed",
-                MOVED_POINTER: "moveSelectedMixed",
+                MOVED_POINTER: {
+                  if: "hasMeta",
+                  do: "resizeNode",
+                  else: "moveSelectedMixed",
+                },
                 STOPPED_POINTING: {
                   to: "notPointing",
                 },
@@ -250,6 +257,9 @@ const state = createState({
     isTrackpadZoom(data, payload: { ctrlKey: boolean }) {
       return keys.Alt || payload.ctrlKey
     },
+    hasMeta() {
+      return keys.Meta
+    },
     hasShift() {
       return keys.Shift
     },
@@ -286,14 +296,20 @@ const state = createState({
           ...globIds
             .map((id) => globs[id])
             .map((glob) => {
-              return {
-                id: glob.id,
-                type: "glob" as const,
-                path: getGlobPath(
+              let path = ""
+
+              try {
+                path = getGlobPath(
                   glob,
                   nodes[glob.nodes[0]],
                   nodes[glob.nodes[1]]
-                ),
+                )
+              } catch (e) {}
+
+              return {
+                id: glob.id,
+                type: "glob" as const,
+                path,
               }
             }),
         ],
@@ -362,12 +378,13 @@ const state = createState({
       const pt0 = Vec.add(Vec.div(point, camera.zoom), camera.point)
 
       camera.zoom = Math.max(Math.min(camera.zoom + result.delta, 10), 0.25)
+      camera.zoom = Math.round(camera.zoom * 100) / 100
 
       const pt1 = Vec.add(Vec.div(point, camera.zoom), camera.point)
 
       camera.point = Vec.sub(camera.point, Vec.sub(pt1, pt0))
 
-      document.size = Vec.div(viewport.size, camera.zoom)
+      document.size = Vec.round(Vec.div(viewport.size, camera.zoom))
       document.point = camera.point
     },
 
@@ -439,9 +456,10 @@ const state = createState({
       nodeIds.push(node.id)
       nodes[node.id] = node
     },
-    resizedNode(data, payload: { id: string }) {
-      const { nodes, camera } = data
-      const node = data.nodes[payload.id]
+    resizeNode(data) {
+      const { nodes, hoveredNodes, camera, selected } = data
+      if (selected[0] !== hoveredNodes[0]) return
+      const node = nodes[selected[0]]
       const point = screenToWorld(pointer.point, camera.point, camera.zoom)
 
       node.radius = Vec.dist(node.point, point)
@@ -461,6 +479,21 @@ const state = createState({
       const node = data.nodes[payload.id]
       node.cap = node.cap === "round" ? "flat" : "round"
     },
+    setSelectedNodesPointX(data, payload: { value: number }) {
+      for (let id of data.selected) {
+        data.nodes[id].point[0] = payload.value
+      }
+    },
+    setSelectedNodesPointY(data, payload: { value: number }) {
+      for (let id of data.selected) {
+        data.nodes[id].point[1] = payload.value
+      }
+    },
+    setSelectedNodesRadius(data, payload: { value: number }) {
+      for (let id of data.selected) {
+        data.nodes[id].radius = payload.value
+      }
+    },
     moveSelectedNodes(data) {
       const { camera, globs } = data
       for (let id of data.selected) {
@@ -468,7 +501,9 @@ const state = createState({
 
         const backupPt = [...node.point]
 
-        node.point = Vec.add(node.point, Vec.div(pointer.delta, camera.zoom))
+        node.point = Vec.round(
+          Vec.add(node.point, Vec.div(pointer.delta, camera.zoom))
+        )
 
         for (let gid in globs) {
           const glob = globs[gid]
@@ -587,7 +622,7 @@ const state = createState({
       }
 
       for (let id of nodesToMove) {
-        nodes[id].point = Vec.add(nodes[id].point, delta)
+        nodes[id].point = Vec.round(Vec.add(nodes[id].point, delta), 2)
       }
     },
     moveSelectedGlobs(data, payload: { id: string }) {
@@ -846,9 +881,6 @@ function handleKeyUp(e: KeyboardEvent) {
   state.send("RELEASED_KEY")
 }
 
-export const useSelector = createSelectorHook(state)
-export default state
-
 function screenToWorld(point: number[], offset: number[], zoom: number) {
   return Vec.add(Vec.div(point, zoom), offset)
 }
@@ -856,8 +888,6 @@ function screenToWorld(point: number[], offset: number[], zoom: number) {
 function worldToScreen(point: number[], offset: number[], zoom: number) {
   return Vec.mul(Vec.sub(point, offset), zoom)
 }
-
-// state.onUpdate((s) => console.log(s.active, s.log[0]))
 
 function createGlob(A: INode, B: INode): IGlob {
   const { point: C0, radius: r0 } = A
@@ -894,3 +924,8 @@ function createNode(point: number[]): INode {
     zIndex: 1,
   }
 }
+
+export const useSelector = createSelectorHook(state)
+export default state
+
+// state.onUpdate((s) => console.log(s.active, s.log[0]))

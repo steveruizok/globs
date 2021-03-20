@@ -7,6 +7,7 @@ import Globs from "./canvas/globs"
 import Nodes from "./canvas/nodes"
 import HoveredGlobs from "./canvas/hovered-globs"
 import HoveredNodes from "./canvas/hovered-nodes"
+import InspectPanel from "components/ui/inspect-panel"
 import ContentPanel from "components/ui/content-panel"
 import Toolbar from "components/ui/toolbar"
 import StatusBar from "components/ui/statusbar"
@@ -86,6 +87,7 @@ export default function Editor() {
       <Layout>
         <Toolbar />
         <ContentPanel />
+        <InspectPanel />
         <StatusBar />
       </Layout>
     </EditorContainer>
@@ -116,13 +118,13 @@ const Layout = styled.div`
   height: 100%;
   grid-template-areas:
     "tool    tool    tool"
-    "content main    main"
+    "content main    inspect"
     "status  status  status";
-  grid-template-columns: 200px auto 1fr;
+  grid-template-columns: auto 1fr auto;
   grid-template-rows: 40px 1fr 32px;
 
   @media (max-width: 768px) {
-    grid-template-columns: 0px auto 1fr;
+    grid-template-columns: 0px 1fr auto;
 
     & > *[data-bp-desktop="true"] {
       visibility: hidden;

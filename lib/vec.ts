@@ -294,3 +294,12 @@ export function isLeft(p1: IVector, pc: IVector, p2: IVector) {
 export function clockwise(p1: IVector, pc: IVector, p2: IVector) {
   return isLeft(p1, pc, p2) > 0
 }
+
+const rounds = [1, 10, 100, 1000]
+
+export function round(a: IVector, d = 2) {
+  return [
+    Math.round(a[0] * rounds[d]) / rounds[d],
+    Math.round(a[1] * rounds[d]) / rounds[d],
+  ]
+}

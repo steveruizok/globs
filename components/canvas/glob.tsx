@@ -55,12 +55,14 @@ export default function Glob({ id }: Props) {
   const { point: C0, radius: r0 } = start
   const { point: C1, radius: r1 } = end
 
+  let safe = false
   let globPts = rPrevPts.current
 
   try {
     rPrevPts.current = globPts = getGlob(C0, r0, C1, r1, D, Dp, a, b, ap, bp)
+    safe = true
   } catch (e) {
-    return null
+    // return null
   }
 
   const { E0, E0p, E1, E1p, F0, F1, F0p, F1p, N0, N0p, N1, N1p } = globPts
@@ -128,53 +130,66 @@ export default function Glob({ id }: Props) {
 
   return (
     <g strokeWidth={zoom > 1 ? stroke / zoom : stroke} strokeLinecap="round">
-      <path
-        ref={rOutline}
-        d={getGlobOutline(globPts, start.cap, end.cap)}
-        fill="rgba(255, 255, 255, .8"
-        stroke={isSelected ? "red" : "black"}
-        onPointerLeave={() => state.send("UNHOVERED_GLOB", { id: glob.id })}
-        onPointerEnter={() => state.send("HOVERED_GLOB", { id: glob.id })}
-        onPointerDown={() => state.send("SELECTED_GLOB", { id: glob.id })}
-      />
-      <g fill="none" strokeWidth={z * 1.5}>
-        {isDraggingD ? (
-          <path
-            d={[
-              svg.moveTo(projectPoint(D, Vec.angle(D, E0), 10000)),
-              svg.lineTo(projectPoint(D, Vec.angle(D, E0), -10000)),
-              svg.moveTo(projectPoint(D, Vec.angle(D, E1), 10000)),
-              svg.lineTo(projectPoint(D, Vec.angle(D, E1), -10000)),
-            ].join(" ")}
-            stroke="red"
-            opacity={0.5}
-          />
-        ) : (
-          <path
-            d={[svg.moveTo(E0), svg.lineTo(D), svg.lineTo(E1)].join(" ")}
-            stroke={isSelected ? "red" : "dodgerblue"}
-            strokeDasharray={`${z * 1} ${z * 3}`}
-          />
-        )}
-        {isDraggingDp ? (
-          <path
-            d={[
-              svg.moveTo(projectPoint(Dp, Vec.angle(Dp, E0p), 10000)),
-              svg.lineTo(projectPoint(Dp, Vec.angle(Dp, E0p), -10000)),
-              svg.moveTo(projectPoint(Dp, Vec.angle(Dp, E1p), 10000)),
-              svg.lineTo(projectPoint(Dp, Vec.angle(Dp, E1p), -10000)),
-            ].join(" ")}
-            stroke="red"
-            opacity={0.5}
-          />
-        ) : (
-          <path
-            d={[svg.moveTo(E0p), svg.lineTo(Dp), svg.lineTo(E1p)].join(" ")}
-            stroke={isSelected ? "red" : "orange"}
-            strokeDasharray={`${z * 1} ${z * 3}`}
-          />
-        )}
-      </g>
+      {safe ? (
+        <path
+          ref={rOutline}
+          d={getGlobOutline(globPts, start.cap, end.cap)}
+          fill="rgba(255, 255, 255, .8"
+          stroke={isSelected ? "red" : "black"}
+          onPointerLeave={() => state.send("UNHOVERED_GLOB", { id: glob.id })}
+          onPointerEnter={() => state.send("HOVERED_GLOB", { id: glob.id })}
+          onPointerDown={() => state.send("SELECTED_GLOB", { id: glob.id })}
+        />
+      ) : (
+        <line
+          x1={C0[0]}
+          y1={C0[1]}
+          x2={C1[0]}
+          y2={C1[1]}
+          stroke="red"
+          strokeWidth={2 / zoom}
+        />
+      )}
+      {safe && (
+        <g fill="none" strokeWidth={z * 1.5}>
+          {isDraggingD ? (
+            <path
+              d={[
+                svg.moveTo(projectPoint(D, Vec.angle(D, E0), 10000)),
+                svg.lineTo(projectPoint(D, Vec.angle(D, E0), -10000)),
+                svg.moveTo(projectPoint(D, Vec.angle(D, E1), 10000)),
+                svg.lineTo(projectPoint(D, Vec.angle(D, E1), -10000)),
+              ].join(" ")}
+              stroke="red"
+              opacity={0.5}
+            />
+          ) : (
+            <path
+              d={[svg.moveTo(E0), svg.lineTo(D), svg.lineTo(E1)].join(" ")}
+              stroke={isSelected ? "red" : "dodgerblue"}
+              strokeDasharray={`${z * 1} ${z * 3}`}
+            />
+          )}
+          {isDraggingDp ? (
+            <path
+              d={[
+                svg.moveTo(projectPoint(Dp, Vec.angle(Dp, E0p), 10000)),
+                svg.lineTo(projectPoint(Dp, Vec.angle(Dp, E0p), -10000)),
+                svg.moveTo(projectPoint(Dp, Vec.angle(Dp, E1p), 10000)),
+                svg.lineTo(projectPoint(Dp, Vec.angle(Dp, E1p), -10000)),
+              ].join(" ")}
+              stroke="red"
+              opacity={0.5}
+            />
+          ) : (
+            <path
+              d={[svg.moveTo(E0p), svg.lineTo(Dp), svg.lineTo(E1p)].join(" ")}
+              stroke={isSelected ? "red" : "orange"}
+              strokeDasharray={`${z * 1} ${z * 3}`}
+            />
+          )}
+        </g>
+      )}
       {/* Dots */}
       <g opacity=".5">
         <Dot position={E0} radius={z * 3} color="dodgerblue" />
