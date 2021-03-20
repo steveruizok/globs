@@ -1,34 +1,41 @@
 import React, { useCallback, useEffect, useRef } from "react"
-
-import Brush from "components/brush"
-import Glob from "components/glob"
 import styled from "styled-components"
-import state, { useSelector } from "lib/state"
-import { deepCompare } from "lib/utils"
+import state from "lib/state"
 import usePinchZoom from "hooks/usePinchZoom"
 
+import Globs from "./canvas/globs"
+import Nodes from "./canvas/nodes"
+import HoveredGlobs from "./canvas/hovered-globs"
+import HoveredNodes from "./canvas/hovered-nodes"
+import ContentPanel from "components/ui/content-panel"
+import Toolbar from "components/ui/toolbar"
+import StatusBar from "components/ui/statusbar"
+import Brush from "components/canvas/brush"
+
 export default function Editor() {
-  const globIds = useSelector((s) => s.data.globIds, deepCompare)
   const rContainer = useRef<HTMLDivElement>(null)
   const rSvg = useRef<SVGSVGElement>(null)
+  const rCanvas = useRef<SVGRectElement>(null)
 
   // When we zoom or pan, manually update the svg's viewbox
   // This is expensive, so we want to set this property
   // only when we really need to.
   useEffect(() => {
     const svg = rSvg.current!
+    const cvs = rCanvas.current!
     let prev = ``
 
     return state.onUpdate((s) => {
-      const { document } = s.data
-      const next = [
-        document.point[0],
-        document.point[1],
-        document.size[0],
-        document.size[1],
-      ].join(" ")
+      const {
+        document: { point, size },
+      } = s.data
+      const next = [point, size].toString()
 
       if (next !== prev) {
+        cvs.setAttribute("x", point[0].toString())
+        cvs.setAttribute("y", point[1].toString())
+        cvs.setAttribute("width", size[0].toString())
+        cvs.setAttribute("height", size[1].toString())
         svg.setAttribute("viewBox", next)
         prev = next
       }
@@ -62,6 +69,7 @@ export default function Editor() {
     >
       <svg ref={rSvg} width="100%" height="100%">
         <rect
+          ref={rCanvas}
           x={-2000}
           y={-2000}
           width={4000}
@@ -69,11 +77,17 @@ export default function Editor() {
           fill="#efefef"
           onPointerDown={() => state.send("POINTED_CANVAS")}
         />
-        {Object.values(globIds).map((id) => (
-          <Glob key={id} id={id} />
-        ))}
+        <Globs />
+        <Nodes />
+        <HoveredNodes />
+        <HoveredGlobs />
         <Brush />
       </svg>
+      <Layout>
+        <Toolbar />
+        <ContentPanel />
+        <StatusBar />
+      </Layout>
     </EditorContainer>
   )
 }
@@ -81,7 +95,33 @@ export default function Editor() {
 const EditorContainer = styled.div`
   position: fixed;
   top: 0;
-  left: 0;
   right: 0;
   bottom: 0;
+  left: 0;
+
+  & > svg {
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    z-index: 1;
+  }
+`
+
+const Layout = styled.div`
+  pointer-events: none;
+  display: grid;
+  height: 100%;
+  grid-template-areas:
+    "tool    tool    tool"
+    "content main    main"
+    "status  status  status";
+  grid-template-columns: auto 1fr;
+  grid-template-rows: 40px 1fr 32px;
+
+  & > * {
+    pointer-events: all;
+    z-index: 2;
+  }
 `

@@ -38,6 +38,7 @@ export enum ICanvasItems {
 
 export interface ICanvasItem {
   id: string
+  name: string
   zIndex: number
 }
 
@@ -52,8 +53,7 @@ export interface IGlobOptions {
 
 export interface IGlob extends ICanvasItem {
   id: string
-  start: string
-  end: string
+  nodes: string[]
   options: IGlobOptions
 }
 

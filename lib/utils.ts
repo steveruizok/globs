@@ -430,6 +430,7 @@ export function getGlobPath(glob: IGlob, start: INode, end: INode) {
     svg.bezierTo(F0p, F1p, E1p),
     end.cap === "round" ? svg.arcTo(C1, r1, E1p, E1) : svg.lineTo(E1),
     svg.bezierTo(F1, F0, E0),
+    svg.closePath(),
   ].join(" ")
 }
 
@@ -493,4 +494,90 @@ export function getGlob(
 
 export function deepCompare<T>(a: T, b: T) {
   return JSON.stringify(a) === JSON.stringify(b)
+}
+
+/**
+ * Get outer tangents of two circles.
+ * @param x0
+ * @param y0
+ * @param r0
+ * @param x1
+ * @param y1
+ * @param r1
+ * @returns [lx0, ly0, lx1, ly1, rx0, ry0, rx1, ry1]
+ */
+export function getOuterTangents(
+  C0: number[],
+  r0: number,
+  C1: number[],
+  r1: number
+) {
+  const a0 = angle(C0, C1)
+  const d = dist(C0, C1)
+
+  // Circles are overlapping, no tangents
+  if (d < Math.abs(r1 - r0)) return
+
+  const a1 = Math.acos((r0 - r1) / d),
+    t0 = a0 + a1,
+    t1 = a0 - a1
+
+  return [
+    [C0[0] + r0 * Math.cos(t1), C0[1] + r0 * Math.sin(t1)],
+    [C1[0] + r1 * Math.cos(t1), C1[1] + r1 * Math.sin(t1)],
+    [C0[0] + r0 * Math.cos(t0), C0[1] + r0 * Math.sin(t0)],
+    [C1[0] + r1 * Math.cos(t0), C1[1] + r1 * Math.sin(t0)],
+  ]
+}
+
+export function arrsIntersect<T, K>(
+  a: T[],
+  b: K[],
+  fn?: (item: K) => T
+): boolean
+export function arrsIntersect<T>(a: T[], b: T[]): boolean
+export function arrsIntersect<T>(
+  a: T[],
+  b: unknown[],
+  fn?: (item: unknown) => T
+) {
+  return a.some((item) => b.includes(fn ? fn(item) : item))
+}
+
+// /**
+//  * Will mutate an array to remove items.
+//  * @param arr
+//  * @param item
+//  */
+// export function pull<T>(arr: T[], ...items: T[]) {
+//   for (let item of items) {
+//     arr.splice(arr.indexOf(item), 1)
+//   }
+//   return arr
+// }
+
+// /**
+//  * Will mutate an array to remove items, based on a function
+//  * @param arr
+//  * @param fn
+//  * @returns
+//  */
+// export function pullWith<T>(arr: T[], fn: (item: T) => boolean) {
+//   pull(arr, ...arr.filter((item) => fn(item)))
+//   return arr
+// }
+
+export function rectContainsRect(
+  x0: number,
+  y0: number,
+  x1: number,
+  y1: number,
+  box: { x: number; y: number; width: number; height: number }
+) {
+  return !(
+    x0 > box.x ||
+    x1 < box.x + box.width ||
+    y0 > box.y ||
+    y1 < box.y + box.height
+  )
 }

@@ -10,10 +10,10 @@ import {
   getClosestPointOnCircle,
   radiansToDegrees,
   getEllipseDashOffset,
+  arrsIntersect,
 } from "utils"
 import Dot from "./dot"
 import Handle from "./handle"
-import Node from "./node"
 import { IGlobPath } from "types"
 import state, { useSelector } from "lib/state"
 
@@ -24,31 +24,34 @@ interface Props {
 export default function Glob({ id }: Props) {
   const zoom = useSelector((s) => s.data.camera.zoom)
   const glob = useSelector((s) => s.data.globs[id])
-  const start = useSelector((s) => s.data.nodes[glob?.start])
-  const end = useSelector((s) => s.data.nodes[glob?.end])
+  const nodes = useSelector((s) => glob?.nodes.map((id) => s.data.nodes[id]))
+
+  const rOutline = useRef<SVGPathElement>(null)
+
+  useEffect(() => {
+    state.send("MOUNTED_ELEMENT", { id: glob.id, elm: rOutline.current })
+  }, [])
 
   const rPrevPts = useRef<ReturnType<typeof getGlob>>()
   const isSelected = useSelector(
-    (s) =>
-      s.data.selectedGlobs.includes(id) ||
-      s.data.selected.includes(glob?.start) ||
-      s.data.selected.includes(glob?.end)
+    ({ data: { selectedGlobs, selected } }) => selectedGlobs.includes(id) //|| arrsIntersect(selected, glob?.nodes)
   )
 
   const isDraggingD = useSelector(
-    (s) =>
-      s.data.selectedHandle?.id === id && s.data.selectedHandle.handle === "D"
+    ({ data: { selectedHandle } }) =>
+      selectedHandle?.id === id && selectedHandle.handle === "D"
   )
 
   const isDraggingDp = useSelector(
-    (s) =>
-      s.data.selectedHandle?.id === id && s.data.selectedHandle.handle === "Dp"
+    ({ data: { selectedHandle } }) =>
+      selectedHandle?.id === id && selectedHandle.handle === "Dp"
   )
 
   if (!glob) return null
 
   const { D, Dp, a, b, ap, bp } = glob.options
 
+  const [start, end] = nodes
   const { point: C0, radius: r0 } = start
   const { point: C1, radius: r1 } = end
 
@@ -119,57 +122,22 @@ export default function Glob({ id }: Props) {
   //   [glob, onChange]
   // )
 
-  const z = Math.min(2, 1 / zoom)
-  const stroke = isSelected ? 3 : 2 // * z
+  const z = zoom < 1 ? 1 : 1 / zoom
+  const stroke = 2 // * z
   const dash = `${1 / zoom} ${4 / zoom}` //zoom > 1 ? 2 / zoom : 2
 
   return (
     <g strokeWidth={zoom > 1 ? stroke / zoom : stroke} strokeLinecap="round">
       <path
+        ref={rOutline}
         d={getGlobOutline(globPts, start.cap, end.cap)}
-        fill="#ffffff"
-        stroke="black"
-        onPointerDown={() => state.send("POINTED_GLOB", { id: glob.id })}
+        fill="rgba(255, 255, 255, .8"
+        stroke={isSelected ? "red" : "black"}
+        onPointerLeave={() => state.send("UNHOVERED_GLOB", { id: glob.id })}
+        onPointerEnter={() => state.send("HOVERED_GLOB", { id: glob.id })}
+        onPointerDown={() => state.send("SELECTED_GLOB", { id: glob.id })}
       />
-      <g strokeDasharray={dash} pointerEvents="none" fill="none" stroke="black">
-        {/* Middle Path */}
-        {/* <path
-              ref={rMiddlePath}
-              mask={`url(#mask${id})`}
-              strokeDashoffset={0}
-              d={[svg.moveTo(C0), svg.bezierTo(cp0, cp1, C1)].join(" ")}
-            /> */}
-        {/* Inner Arcs */}
-        {start.cap === "round" ? (
-          <path
-            d={[svg.arcTo(C0, r0, E0p, E0)].join(" ")}
-            // strokeDashoffset={getArcDashOffset(C0, r0, E0, E0p, dash)}
-          />
-        ) : (
-          <path
-            d={[svg.ellipse(C0, r0)].join(" ")}
-            transform={`rotate(${radiansToDegrees(Vec.angle(N0p, C0))}, ${
-              C0[0]
-            }, ${C0[1]})`}
-            // strokeDashoffset={getEllipseDashOffset(C0, dash)}
-          />
-        )}
-        {end.cap === "round" ? (
-          <path
-            d={[svg.arcTo(C1, r1, E1p, E1)].join(" ")}
-            // strokeDashoffset={getArcDashOffset(C1, r1, E1p, E1, dash)}
-          />
-        ) : (
-          <path
-            d={[svg.ellipse(C1, r1)].join(" ")}
-            transform={`rotate(${radiansToDegrees(Vec.angle(N1p, C1))}, ${
-              C1[0]
-            }, ${C1[1]})`}
-            // strokeDashoffset={getEllipseDashOffset(C1, dash)}
-          />
-        )}
-      </g>
-      <g fill="none" strokeWidth={1 / zoom}>
+      <g fill="none" strokeWidth={z * 1.5}>
         {isDraggingD ? (
           <path
             d={[
@@ -178,14 +146,14 @@ export default function Glob({ id }: Props) {
               svg.moveTo(projectPoint(D, Vec.angle(D, E1), 10000)),
               svg.lineTo(projectPoint(D, Vec.angle(D, E1), -10000)),
             ].join(" ")}
-            stroke="dodgerblue"
+            stroke="red"
             opacity={0.5}
           />
         ) : (
           <path
             d={[svg.moveTo(E0), svg.lineTo(D), svg.lineTo(E1)].join(" ")}
-            stroke="dodgerblue"
-            strokeDasharray={`${1 / zoom} ${3 / zoom}`}
+            stroke={isSelected ? "red" : "dodgerblue"}
+            strokeDasharray={`${z * 1} ${z * 3}`}
           />
         )}
         {isDraggingDp ? (
@@ -196,82 +164,38 @@ export default function Glob({ id }: Props) {
               svg.moveTo(projectPoint(Dp, Vec.angle(Dp, E1p), 10000)),
               svg.lineTo(projectPoint(Dp, Vec.angle(Dp, E1p), -10000)),
             ].join(" ")}
+            stroke="red"
             opacity={0.5}
-            stroke="orange"
           />
         ) : (
           <path
             d={[svg.moveTo(E0p), svg.lineTo(Dp), svg.lineTo(E1p)].join(" ")}
-            stroke="orange"
-            strokeDasharray={dash}
+            stroke={isSelected ? "red" : "orange"}
+            strokeDasharray={`${z * 1} ${z * 3}`}
           />
         )}
       </g>
-      <Node
-        id={glob.start}
-        onSelect={() => state.send("POINTED_NODE", { id: glob.start })}
-      />
-      <Node
-        id={glob.end}
-        onSelect={() => state.send("POINTED_NODE", { id: glob.end })}
-      />
-      {/* <Line
-          points={startCapOuter
-            .getPoints(50)
-            .map((p) => new Three.Vector3(p.x, p.y, C0.z))}
-          dashOffset={getArcDashOffset(C0, r0, E0, E0p, 4)}
-          color={"black"}
-          flatShading
-        />
-        <Line
-          points={endCapOuter
-            .getPoints(50)
-            .map((p) => new Three.Vector3(p.x, p.y, C0.z))}
-          dashOffset={getArcDashOffset(C0, r0, E0, E0p, 4)}
-          color={"black"}
-          flatShading
-        /> */}
-      {/* <Line
-          points={startCapInner
-            .getPoints(50)
-            .map((p) => new Three.Vector3(p.x, p.y, C0.z))}
-          dashed
-          dashSize={4}
-          lineWidth={2}
-          dashOffset={getArcDashOffset(C0, r0, E0, E0p, 4)}
-          color={"black"}
-          flatShading
-        />
-        <Line
-          points={endCapInner
-            .getPoints(50)
-            .map((p) => new Three.Vector3(p.x, p.y, C1.z))}
-          dashed
-          dashSize={4}
-          dashOffset={getArcDashOffset(C1, r1, E1, E1p, 4)}
-          lineWidth={2}
-          color={"black"}
-          flatShading
-        /> */}
-      <g>
-        <Dot position={E0} color="dodgerblue" />
-        <Dot position={F0} color="dodgerblue" />
-        <Dot position={F1} color="dodgerblue" />
-        <Dot position={E1} color="dodgerblue" />
-        <Dot position={D1} color="dodgerblue" />
-        <Dot position={D2} color="dodgerblue" />
-        <Dot position={E0p} color="orange" />
-        <Dot position={E1p} color="orange" />
-        <Dot position={F0p} color="orange" />
-        <Dot position={F1p} color="orange" />
-        <Dot position={Dp1} color="orange" />
-        <Dot position={Dp2} color="orange" />
+      {/* Dots */}
+      <g opacity=".5">
+        <Dot position={E0} radius={z * 3} color="dodgerblue" />
+        <Dot position={F0} radius={z * 3} color="dodgerblue" />
+        <Dot position={F1} radius={z * 3} color="dodgerblue" />
+        <Dot position={E1} radius={z * 3} color="dodgerblue" />
+        <Dot position={D1} radius={z * 3} color="dodgerblue" />
+        <Dot position={D2} radius={z * 3} color="dodgerblue" />
+        <Dot position={E0p} radius={z * 3} color="orange" />
+        <Dot position={E1p} radius={z * 3} color="orange" />
+        <Dot position={F0p} radius={z * 3} color="orange" />
+        <Dot position={F1p} radius={z * 3} color="orange" />
+        <Dot position={Dp1} radius={z * 3} color="orange" />
+        <Dot position={Dp2} radius={z * 3} color="orange" />
       </g>
       <g>
         {/* Left Handles */}
         <Handle
           color="dodgerblue"
           position={D}
+          radius={z * 12}
           onSelect={() =>
             state.send("POINTED_HANDLE", { id: glob.id, handle: "D" })
           }
@@ -280,6 +204,7 @@ export default function Glob({ id }: Props) {
         <Handle
           color="orange"
           position={Dp}
+          radius={z * 12}
           onSelect={() =>
             state.send("POINTED_HANDLE", { id: glob.id, handle: "Dp" })
           }
