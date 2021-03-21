@@ -27,6 +27,8 @@ export default function NodeList() {
 function NodeListItem({ id, selected }, { id: string, selected: boolean }) {
   const node = useSelector((s) => s.data.nodes[id], deepCompare)
 
+  if (!node) return null
+
   return (
     <li
       key={id}

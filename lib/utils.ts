@@ -1,6 +1,6 @@
 // Includes a lot of extras here.
 import * as svg from "./svg"
-import { IGlob, INode, IVector } from "./types"
+import { IGlob, IGlobPath, INode, IVector } from "./types"
 import {
   tangent,
   angle,
@@ -456,7 +456,7 @@ export function getGlob(
   b: number,
   ap: number,
   bp: number
-) {
+): IGlobPath {
   // Get end points
   const E0 = getCircleTangentToPoint(C0, r0, D, 0),
     E0p = getCircleTangentToPoint(C0, r0, Dp, 1),
@@ -500,6 +500,8 @@ export function getGlob(
     N0p,
     N1,
     N1p,
+    D,
+    Dp,
   }
 }
 

@@ -3,9 +3,11 @@ import { ArrowRight, ArrowUp, Disc, X } from "react-feather"
 export default function Docs() {
   return (
     <div>
-      <h4>Tips</h4>
       <p>
         You can create <b>nodes</b> and connect nodes to form <b>globs</b>.
+      </p>
+      <p>
+        Hold <b>Space</b> to see the solid shape.
       </p>
       <p>
         To <b>create</b> a node: click the{" "}

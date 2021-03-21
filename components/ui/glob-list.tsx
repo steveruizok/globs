@@ -12,18 +12,30 @@ export default function GlobList() {
       </section>
       <ol>
         {globIds.map((id) => (
-          <li key={id}>
-            <button
-              data-selected={selected.includes(id)}
-              onPointerLeave={() => state.send("UNHIGHLIT_GLOB", { id })}
-              onPointerEnter={() => state.send("HIGHLIT_GLOB", { id })}
-              onClick={() => state.send("SELECTED_GLOB", { id })}
-            >
-              {state.data.globs[id].name}
-            </button>
-          </li>
+          <GlobListItem key={id} id={id} selected={selected.includes(id)} />
         ))}
       </ol>
     </>
+  )
+}
+
+function GlobListItem({ id, selected }, { id: string, selected: boolean }) {
+  const glob = useSelector((s) => s.data.globs[id], deepCompare)
+
+  if (!glob) return null
+
+  return (
+    <li
+      key={id}
+      onPointerLeave={() => state.send("UNHIGHLIT_GLOB", { id })}
+      onPointerEnter={() => state.send("HIGHLIT_GLOB", { id })}
+    >
+      <button
+        data-selected={selected}
+        onClick={() => state.send("SELECTED_GLOB", { id })}
+      >
+        {glob.name}
+      </button>
+    </li>
   )
 }

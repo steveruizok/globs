@@ -26,6 +26,12 @@ export interface IGlobPath {
   E1p: IVector
   F0p: IVector
   F1p: IVector
+  N0: IVector
+  N0p: IVector
+  N1: IVector
+  N1p: IVector
+  D: IVector
+  Dp: IVector
 }
 
 export enum ICanvasItems {
@@ -54,7 +60,9 @@ export interface IGlobOptions {
 export interface IGlob extends ICanvasItem {
   id: string
   nodes: string[]
+  points?: IGlobPath
   options: IGlobOptions
+  p0?: IVector
 }
 
 export interface INode extends ICanvasItem {
@@ -90,7 +98,7 @@ export interface IData {
   }
   snaps: {
     nodes: Record<string, number[]>
-    globs: Record<string, { D: number[]; Dp: number[] }>
+    globs: Record<string, number[][]>
   }
   fill: boolean
   nodeIds: string[]

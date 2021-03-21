@@ -33,7 +33,7 @@ export default function Glob({ id }: Props) {
     state.send("MOUNTED_ELEMENT", { id: glob.id, elm: rOutline.current })
   }, [])
 
-  const rPrevPts = useRef<ReturnType<typeof getGlob>>()
+  const rPrevPts = useRef<IGlobPath>()
 
   const isSelected = useSelector(({ data: { selectedGlobs } }) =>
     selectedGlobs.includes(id)
@@ -57,15 +57,10 @@ export default function Glob({ id }: Props) {
   const { point: C0, radius: r0 } = start
   const { point: C1, radius: r1 } = end
 
-  let safe = false
-  let globPts = rPrevPts.current
+  let safe = !!glob.points
+  let globPts = glob.points || rPrevPts.current
 
-  try {
-    rPrevPts.current = globPts = getGlob(C0, r0, C1, r1, D, Dp, a, b, ap, bp)
-    safe = true
-  } catch (e) {
-    // return null
-  }
+  rPrevPts.current = globPts
 
   const { E0, E0p, E1, E1p, F0, F1, F0p, F1p, N0, N0p, N1, N1p } = globPts
 
@@ -209,6 +204,7 @@ export default function Glob({ id }: Props) {
             <Dot position={F1p} radius={z * 3} color="orange" />
             <Dot position={Dp1} radius={z * 3} color="orange" />
             <Dot position={Dp2} radius={z * 3} color="orange" />
+            {glob.p0 && <Dot position={glob.p0} radius={z * 3} color="blue" />}
           </g>
           {/* Left Handles */}
           <Handle
