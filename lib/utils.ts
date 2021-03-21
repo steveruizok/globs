@@ -589,3 +589,9 @@ export function getTouchDisplay() {
     navigator.msMaxTouchPoints > 0
   )
 }
+
+const rounds = [1, 10, 100, 1000]
+
+export function round(n: number, p = 2) {
+  return Math.floor(n * rounds[p]) / rounds[p]
+}

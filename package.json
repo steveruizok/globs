@@ -8,6 +8,7 @@
     "start": "next start"
   },
   "dependencies": {
+    "@radix-ui/react-context-menu": "^0.0.10",
     "@state-designer/react": "^1.6.7",
     "framer-motion": "^4.0.0",
     "next": "10.0.8",

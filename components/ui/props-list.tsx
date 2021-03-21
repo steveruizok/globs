@@ -1,6 +1,7 @@
 import state, { useSelector } from "lib/state"
 import { deepCompare } from "lib/utils"
 import styled from "styled-components"
+import * as ContextMenu from "@radix-ui/react-context-menu"
 
 export default function Inspect() {
   const selectedNodeIds = useSelector((s) => s.data.selected, deepCompare)
@@ -40,7 +41,7 @@ export default function Inspect() {
   return (
     <>
       <section>Position</section>
-      <PropsTable tabIndex={-1}>
+      <PropsTable>
         <NumberProp
           value={x}
           unit="x"

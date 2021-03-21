@@ -3,6 +3,11 @@ import styled from "styled-components"
 import state from "lib/state"
 import usePinchZoom from "hooks/usePinchZoom"
 
+import ContextMenu, {
+  ContextMenuRoot,
+  ContextMenuTrigger,
+} from "./ui/context-menu"
+
 import Globs from "./canvas/globs"
 import Nodes from "./canvas/nodes"
 import HoveredGlobs from "./canvas/hovered-globs"
@@ -16,14 +21,13 @@ import Brush from "components/canvas/brush"
 export default function Editor() {
   const rContainer = useRef<HTMLDivElement>(null)
   const rSvg = useRef<SVGSVGElement>(null)
-  const rCanvas = useRef<SVGRectElement>(null)
 
   // When we zoom or pan, manually update the svg's viewbox
   // This is expensive, so we want to set this property
   // only when we really need to.
   useEffect(() => {
     const svg = rSvg.current!
-    const cvs = rCanvas.current!
+    // const cvs = rCanvas.current!
     let prev = ``
 
     return state.onUpdate((s) => {
@@ -33,10 +37,6 @@ export default function Editor() {
       const next = [point, size].toString()
 
       if (next !== prev) {
-        cvs.setAttribute("x", point[0].toString())
-        cvs.setAttribute("y", point[1].toString())
-        cvs.setAttribute("width", size[0].toString())
-        cvs.setAttribute("height", size[1].toString())
         svg.setAttribute("viewBox", next)
         prev = next
       }
@@ -62,35 +62,33 @@ export default function Editor() {
   }, [])
 
   return (
-    <EditorContainer
-      ref={rContainer}
-      onTouchStart={handleTouchStart}
-      onTouchEnd={handleTouchMove}
-      onWheel={handleWheel}
-    >
-      <svg ref={rSvg} width="100%" height="100%">
-        <rect
-          ref={rCanvas}
-          x={-2000}
-          y={-2000}
-          width={4000}
-          height={4000}
-          fill="#efefef"
-          onPointerDown={() => state.send("POINTED_CANVAS")}
-        />
-        <Globs />
-        <Nodes />
-        <HoveredNodes />
-        <HoveredGlobs />
-        <Brush />
-      </svg>
-      <Layout>
-        <Toolbar />
-        <ContentPanel />
-        <InspectPanel />
-        <StatusBar />
-      </Layout>
-    </EditorContainer>
+    <OuterWrapper className="light">
+      <ContextMenuRoot>
+        <EditorContainer ref={rContainer}>
+          <Layout>
+            <SVGWrapper
+              onPointerDown={() => state.send("POINTED_CANVAS")}
+              onTouchStart={handleTouchStart}
+              onTouchEnd={handleTouchMove}
+              onWheel={handleWheel}
+            >
+              <svg ref={rSvg} width="100%" height="100%">
+                <Globs />
+                <Nodes />
+                <HoveredNodes />
+                <HoveredGlobs />
+                <Brush />
+              </svg>
+              <ContextMenu />
+            </SVGWrapper>
+            <Toolbar />
+            <ContentPanel />
+            <InspectPanel />
+            <StatusBar />
+          </Layout>
+        </EditorContainer>
+      </ContextMenuRoot>
+    </OuterWrapper>
   )
 }
 
@@ -100,6 +98,8 @@ const EditorContainer = styled.div`
   right: 0;
   bottom: 0;
   left: 0;
+  z-index: 0;
+  /* height: 100vh; */
 
   & > svg {
     position: absolute;
@@ -135,4 +135,20 @@ const Layout = styled.div`
     pointer-events: all;
     z-index: 2;
   }
+`
+
+const Main = styled.main`
+  grid-area: main;
+`
+
+const OuterWrapper = styled.div`
+  height: 100vh;
+  width: 100vw;
+`
+
+const SVGWrapper = styled(ContextMenuTrigger)`
+  position: relative;
+  grid-column: 1 / span 3;
+  grid-row: 1 / span 3;
+  background-color: var(--muted);
 `

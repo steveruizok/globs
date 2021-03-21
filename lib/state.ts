@@ -12,6 +12,7 @@ import {
   getOuterTangents,
   getTouchDisplay,
   rectContainsRect,
+  round,
 } from "utils"
 import { initialData } from "./data"
 import { getGlobOutline } from "components/canvas/glob"
@@ -461,8 +462,15 @@ const state = createState({
       if (selected[0] !== hoveredNodes[0]) return
       const node = nodes[selected[0]]
       const point = screenToWorld(pointer.point, camera.point, camera.zoom)
+      const delta = screenToWorld(pointer.delta, camera.point, camera.zoom)
+      node.radius = Math.round(
+        node.radius +
+          (Vec.dist(point, node.point) > node.radius
+            ? Vec.len(delta)
+            : -Vec.len(delta))
+      )
 
-      node.radius = Vec.dist(node.point, point)
+      // node.radius = Vec.dist(node.point, point)
     },
     setSelectedNode(data, payload: { id: string }) {
       data.selectedHandle = undefined
