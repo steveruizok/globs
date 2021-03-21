@@ -25,6 +25,7 @@ export default function Glob({ id }: Props) {
   const zoom = useSelector((s) => s.data.camera.zoom)
   const glob = useSelector((s) => s.data.globs[id])
   const nodes = useSelector((s) => glob?.nodes.map((id) => s.data.nodes[id]))
+  const fill = useSelector((s) => s.data.fill)
 
   const rOutline = useRef<SVGPathElement>(null)
 
@@ -33,8 +34,9 @@ export default function Glob({ id }: Props) {
   }, [])
 
   const rPrevPts = useRef<ReturnType<typeof getGlob>>()
-  const isSelected = useSelector(
-    ({ data: { selectedGlobs, selected } }) => selectedGlobs.includes(id) //|| arrsIntersect(selected, glob?.nodes)
+
+  const isSelected = useSelector(({ data: { selectedGlobs } }) =>
+    selectedGlobs.includes(id)
   )
 
   const isDraggingD = useSelector(
@@ -134,7 +136,6 @@ export default function Glob({ id }: Props) {
         <path
           ref={rOutline}
           d={getGlobOutline(globPts, start.cap, end.cap)}
-          fill="rgba(255, 255, 255, .8"
           stroke={isSelected ? "red" : "black"}
           onPointerLeave={() => state.send("UNHOVERED_GLOB", { id: glob.id })}
           onPointerEnter={() => state.send("HOVERED_GLOB", { id: glob.id })}
@@ -150,81 +151,85 @@ export default function Glob({ id }: Props) {
           strokeWidth={2 / zoom}
         />
       )}
-      {safe && (
-        <g fill="none" strokeWidth={z * 1.5}>
-          {isDraggingD ? (
-            <path
-              d={[
-                svg.moveTo(projectPoint(D, Vec.angle(D, E0), 10000)),
-                svg.lineTo(projectPoint(D, Vec.angle(D, E0), -10000)),
-                svg.moveTo(projectPoint(D, Vec.angle(D, E1), 10000)),
-                svg.lineTo(projectPoint(D, Vec.angle(D, E1), -10000)),
-              ].join(" ")}
-              stroke="red"
-              opacity={0.5}
-            />
-          ) : (
-            <path
-              d={[svg.moveTo(E0), svg.lineTo(D), svg.lineTo(E1)].join(" ")}
-              stroke={isSelected ? "red" : "dodgerblue"}
-              strokeDasharray={`${z * 1} ${z * 3}`}
-            />
+      {!fill && (
+        <g>
+          {safe && (
+            <g fill="none" strokeWidth={z * 1.5} pointerEvents="none">
+              {isDraggingD ? (
+                <path
+                  d={[
+                    svg.moveTo(projectPoint(D, Vec.angle(D, E0), 10000)),
+                    svg.lineTo(projectPoint(D, Vec.angle(D, E0), -10000)),
+                    svg.moveTo(projectPoint(D, Vec.angle(D, E1), 10000)),
+                    svg.lineTo(projectPoint(D, Vec.angle(D, E1), -10000)),
+                  ].join(" ")}
+                  stroke="red"
+                  opacity={0.5}
+                />
+              ) : (
+                <path
+                  d={[svg.moveTo(E0), svg.lineTo(D), svg.lineTo(E1)].join(" ")}
+                  stroke={isSelected ? "red" : "dodgerblue"}
+                  strokeDasharray={`${z * 1} ${z * 3}`}
+                />
+              )}
+              {isDraggingDp ? (
+                <path
+                  d={[
+                    svg.moveTo(projectPoint(Dp, Vec.angle(Dp, E0p), 10000)),
+                    svg.lineTo(projectPoint(Dp, Vec.angle(Dp, E0p), -10000)),
+                    svg.moveTo(projectPoint(Dp, Vec.angle(Dp, E1p), 10000)),
+                    svg.lineTo(projectPoint(Dp, Vec.angle(Dp, E1p), -10000)),
+                  ].join(" ")}
+                  stroke="red"
+                  opacity={0.5}
+                />
+              ) : (
+                <path
+                  d={[svg.moveTo(E0p), svg.lineTo(Dp), svg.lineTo(E1p)].join(
+                    " "
+                  )}
+                  stroke={isSelected ? "red" : "orange"}
+                  strokeDasharray={`${z * 1} ${z * 3}`}
+                />
+              )}
+            </g>
           )}
-          {isDraggingDp ? (
-            <path
-              d={[
-                svg.moveTo(projectPoint(Dp, Vec.angle(Dp, E0p), 10000)),
-                svg.lineTo(projectPoint(Dp, Vec.angle(Dp, E0p), -10000)),
-                svg.moveTo(projectPoint(Dp, Vec.angle(Dp, E1p), 10000)),
-                svg.lineTo(projectPoint(Dp, Vec.angle(Dp, E1p), -10000)),
-              ].join(" ")}
-              stroke="red"
-              opacity={0.5}
-            />
-          ) : (
-            <path
-              d={[svg.moveTo(E0p), svg.lineTo(Dp), svg.lineTo(E1p)].join(" ")}
-              stroke={isSelected ? "red" : "orange"}
-              strokeDasharray={`${z * 1} ${z * 3}`}
-            />
-          )}
+          {/* Dots */}
+          <g opacity=".5">
+            <Dot position={E0} radius={z * 3} color="dodgerblue" />
+            <Dot position={F0} radius={z * 3} color="dodgerblue" />
+            <Dot position={F1} radius={z * 3} color="dodgerblue" />
+            <Dot position={E1} radius={z * 3} color="dodgerblue" />
+            <Dot position={D1} radius={z * 3} color="dodgerblue" />
+            <Dot position={D2} radius={z * 3} color="dodgerblue" />
+            <Dot position={E0p} radius={z * 3} color="orange" />
+            <Dot position={E1p} radius={z * 3} color="orange" />
+            <Dot position={F0p} radius={z * 3} color="orange" />
+            <Dot position={F1p} radius={z * 3} color="orange" />
+            <Dot position={Dp1} radius={z * 3} color="orange" />
+            <Dot position={Dp2} radius={z * 3} color="orange" />
+          </g>
+          {/* Left Handles */}
+          <Handle
+            color="dodgerblue"
+            position={D}
+            radius={z * 12}
+            onSelect={() =>
+              state.send("POINTED_HANDLE", { id: glob.id, handle: "D" })
+            }
+          />
+          {/* Right Handles */}
+          <Handle
+            color="orange"
+            position={Dp}
+            radius={z * 12}
+            onSelect={() =>
+              state.send("POINTED_HANDLE", { id: glob.id, handle: "Dp" })
+            }
+          />
         </g>
       )}
-      {/* Dots */}
-      <g opacity=".5">
-        <Dot position={E0} radius={z * 3} color="dodgerblue" />
-        <Dot position={F0} radius={z * 3} color="dodgerblue" />
-        <Dot position={F1} radius={z * 3} color="dodgerblue" />
-        <Dot position={E1} radius={z * 3} color="dodgerblue" />
-        <Dot position={D1} radius={z * 3} color="dodgerblue" />
-        <Dot position={D2} radius={z * 3} color="dodgerblue" />
-        <Dot position={E0p} radius={z * 3} color="orange" />
-        <Dot position={E1p} radius={z * 3} color="orange" />
-        <Dot position={F0p} radius={z * 3} color="orange" />
-        <Dot position={F1p} radius={z * 3} color="orange" />
-        <Dot position={Dp1} radius={z * 3} color="orange" />
-        <Dot position={Dp2} radius={z * 3} color="orange" />
-      </g>
-      <g>
-        {/* Left Handles */}
-        <Handle
-          color="dodgerblue"
-          position={D}
-          radius={z * 12}
-          onSelect={() =>
-            state.send("POINTED_HANDLE", { id: glob.id, handle: "D" })
-          }
-        />
-        {/* Right Handles */}
-        <Handle
-          color="orange"
-          position={Dp}
-          radius={z * 12}
-          onSelect={() =>
-            state.send("POINTED_HANDLE", { id: glob.id, handle: "Dp" })
-          }
-        />
-      </g>
     </g>
   )
 }

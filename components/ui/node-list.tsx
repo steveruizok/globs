@@ -1,9 +1,10 @@
 import state, { useSelector } from "lib/state"
 import { deepCompare } from "lib/utils"
+import { Lock, Unlock } from "react-feather"
 
 export default function NodeList() {
   const nodeIds = useSelector((s) => s.data.nodeIds, deepCompare)
-  const selected = useSelector((s) => s.data.selected, deepCompare)
+  const selectedNodeIds = useSelector((s) => s.data.selectedNodes, deepCompare)
 
   return (
     <>
@@ -12,18 +13,42 @@ export default function NodeList() {
       </section>
       <ol>
         {nodeIds.map((id) => (
-          <li key={id}>
-            <button
-              data-selected={selected.includes(id)}
-              onPointerLeave={() => state.send("UNHIGHLIT_NODE", { id })}
-              onPointerEnter={() => state.send("HIGHLIT_NODE", { id })}
-              onClick={() => state.send("SELECTED_NODE", { id })}
-            >
-              {state.data.nodes[id].name}
-            </button>
-          </li>
+          <NodeListItem
+            key={id}
+            id={id}
+            selected={selectedNodeIds.includes(id)}
+          />
         ))}
       </ol>
     </>
+  )
+}
+
+function NodeListItem({ id, selected }, { id: string, selected: boolean }) {
+  const node = useSelector((s) => s.data.nodes[id], deepCompare)
+
+  return (
+    <li
+      key={id}
+      onPointerLeave={() => state.send("UNHIGHLIT_NODE", { id })}
+      onPointerEnter={() => state.send("HIGHLIT_NODE", { id })}
+    >
+      <button
+        data-selected={selected}
+        onClick={() => state.send("SELECTED_NODE", { id })}
+      >
+        {node.name}
+      </button>
+      <button
+        data-hidey={!node.locked}
+        onClick={() => state.send("TOGGLED_NODE_LOCKED", { id })}
+      >
+        {node.locked ? (
+          <Lock size={12} strokeWidth={3} opacity={1} />
+        ) : (
+          <Unlock size={12} strokeWidth={3} opacity={0.4} />
+        )}
+      </button>
+    </li>
   )
 }

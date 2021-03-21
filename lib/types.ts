@@ -62,4 +62,47 @@ export interface INode extends ICanvasItem {
   point: IVector
   radius: number
   cap: "round" | "flat"
+  locked: boolean
+}
+
+export interface IData {
+  viewport: {
+    point: number[]
+    size: number[]
+    scroll: number[]
+  }
+  document: {
+    point: number[]
+    size: number[]
+  }
+  camera: {
+    zoom: number
+    point: number[]
+  }
+  brush: {
+    start: number[]
+    end: number[]
+    targets: { id: string; type: "glob" | "handle" | "node"; path: string }[]
+  }
+  initialPoints: {
+    nodes: Record<string, number[]>
+    globs: Record<string, { D: number[]; Dp: number[] }>
+  }
+  snaps: {
+    nodes: Record<string, number[]>
+    globs: Record<string, { D: number[]; Dp: number[] }>
+  }
+  fill: boolean
+  nodeIds: string[]
+  nodes: Record<string, INode>
+  globIds: string[]
+  globs: Record<string, IGlob>
+  selectedHandle: { id: string; handle: string } | undefined
+  selectedGlobs: string[]
+  hoveredNodes: string[]
+  hoveredGlobs: string[]
+  highlightNodes: string[]
+  highlightGlobs: string[]
+  selectedNodes: string[]
+  cloning: string[]
 }

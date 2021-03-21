@@ -3,10 +3,9 @@ import * as _ContextMenu from "@radix-ui/react-context-menu"
 
 export default function ContextMenu() {
   return (
-    <StyledContent onOpenAutoFocus={(e) => console.log("hi")}>
-      <StyledItem onSelect={() => console.log("cut")}>Cut</StyledItem>
-      <StyledItem onSelect={() => console.log("copy")}>Copy</StyledItem>
-      <StyledItem onSelect={() => console.log("paste")}>Paste</StyledItem>
+    // @ts-ignore
+    <StyledContent onOpenAutoFocus={(e) => {}}>
+      <StyledItem onSelect={() => {}}>Todo!</StyledItem>
     </StyledContent>
   )
 }

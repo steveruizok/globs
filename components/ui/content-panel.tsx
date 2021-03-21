@@ -72,25 +72,45 @@ const PanelInnerContainer = styled.div`
     padding: 0;
     margin: 0;
 
-    li > button {
-      display: flex;
+    > li {
+      display: grid;
+      grid-template-columns: 1fr 28px;
       align-items: center;
       width: 100%;
       height: 28px;
-      border: none;
-      background: transparent;
       border-bottom: 1px solid rgba(0, 0, 0, 0.1);
-      padding: 0 8px;
-      font-weight: 400;
-      cursor: pointer;
-      outline: none;
 
       &:hover {
         background-color: rgba(0, 0, 0, 0.03);
       }
 
+      & *[data-hidey="true"] {
+        visibility: hidden;
+      }
+
+      &:hover *[data-hidey="true"] {
+        visibility: visible;
+      }
+    }
+
+    > li > button {
+      display: flex;
+      align-items: center;
+      width: 100%;
+      height: 100%;
+      border: none;
+      background: transparent;
+      padding: 0 8px;
+      font-weight: 400;
+      cursor: pointer;
+      outline: none;
+
       &[data-selected="true"] {
         color: red;
+      }
+
+      &:hover > svg {
+        opacity: 1;
       }
     }
   }

@@ -14,7 +14,7 @@ import styled from "styled-components"
 export default function Toolbar() {
   const canUndo = useSelector((s) => s.can("UNDO"))
   const canRedo = useSelector((s) => s.can("REDO"))
-  const hasSelectedNodes = useSelector((s) => s.data.selected.length > 0)
+  const hasSelectedNodes = useSelector((s) => s.data.selectedNodes.length > 0)
   const hasSelectedGlobs = useSelector((s) => s.data.selectedGlobs.length > 0)
   const isLinking = useSelector((s) => s.isIn("linkingNodes"))
   const isCreating = useSelector((s) => s.isIn("creatingNodes"))
@@ -48,13 +48,15 @@ export default function Toolbar() {
         >
           <Disc size={18} />
         </button>
-        <button
-          title="Link Nodes"
-          data-active={isLinking}
-          onClick={() => state.send("STARTED_LINKING_NODES")}
-        >
-          <ArrowRight />
-        </button>
+        {hasSelectedNodes && (
+          <button
+            title="Link Nodes"
+            data-active={isLinking}
+            onClick={() => state.send("STARTED_LINKING_NODES")}
+          >
+            <ArrowRight />
+          </button>
+        )}
         {hasSelectedNodes && (
           <button
             title="Branch Nodes"

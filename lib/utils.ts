@@ -1,7 +1,20 @@
 // Includes a lot of extras here.
 import * as svg from "./svg"
 import { IGlob, INode, IVector } from "./types"
-import { tangent, angle, lrp, dist, sub, len, add, mul, per } from "./vec"
+import {
+  tangent,
+  angle,
+  lrp,
+  dist,
+  sub,
+  len,
+  add,
+  mul,
+  per,
+  uni,
+  div,
+  mulV,
+} from "./vec"
 
 // A helper for getting tangents.
 export function getCircleTangentToPoint(
@@ -50,10 +63,8 @@ export function getClosestPointOnCircle(
   P: number[],
   padding = 0
 ) {
-  var dx = P[0] - C[0]
-  var dy = P[1] - C[1]
-  var dist = Math.hypot(dx, dy) - padding
-  return [C[0] + (dx * r) / dist, C[1] + (dy * r) / dist]
+  const v = sub(C, P)
+  return sub(C, mul(div(v, len(v)), r + padding))
 }
 
 export function projectPoint(p0: number[], a: number, d: number) {

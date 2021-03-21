@@ -8,12 +8,14 @@ interface Props {
 
 export default function Node({ id }: Props) {
   const zoom = useSelector((s) => s.data.camera.zoom)
+  const fill = useSelector((s) => s.data.fill)
+
   const node = useSelector((s) => s.data.nodes[id], deepCompare)
   const globs = useSelector((s) =>
     Object.values(s.data.globs).filter((glob) => glob.nodes.includes(id))
   )
 
-  const isSelected = useSelector((s) => s.data.selected.includes(id))
+  const isSelected = useSelector((s) => s.data.selectedNodes.includes(id))
 
   const hasGlobs = globs.length > 0
 
@@ -34,21 +36,42 @@ export default function Node({ id }: Props) {
         cx={node.point[0]}
         cy={node.point[1]}
         r={node.radius}
-        fill={hasGlobs ? "transparent" : "rgba(255, 255, 255, .8)"}
-        stroke={isSelected ? "red" : "black"}
+        fill={hasGlobs ? "transparent" : undefined}
+        stroke={isSelected ? "red" : undefined}
         strokeWidth={zoom < 1 ? 2 : 2 / zoom}
+      />
+      <circle
+        cx={node.point[0]}
+        cy={node.point[1]}
+        r={Math.max(node.radius, 8)}
+        fill="transparent"
+        stroke="transparent"
         onPointerDown={() => state.send("SELECTED_NODE", { id })}
         onDoubleClick={() => state.send("TOGGLED_CAP", { id })}
         onPointerOver={() => state.send("HOVERED_NODE", { id })}
         onPointerOut={() => state.send("UNHOVERED_NODE", { id })}
       />
-      <circle
-        pointerEvents="none"
-        cx={node.point[0]}
-        cy={node.point[1]}
-        r={zoom < 1 ? 2 : 2 / zoom}
-        fill={"black"}
-      />
+      {!fill && !node.locked && (
+        <circle
+          pointerEvents="none"
+          cx={node.point[0]}
+          cy={node.point[1]}
+          r={zoom < 1 ? 2 : 2 / zoom}
+          fill={"black"}
+        />
+      )}
+      {node.locked && (
+        <circle
+          pointerEvents="none"
+          cx={node.point[0]}
+          cy={node.point[1]}
+          r={zoom < 1 ? 4 : 4 / zoom}
+          strokeWidth={zoom < 1 ? 2 : 2 / zoom}
+          strokeDasharray={zoom < 1 ? "1,3" : [1 / zoom, 3 / zoom].toString()}
+          stroke={"black"}
+          strokeLinecap="round"
+        />
+      )}
     </g>
   )
 }

@@ -1,37 +1,4 @@
-import { ICanvasItems, INode, IGlob } from "lib/types"
-
-export interface IData {
-  viewport: {
-    point: number[]
-    size: number[]
-    scroll: number[]
-  }
-  document: {
-    point: number[]
-    size: number[]
-  }
-  camera: {
-    zoom: number
-    point: number[]
-  }
-  brush: {
-    start: number[]
-    end: number[]
-    targets: { id: string; type: "glob" | "handle" | "node"; path: string }[]
-  }
-  nodeIds: string[]
-  nodes: Record<string, INode>
-  globIds: string[]
-  globs: Record<string, IGlob>
-  selectedHandle: { id: string; handle: string } | undefined
-  selectedGlobs: string[]
-  hoveredNodes: string[]
-  hoveredGlobs: string[]
-  highlightNodes: string[]
-  highlightGlobs: string[]
-  selected: string[]
-  cloning: string[]
-}
+import { ICanvasItems, IData } from "lib/types"
 
 export const initialData: IData = {
   viewport: {
@@ -47,6 +14,7 @@ export const initialData: IData = {
     point: [0, 0],
     zoom: 1,
   },
+  fill: false,
   brush: undefined,
   nodes: {
     0: {
@@ -57,6 +25,7 @@ export const initialData: IData = {
       radius: 50,
       zIndex: 0,
       cap: "round",
+      locked: false,
     },
     1: {
       id: "1",
@@ -66,6 +35,7 @@ export const initialData: IData = {
       radius: 25,
       zIndex: 1,
       cap: "round",
+      locked: false,
     },
     2: {
       id: "2",
@@ -75,6 +45,7 @@ export const initialData: IData = {
       radius: 10,
       zIndex: 1,
       cap: "round",
+      locked: false,
     },
     3: {
       id: "3",
@@ -84,6 +55,7 @@ export const initialData: IData = {
       radius: 20,
       zIndex: 1,
       cap: "round",
+      locked: false,
     },
     4: {
       id: "4",
@@ -93,6 +65,7 @@ export const initialData: IData = {
       radius: 50,
       zIndex: 1,
       cap: "round",
+      locked: false,
     },
   },
   globs: {
@@ -139,14 +112,22 @@ export const initialData: IData = {
       zIndex: 3,
     },
   },
-  selectedHandle: undefined,
+  initialPoints: {
+    nodes: {},
+    globs: {},
+  },
+  snaps: {
+    nodes: {},
+    globs: {},
+  },
   nodeIds: ["0", "1", "2", "3", "4"],
   globIds: ["g0", "g1", "g2"],
   hoveredNodes: [],
   hoveredGlobs: [],
   highlightNodes: [],
-  selected: [],
-  selectedGlobs: [],
   highlightGlobs: [],
+  selectedNodes: [],
+  selectedGlobs: [],
+  selectedHandle: undefined,
   cloning: [],
 }

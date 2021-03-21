@@ -12,7 +12,7 @@ import {
 import styled from "styled-components"
 
 export default function StatusBar() {
-  const selected = useSelector((s) => s.data.selected)
+  const selectedNodes = useSelector((s) => s.data.selectedNodes)
   const active = useSelector(
     (s) => s.active.slice(1).map((s) => s.split("root.")[1]),
     deepCompare
@@ -24,7 +24,7 @@ export default function StatusBar() {
       <Section>
         {active.join(" | ")} | {log}
       </Section>
-      <Section>{selected}</Section>
+      <Section>{selectedNodes.join(", ")}</Section>
     </StatusBarContainer>
   )
 }

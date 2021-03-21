@@ -45,7 +45,7 @@ const PanelInnerContainer = styled.div`
   width: 100%;
   height: 100%;
   min-width: 120px;
-  overflow: hidden;
+  overflow-y: scroll;
   background-color: #ffffff;
   font-size: 13px;
 

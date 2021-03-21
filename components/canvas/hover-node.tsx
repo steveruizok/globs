@@ -11,5 +11,11 @@ export default function HoverNode({ id }: Props) {
 
   if (!node) return null
 
-  return <circle cx={node.point[0]} cy={node.point[1]} r={node.radius} />
+  return (
+    <circle
+      cx={node.point[0]}
+      cy={node.point[1]}
+      r={Math.max(8, node.radius)}
+    />
+  )
 }
