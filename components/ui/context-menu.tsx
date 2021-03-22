@@ -1,11 +1,20 @@
 import styled from "styled-components"
 import * as _ContextMenu from "@radix-ui/react-context-menu"
+import { useSelector } from "lib/state"
+import { deepCompare } from "lib/utils"
 
 export default function ContextMenu() {
+  const hoveredNode = useSelector(
+    (s) => s.data.hoveredNodes[0] && s.data.nodes[s.data.hoveredNodes[0]],
+    deepCompare
+  )
+
+  console.log("updated", hoveredNode)
+
   return (
     // @ts-ignore
-    <StyledContent onOpenAutoFocus={(e) => {}}>
-      <StyledItem onSelect={() => {}}>Todo!</StyledItem>
+    <StyledContent disableOutsidePointerEvents={false}>
+      <StyledItem onSelect={() => {}}>{hoveredNode?.id}</StyledItem>
     </StyledContent>
   )
 }
