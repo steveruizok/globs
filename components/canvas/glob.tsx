@@ -1,22 +1,10 @@
 import React, { useRef, useMemo, useCallback, useEffect, useState } from "react"
 import * as svg from "lib/svg"
 import * as vec from "lib/vec"
-import {
-  getCircleTangentToPoint,
-  getSweep,
-  projectPoint,
-  getArcDashOffset,
-  getGlob,
-  getClosestPointOnCircle,
-  radiansToDegrees,
-  getEllipseDashOffset,
-  arrsIntersect,
-  modulate,
-  lerp,
-} from "utils"
+import { projectPoint } from "utils"
 import Dot from "./dot"
 import Handle from "./handle"
-import { IGlobPath } from "types"
+import { IGlobPoints } from "types"
 import state, { useSelector } from "lib/state"
 
 interface Props {
@@ -31,7 +19,7 @@ export default function Glob({ id }: Props) {
 
   const rOutline = useRef<SVGPathElement>(null)
 
-  const rPrevPts = useRef<IGlobPath>()
+  const rPrevPts = useRef<IGlobPoints>()
 
   let safe = !!glob.points
   let globPts = glob.points || rPrevPts.current
@@ -51,34 +39,6 @@ export default function Glob({ id }: Props) {
     ({ data: { selectedHandle } }) =>
       selectedHandle?.id === id && selectedHandle.handle === "Dp"
   )
-
-  // Show normal points along line
-  const rLeftPath = useRef<SVGPathElement>(null)
-  const rRightPath = useRef<SVGPathElement>(null)
-
-  const skeletonPts = useMemo(() => {
-    const left = rLeftPath.current
-    const right = rRightPath.current
-
-    if (!(left && right)) return []
-
-    const lenL = left.getTotalLength()
-    const lenR = right.getTotalLength()
-
-    let pts: number[][][] = []
-    const steps = 20, // Math.max(lenL, lenR) / 32,
-      step = 1 / steps
-    for (let t = 0; t <= 1; t += step) {
-      const ptL = left.getPointAtLength(t * lenL)
-      const ptR = right.getPointAtLength(t * lenR)
-      const pt0 = [ptL.x, ptL.y],
-        pt1 = [ptR.x, ptR.y]
-
-      pts.push([pt0, vec.med(pt0, pt1), pt1])
-    }
-
-    return pts
-  }, [globPts])
 
   useEffect(() => {
     state.send("MOUNTED_ELEMENT", { id: glob.id, elm: rOutline.current })
@@ -129,36 +89,6 @@ export default function Glob({ id }: Props) {
       {/* Skeleton + Outline */}
       {!fill && safe && (
         <g pointerEvents="none">
-          <path
-            ref={rLeftPath}
-            d={[svg.moveTo(E0), svg.bezierTo(F0, F1, E1)].join()}
-            opacity={0}
-            pointerEvents={"none"}
-          />
-          <path
-            ref={rRightPath}
-            d={[svg.moveTo(E0p), svg.bezierTo(F0p, F1p, E1p)].join()}
-            opacity={0}
-            pointerEvents={"none"}
-          />
-          {skeletonPts.map(([p0, m, p1], i) => (
-            <line
-              key={i}
-              x1={p0[0]}
-              y1={p0[1]}
-              x2={p1[0]}
-              y2={p1[1]}
-              strokeWidth={z * 2}
-              stroke={getNormalColor(m)}
-            />
-          ))}
-          {isSelected && <polyline
-            points={skeletonPts.map((p) => p[1]).join(" ")}
-            strokeWidth={1}
-            opacity={.5}
-            stroke="red"
-            fill="transparent"
-          />}
           <path
             ref={rOutline}
             d={outline}
@@ -253,7 +183,7 @@ export default function Glob({ id }: Props) {
 }
 
 export function getGlobOutline(
-  { C0, r0, C1, r1, E0, E1, F0, F1, E0p, E1p, F0p, F1p }: IGlobPath,
+  { C0, r0, C1, r1, E0, E1, F0, F1, E0p, E1p, F0p, F1p }: IGlobPoints,
   startCap: "round" | "flat" = "round",
   endCap: "round" | "flat" = "round"
 ) {
@@ -264,14 +194,4 @@ export function getGlobOutline(
     endCap === "round" ? svg.arcTo(C1, r1, E1p, E1) : svg.lineTo(E1),
     svg.bezierTo(F1, F0, E0),
   ].join(" ")
-}
-
-export function getNormalColor(A: number[]) {
-  const n = vec.normalize(A)
-
-  return `rgb(${modulate(n[0], [-1, 1], [0, 255])}, ${modulate(
-    n[1],
-    [-1, 1],
-    [0, 255]
-  )}, 255)`
 }

@@ -303,39 +303,36 @@ const state = createState({
     },
     // BRUSH
     startBrush(data) {
-      const { nodes, nodeIds, globs, globIds, camera } = data
+      const { nodes, globs, camera } = data
+
       data.brush = {
         start: screenToWorld(pointer.point, camera.point, camera.zoom),
         end: screenToWorld(pointer.point, camera.point, camera.zoom),
         targets: [
-          ...nodeIds
-            .map((id) => nodes[id])
-            .map((node) => {
-              return {
-                id: node.id,
-                type: "node" as const,
-                path: svg.ellipse(node.point, node.radius),
-              }
-            }),
-          ...globIds
-            .map((id) => globs[id])
-            .map((glob) => {
-              let path = ""
+          ...Object.values(nodes).map((node) => {
+            return {
+              id: node.id,
+              type: "node" as const,
+              path: svg.ellipse(node.point, node.radius),
+            }
+          }),
+          ...Object.values(globs).map((glob) => {
+            let path = ""
 
-              try {
-                path = getGlobPath(
-                  glob,
-                  nodes[glob.nodes[0]],
-                  nodes[glob.nodes[1]]
-                )
-              } catch (e) {}
+            try {
+              path = getGlobPath(
+                glob,
+                nodes[glob.nodes[0]],
+                nodes[glob.nodes[1]]
+              )
+            } catch (e) {}
 
-              return {
-                id: glob.id,
-                type: "glob" as const,
-                path,
-              }
-            }),
+            return {
+              id: glob.id,
+              type: "glob" as const,
+              path,
+            }
+          }),
         ],
       }
     },
@@ -344,7 +341,7 @@ const state = createState({
       brush.end = screenToWorld(pointer.point, camera.point, camera.zoom)
     },
     updateBrushSelection(data) {
-      const { nodes, nodeIds, brush } = data
+      const { brush } = data
       const { start, end } = brush
       const x0 = Math.min(start[0], end[0])
       const y0 = Math.min(start[1], end[1])

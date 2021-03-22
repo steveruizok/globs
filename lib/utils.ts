@@ -1,6 +1,6 @@
 // Includes a lot of extras here.
 import * as svg from "./svg"
-import { IGlob, IGlobPath, INode, IVector } from "./types"
+import { IGlob, IGlobPoints, INode } from "./types"
 import {
   tangent,
   angle,
@@ -435,6 +435,7 @@ export function getGlobPath(glob: IGlob, start: INode, end: INode) {
     ap,
     bp
   )
+
   return [
     svg.moveTo(E0),
     start.cap === "round" ? svg.arcTo(C0, r0, E0, E0p) : svg.lineTo(E0p),
@@ -456,7 +457,7 @@ export function getGlob(
   b: number,
   ap: number,
   bp: number
-): IGlobPath {
+): IGlobPoints {
   // Get end points
   const E0 = getCircleTangentToPoint(C0, r0, D, 0),
     E0p = getCircleTangentToPoint(C0, r0, Dp, 1),
@@ -502,6 +503,10 @@ export function getGlob(
     N1p,
     D,
     Dp,
+    D1: projectPoint(D, angle(D, E0), dist(D, E0) * 2),
+    Dp1: projectPoint(Dp, angle(Dp, E0p), dist(Dp, E0p) * 2),
+    D2: projectPoint(D, angle(D, E1), dist(D, E1) * 2),
+    Dp2: projectPoint(Dp, angle(Dp, E1p), dist(Dp, E1p) * 2),
   }
 }
 

@@ -1,37 +1,39 @@
-export type IVector = number[]
-
 export interface IGlobParams {
-  C0: IVector
+  C0: number[]
   r0: number
-  C1: IVector
+  C1: number[]
   r1: number
-  D: IVector
-  Dp: IVector
+  D: number[]
+  Dp: number[]
   a: number
   ap: number
   b: number
   bp: number
 }
 
-export interface IGlobPath {
-  C0: IVector
+export interface IGlobPoints {
+  C0: number[]
   r0: number
-  C1: IVector
+  C1: number[]
   r1: number
-  E0: IVector
-  E1: IVector
-  F0: IVector
-  F1: IVector
-  E0p: IVector
-  E1p: IVector
-  F0p: IVector
-  F1p: IVector
-  N0: IVector
-  N0p: IVector
-  N1: IVector
-  N1p: IVector
-  D: IVector
-  Dp: IVector
+  E0: number[]
+  E1: number[]
+  F0: number[]
+  F1: number[]
+  E0p: number[]
+  E1p: number[]
+  F0p: number[]
+  F1p: number[]
+  N0: number[]
+  N0p: number[]
+  N1: number[]
+  N1p: number[]
+  D: number[]
+  Dp: number[]
+  D1: number[]
+  Dp1: number[]
+  D2: number[]
+  Dp2: number[]
 }
 
 export enum ICanvasItems {
@@ -49,8 +51,8 @@ export interface ICanvasItem {
 }
 
 export interface IGlobOptions {
-  D: IVector
-  Dp: IVector
+  D: number[]
+  Dp: number[]
   a: number
   ap: number
   b: number
@@ -60,14 +62,14 @@ export interface IGlobOptions {
 export interface IGlob extends ICanvasItem {
   id: string
   nodes: string[]
-  points?: IGlobPath
+  points?: IGlobPoints
   options: IGlobOptions
-  p0?: IVector
+  p0?: number[]
 }
 
 export interface INode extends ICanvasItem {
   type: ICanvasItems.Node
-  point: IVector
+  point: number[]
   radius: number
   cap: "round" | "flat"
   locked: boolean
