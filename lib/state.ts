@@ -427,6 +427,7 @@ const state = createState({
 
     // HOVERS / HIGHLIGHTS
     pushHighlightGlob(data, payload: { id: string }) {
+      if (data.highlightGlobs.includes(payload.id)) return
       data.highlightGlobs.push(payload.id)
     },
     pullHighlightGlob(data, payload: { id: string }) {
@@ -434,6 +435,7 @@ const state = createState({
       data.highlightGlobs.splice(index, 1)
     },
     pushHoveredGlob(data, payload: { id: string }) {
+      if (data.hoveredGlobs.includes(payload.id)) return
       data.hoveredGlobs.push(payload.id)
     },
     pullHoveredGlob(data, payload: { id: string }) {
@@ -449,6 +451,7 @@ const state = createState({
       data.highlightGlobs = []
     },
     pushHighlightNode(data, payload: { id: string }) {
+      if (data.highlightNodes.includes(payload.id)) return
       data.highlightNodes.push(payload.id)
     },
     pullHighlightNode(data, payload: { id: string }) {
@@ -456,6 +459,7 @@ const state = createState({
       data.highlightNodes.splice(index, 1)
     },
     pushHoveredNode(data, payload: { id: string }) {
+      if (data.hoveredNodes.includes(payload.id)) return
       data.hoveredNodes.push(payload.id)
     },
     pullHoveredNode(data, payload: { id: string }) {
