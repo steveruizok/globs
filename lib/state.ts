@@ -19,10 +19,16 @@ import { initialData } from "./data"
 import { getGlobOutline } from "components/canvas/glob"
 
 /*
-- [x] Delete nodes
-- [x] Delete globs
-- [x] Branch nodes
-- [ ] Change radius
+- [ ] Keep camera centered when resizing
+- [ ] Zoom to content
+- [ ] Lock mirrored adjacent handles
+- [ ] Lock handle position relative to some other position?
+- [ ] Lock node position relative to some other position?
+- [ ] Display midline
+- [ ] Copy to clipboard
+- [ ] Select two nodes and glob them
+- [ ] Keyboard shortcuts for toolbar
+- [ ] Copy and paste
 */
 
 const elms: Record<string, SVGSVGElement> = {}
@@ -31,6 +37,7 @@ const state = createState({
   data: initialData,
   on: {
     MOUNTED_ELEMENT: (d, p) => (elms[p.id] = p.elm),
+    UNMOUNTED_ELEMENT: (d, p) => delete elms[p.id],
     MOUNTED: { do: ["setup", "setViewport"], to: "selecting" },
     UNMOUNTED: ["teardown"],
     RESIZED: "setViewport",
@@ -164,7 +171,7 @@ const state = createState({
                 WHEELED: ["moveSelected", "updateSelectedGlobsPoints"],
                 MOVED_POINTER: {
                   if: "hasMeta",
-                  do: "resizeNode",
+                  do: ["resizeNode", "updateSelectedGlobsPoints"],
                   else: ["moveSelected", "updateSelectedGlobsPoints"],
                 },
                 STOPPED_POINTING: {
@@ -788,17 +795,16 @@ const state = createState({
             next = vec.nearestPointOnLine(ap, bp, next, false)
           } else if (Math.abs(vec.distanceToLine(bp, cp, next)) < 3) {
             next = vec.nearestPointOnLine(bp, cp, next, false)
-          } else {
-            for (let snap of pts) {
-              const d = vec.dist(next, snap) * camera.zoom
+          }
+          for (let snap of pts) {
+            const d = vec.dist(next, snap) * camera.zoom
 
-              if (vec.isEqual(next, snap) && d > 3) {
-                // unsnap from point, move to pointer
-                next = vec.add(glob.options[selectedHandle.handle], originDelta)
-              } else if (d < 3) {
-                // Snap to point
-                next = snap
-              }
+            if (vec.isEqual(next, snap) && d > 3) {
+              // unsnap from point, move to pointer
+              next = vec.add(glob.options[selectedHandle.handle], originDelta)
+            } else if (d < 3) {
+              // Snap to point
+              next = snap
             }
           }
         }
@@ -896,13 +902,13 @@ const state = createState({
     saveData(data) {
       if (typeof window === "undefined") return
       if (typeof localStorage === "undefined") return
-      localStorage.setItem("glob_aldata_v1", JSON.stringify(data))
+      localStorage.setItem("glob_aldata_v2", JSON.stringify(data))
     },
     // Setup and Mounting
     setup(data) {
       if (typeof window === "undefined") return
       if (typeof localStorage === "undefined") return
-      const saved = localStorage.getItem("glob_aldata_v1")
+      const saved = localStorage.getItem("glob_aldata_v2")
       if (saved) {
         Object.assign(data, JSON.parse(saved))
       }

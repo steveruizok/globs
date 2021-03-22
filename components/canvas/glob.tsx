@@ -1,6 +1,6 @@
-import React, { useRef, useMemo, useCallback, useEffect } from "react"
+import React, { useRef, useMemo, useCallback, useEffect, useState } from "react"
 import * as svg from "lib/svg"
-import * as Vec from "lib/vec"
+import * as vec from "lib/vec"
 import {
   getCircleTangentToPoint,
   getSweep,
@@ -11,6 +11,8 @@ import {
   radiansToDegrees,
   getEllipseDashOffset,
   arrsIntersect,
+  modulate,
+  lerp,
 } from "utils"
 import Dot from "./dot"
 import Handle from "./handle"
@@ -29,11 +31,12 @@ export default function Glob({ id }: Props) {
 
   const rOutline = useRef<SVGPathElement>(null)
 
-  useEffect(() => {
-    state.send("MOUNTED_ELEMENT", { id: glob.id, elm: rOutline.current })
-  }, [])
-
   const rPrevPts = useRef<IGlobPath>()
+
+  let safe = !!glob.points
+  let globPts = glob.points || rPrevPts.current
+
+  rPrevPts.current = globPts
 
   const isSelected = useSelector(({ data: { selectedGlobs } }) =>
     selectedGlobs.includes(id)
@@ -49,88 +52,65 @@ export default function Glob({ id }: Props) {
       selectedHandle?.id === id && selectedHandle.handle === "Dp"
   )
 
+  // Show normal points along line
+  const rLeftPath = useRef<SVGPathElement>(null)
+  const rRightPath = useRef<SVGPathElement>(null)
+
+  const skeletonPts = useMemo(() => {
+    const left = rLeftPath.current
+    const right = rRightPath.current
+
+    if (!(left && right)) return []
+
+    const lenL = left.getTotalLength()
+    const lenR = right.getTotalLength()
+
+    let pts: number[][][] = []
+    const steps = 20, // Math.max(lenL, lenR) / 32,
+      step = 1 / steps
+    for (let t = 0; t <= 1; t += step) {
+      const ptL = left.getPointAtLength(t * lenL)
+      const ptR = right.getPointAtLength(t * lenR)
+      const pt0 = [ptL.x, ptL.y],
+        pt1 = [ptR.x, ptR.y]
+
+      pts.push([pt0, vec.med(pt0, pt1), pt1])
+    }
+
+    return pts
+  }, [globPts])
+
+  useEffect(() => {
+    state.send("MOUNTED_ELEMENT", { id: glob.id, elm: rOutline.current })
+    return () => void state.send("UNMOUNTED_ELEMENT", { id: glob.id })
+  }, [])
+
   if (!glob) return null
 
-  const { D, Dp, a, b, ap, bp } = glob.options
+  const { D, Dp } = glob.options
 
   const [start, end] = nodes
   const { point: C0, radius: r0 } = start
   const { point: C1, radius: r1 } = end
 
-  let safe = !!glob.points
-  let globPts = glob.points || rPrevPts.current
-
-  rPrevPts.current = globPts
-
   const { E0, E0p, E1, E1p, F0, F1, F0p, F1p, N0, N0p, N1, N1p } = globPts
 
-  // const cp0 = Vec.med(F0, F0p)
-  // const cp1 = Vec.med(F1, F1p)
+  const D1 = projectPoint(D, vec.angle(D, E0), vec.dist(D, E0) * 2)
+  const Dp1 = projectPoint(Dp, vec.angle(Dp, E0p), vec.dist(Dp, E0p) * 2)
+  const D2 = projectPoint(D, vec.angle(D, E1), vec.dist(D, E1) * 2)
+  const Dp2 = projectPoint(Dp, vec.angle(Dp, E1p), vec.dist(Dp, E1p) * 2)
 
-  const D1 = projectPoint(D, Vec.angle(D, E0), Vec.dist(D, E0) * 2)
-  const Dp1 = projectPoint(Dp, Vec.angle(Dp, E0p), Vec.dist(Dp, E0p) * 2)
-  const D2 = projectPoint(D, Vec.angle(D, E1), Vec.dist(D, E1) * 2)
-  const Dp2 = projectPoint(Dp, Vec.angle(Dp, E1p), Vec.dist(Dp, E1p) * 2)
-
-  // Outer Caps
-
-  // const startCapOuter = useMemo(() => {
-  //   const shape = new Three.Shape()
-  //   shape.absarc(C0.x, C0.y, r0, angleTo(C0, E0p), angleTo(C0, E0), false)
-  //   return shape
-  // }, [C0, r0, E0, E0p])
-
-  // const endCapOuter = useMemo(() => {
-  //   const shape = new Three.Shape()
-  //   shape.absarc(C1.x, C1.y, r1, angleTo(C1, E1), angleTo(C1, E1p), false)
-  //   return shape
-  // }, [C1, r1, E1, E1p])
-
-  // Inner Caps
-
-  // const startCapInner = useMemo(() => {
-  //   const shape = new Three.Shape()
-  //   shape.absarc(C0.x, C0.y, r0, angleTo(C0, E0p), angleTo(C0, E0), true)
-  //   return shape
-  // }, [C0, r0, E0, E0p])
-
-  // const endCapInner = useMemo(() => {
-  //   const shape = new Three.Shape()
-  //   shape.absarc(C1.x, C1.y, r1, angleTo(C1, E1), angleTo(C1, E1p), true)
-  //   return shape
-  // }, [C1, r1, E1, E1p])
-
-  // const handleChange = useCallback(
-  //   (delta: Partial<IGlobParams>) => {
-  //     if (onChange) {
-  //       let next = { ...glob.options, ...delta }
-
-  //       for (let handle of [next.D, next.Dp]) {
-  //         if (Vec.dist(handle, next.C0) < next.r0) {
-  //           handle = getClosestPointOnCircle(next.C0, next.r0, handle)
-  //         }
-
-  //         if (Vec.dist(handle, next.C1) < next.r1) {
-  //           handle = getClosestPointOnCircle(next.C1, next.r1, handle)
-  //         }
-  //       }
-
-  //       state.send("CHANGED_GLOB_OPTIONS", next)
-  //     }
-  //   },
-  //   [glob, onChange]
-  // )
+  const outline = getGlobOutline(globPts, start.cap, end.cap)
 
   const z = zoom < 1 ? 1 : 1 / zoom
   const stroke = 2 // * z
-  const dash = `${1 / zoom} ${4 / zoom}` //zoom > 1 ? 2 / zoom : 2
 
   return (
     <g strokeWidth={zoom > 1 ? stroke / zoom : stroke} strokeLinecap="round">
       {safe ? (
         <path
           ref={rOutline}
-          d={getGlobOutline(globPts, start.cap, end.cap)}
+          d={outline}
           stroke={isSelected ? "red" : "black"}
           onPointerLeave={() => state.send("UNHOVERED_GLOB", { id: glob.id })}
           onPointerEnter={() => state.send("HOVERED_GLOB", { id: glob.id })}
@@ -146,6 +126,48 @@ export default function Glob({ id }: Props) {
           strokeWidth={2 / zoom}
         />
       )}
+      {/* Skeleton + Outline */}
+      {!fill && safe && (
+        <g pointerEvents="none">
+          <path
+            ref={rLeftPath}
+            d={[svg.moveTo(E0), svg.bezierTo(F0, F1, E1)].join()}
+            opacity={0}
+            pointerEvents={"none"}
+          />
+          <path
+            ref={rRightPath}
+            d={[svg.moveTo(E0p), svg.bezierTo(F0p, F1p, E1p)].join()}
+            opacity={0}
+            pointerEvents={"none"}
+          />
+          {skeletonPts.map(([p0, m, p1], i) => (
+            <line
+              key={i}
+              x1={p0[0]}
+              y1={p0[1]}
+              x2={p1[0]}
+              y2={p1[1]}
+              strokeWidth={z * 2}
+              stroke={getNormalColor(m)}
+            />
+          ))}
+          {isSelected && <polyline
+            points={skeletonPts.map((p) => p[1]).join(" ")}
+            strokeWidth={1}
+            opacity={.5}
+            stroke="red"
+            fill="transparent"
+          />}
+          <path
+            ref={rOutline}
+            d={outline}
+            stroke={isSelected ? "red" : "black"}
+            fill="transparent"
+            pointerEvents="none"
+          />
+        </g>
+      )}
       {!fill && (
         <g>
           {safe && (
@@ -153,10 +175,10 @@ export default function Glob({ id }: Props) {
               {isDraggingD ? (
                 <path
                   d={[
-                    svg.moveTo(projectPoint(D, Vec.angle(D, E0), 10000)),
-                    svg.lineTo(projectPoint(D, Vec.angle(D, E0), -10000)),
-                    svg.moveTo(projectPoint(D, Vec.angle(D, E1), 10000)),
-                    svg.lineTo(projectPoint(D, Vec.angle(D, E1), -10000)),
+                    svg.moveTo(projectPoint(D, vec.angle(D, E0), 10000)),
+                    svg.lineTo(projectPoint(D, vec.angle(D, E0), -10000)),
+                    svg.moveTo(projectPoint(D, vec.angle(D, E1), 10000)),
+                    svg.lineTo(projectPoint(D, vec.angle(D, E1), -10000)),
                   ].join(" ")}
                   stroke="red"
                   opacity={0.5}
@@ -171,10 +193,10 @@ export default function Glob({ id }: Props) {
               {isDraggingDp ? (
                 <path
                   d={[
-                    svg.moveTo(projectPoint(Dp, Vec.angle(Dp, E0p), 10000)),
-                    svg.lineTo(projectPoint(Dp, Vec.angle(Dp, E0p), -10000)),
-                    svg.moveTo(projectPoint(Dp, Vec.angle(Dp, E1p), 10000)),
-                    svg.lineTo(projectPoint(Dp, Vec.angle(Dp, E1p), -10000)),
+                    svg.moveTo(projectPoint(Dp, vec.angle(Dp, E0p), 10000)),
+                    svg.lineTo(projectPoint(Dp, vec.angle(Dp, E0p), -10000)),
+                    svg.moveTo(projectPoint(Dp, vec.angle(Dp, E1p), 10000)),
+                    svg.lineTo(projectPoint(Dp, vec.angle(Dp, E1p), -10000)),
                   ].join(" ")}
                   stroke="red"
                   opacity={0.5}
@@ -242,4 +264,14 @@ export function getGlobOutline(
     endCap === "round" ? svg.arcTo(C1, r1, E1p, E1) : svg.lineTo(E1),
     svg.bezierTo(F1, F0, E0),
   ].join(" ")
+}
+
+export function getNormalColor(A: number[]) {
+  const n = vec.normalize(A)
+
+  return `rgb(${modulate(n[0], [-1, 1], [0, 255])}, ${modulate(
+    n[1],
+    [-1, 1],
+    [0, 255]
+  )}, 255)`
 }
