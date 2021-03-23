@@ -31,7 +31,7 @@ export default function Node({ id }: Props) {
   const hasGlobs = globs.length > 0
 
   return (
-    <g>
+    <>
       <circle
         ref={rOutline}
         cx={node.point[0]}
@@ -63,6 +63,6 @@ export default function Node({ id }: Props) {
       ) : (
         <Dot position={node.point} />
       )}
-    </g>
+    </>
   )
 }

@@ -36,7 +36,7 @@ export default function Combs({ points }: { points: IGlobPoints }) {
   const { E0, F0, F1, E1, E0p, F0p, F1p, E1p } = points
 
   return (
-    <g>
+    <>
       <path
         ref={rLeftPath}
         d={[svg.moveTo(E0), svg.bezierTo(F0, F1, E1)].join()}
@@ -67,7 +67,7 @@ export default function Combs({ points }: { points: IGlobPoints }) {
         stroke="red"
         fill="transparent"
       />
-    </g>
+    </>
   )
 }
 

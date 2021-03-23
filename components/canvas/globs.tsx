@@ -7,10 +7,10 @@ export default function HoveringNodes() {
   const fill = useSelector((s) => s.data.fill)
 
   return (
-    <g fill={fill ? "#000" : "rgba(255, 255, 255, .72"}>
+    <>
       {globIds.map((id) => (
-        <Glob key={id} id={id} />
+        <Glob key={id} id={id} fill={fill} />
       ))}
-    </g>
+    </>
   )
 }

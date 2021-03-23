@@ -16,6 +16,8 @@ export default function HoverNode({ id }: Props) {
       cx={node.point[0]}
       cy={node.point[1]}
       r={Math.max(8, node.radius)}
+      fill="rgba(255, 0, 0, .12)"
+      pointerEvents="none"
     />
   )
 }

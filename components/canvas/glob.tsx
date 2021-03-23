@@ -11,10 +11,10 @@ import Handles from "./glob-elements/handles"
 
 interface Props {
   id: string
+  fill: boolean
 }
 
-export default function Glob({ id }: Props) {
-  const fill = useSelector((s) => s.data.fill)
+export default function Glob({ id, fill }: Props) {
   const glob = useSelector((s) => s.data.globs[id], deepCompare)
   const nodes = useSelector(
     (s) => glob?.nodes.map((id) => s.data.nodes[id]),
@@ -89,6 +89,7 @@ export default function Glob({ id }: Props) {
           onPointerLeave={() => state.send("UNHOVERED_GLOB", { id: glob.id })}
           onPointerEnter={() => state.send("HOVERED_GLOB", { id: glob.id })}
           onPointerDown={() => state.send("SELECTED_GLOB", { id: glob.id })}
+          fill={fill ? "black" : "rgba(255, 255, 255, .72)"}
         />
       ) : (
         <line
@@ -102,19 +103,17 @@ export default function Glob({ id }: Props) {
       )}
       {!fill && safe && (
         <>
-          <g pointerEvents="none">
-            <path
-              stroke={isSelected ? "red" : "black"}
-              fill="transparent"
-              pointerEvents="none"
-              className="stroke-m"
-            />
-            <g opacity=".5">
-              <Dot position={D1} color="dodgerblue" />
-              <Dot position={D2} color="dodgerblue" />
-              <Dot position={Dp1} color="orange" />
-              <Dot position={Dp2} color="orange" />
-            </g>
+          <path
+            stroke={isSelected ? "red" : "black"}
+            fill="transparent"
+            pointerEvents="none"
+            className="stroke-m"
+          />
+          <g opacity=".5">
+            <Dot position={D1} color="dodgerblue" />
+            <Dot position={D2} color="dodgerblue" />
+            <Dot position={Dp1} color="orange" />
+            <Dot position={Dp2} color="orange" />
           </g>
           <Anchor
             position={F0}

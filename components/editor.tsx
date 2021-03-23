@@ -37,7 +37,6 @@ const letters = {
 export default function Editor() {
   const rContainer = useRef<HTMLDivElement>(null)
   const rSvg = useRef<SVGSVGElement>(null)
-  const rContent = useRef<SVGGElement>(null)
   const rDot = useRef<SVGCircleElement>(null)
   const rAnchor = useRef<SVGCircleElement>(null)
   const rHandle = useRef<SVGCircleElement>(null)
@@ -49,7 +48,6 @@ export default function Editor() {
   // only when we really need to.
   useEffect(() => {
     const svg = rSvg.current!
-    const content = rContent.current!
     const root = document.documentElement
 
     let prev = ``
@@ -157,10 +155,8 @@ export default function Editor() {
                     {key}
                   </text>
                 ))}
-                <g ref={rContent}>
-                  <Globs />
-                  <Nodes />
-                </g>
+                <Globs />
+                <Nodes />
                 <HoveredNodes />
                 <HoveredGlobs />
                 <Brush />

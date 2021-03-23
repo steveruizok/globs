@@ -31,5 +31,11 @@ export default function HoverGlob({ id }: Props) {
     return null
   }
 
-  return <path d={getGlobOutline(globPts, cap0, cap1)} />
+  return (
+    <path
+      d={getGlobOutline(globPts, cap0, cap1)}
+      fill="rgba(255, 0, 0, .12)"
+      pointerEvents="none"
+    />
+  )
 }

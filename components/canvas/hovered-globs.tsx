@@ -10,10 +10,10 @@ export default function HoveringNodes() {
   )
 
   return (
-    <g pointerEvents="none" fill="rgba(255, 0, 0, .12)" stroke="none">
+    <>
       {highlitGlobs.map((id) => (
         <HoverGlob key={id} id={id} />
       ))}
-    </g>
+    </>
   )
 }
