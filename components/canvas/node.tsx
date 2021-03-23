@@ -42,7 +42,7 @@ export default function Node({ id, fill }: Props) {
         fill={
           hasGlobs ? "transparent" : fill ? "black" : "rgba(255, 255, 255, .72)"
         }
-        stroke={isSelected ? "red" : "black"}
+        stroke={fill ? "transparent" : isSelected ? "red" : "black"}
         className="stroke-m"
         pointerEvents="none"
       />
