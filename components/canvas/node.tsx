@@ -5,10 +5,10 @@ import Dot from "./dot"
 
 interface Props {
   id: string
+  fill: boolean
 }
 
-export default function Node({ id }: Props) {
-  const fill = useSelector((s) => s.data.fill)
+export default function Node({ id, fill }: Props) {
   const node = useSelector((s) => s.data.nodes[id], deepCompare)
   const globs = useSelector(
     (s) =>
@@ -39,8 +39,10 @@ export default function Node({ id }: Props) {
         cx={node.point[0]}
         cy={node.point[1]}
         r={node.radius}
-        fill={hasGlobs ? "transparent" : undefined}
-        stroke={isSelected ? "red" : undefined}
+        fill={
+          hasGlobs ? "transparent" : fill ? "black" : "rgba(255, 255, 255, .72)"
+        }
+        stroke={isSelected ? "red" : "black"}
         className="stroke-m"
         pointerEvents="none"
       />
@@ -55,17 +57,18 @@ export default function Node({ id }: Props) {
         onPointerOver={() => state.send("HOVERED_NODE", { id })}
         onPointerOut={() => state.send("UNHOVERED_NODE", { id })}
       />
-      {!fill && node.locked ? (
-        <use
-          href="#anchor"
-          x={node.point[0]}
-          y={node.point[1]}
-          className="stroke-m dash-array-normal"
-          pointerEvents="none"
-        />
-      ) : (
-        <Dot position={node.point} />
-      )}
+      {!fill &&
+        (node.locked ? (
+          <use
+            href="#anchor"
+            x={node.point[0]}
+            y={node.point[1]}
+            className="stroke-m dash-array-normal"
+            pointerEvents="none"
+          />
+        ) : (
+          <Dot position={node.point} />
+        ))}
     </>
   )
 }
