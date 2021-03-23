@@ -6,6 +6,7 @@ import Dot from "./dot"
 import Handle from "./handle"
 import { IGlobPoints } from "types"
 import state, { useSelector } from "lib/state"
+import Anchor from "./anchor"
 
 interface Props {
   id: string
@@ -18,13 +19,6 @@ export default function Glob({ id }: Props) {
   const fill = useSelector((s) => s.data.fill)
 
   const rOutline = useRef<SVGPathElement>(null)
-
-  const rPrevPts = useRef<IGlobPoints>()
-
-  let safe = !!glob.points
-  let globPts = glob.points || rPrevPts.current
-
-  rPrevPts.current = globPts
 
   const isSelected = useSelector(({ data: { selectedGlobs } }) =>
     selectedGlobs.includes(id)
@@ -45,7 +39,14 @@ export default function Glob({ id }: Props) {
     return () => void state.send("UNMOUNTED_ELEMENT", { id: glob.id })
   }, [])
 
+  const rPrevPts = useRef<IGlobPoints>()
+
   if (!glob) return null
+
+  let safe = !!glob.points
+  let globPts = glob.points || rPrevPts.current
+
+  rPrevPts.current = globPts
 
   const { D, Dp } = glob.options
 
@@ -144,20 +145,49 @@ export default function Glob({ id }: Props) {
           )}
           {/* Dots */}
           <g opacity=".5">
-            <Dot position={E0} radius={z * 3} color="dodgerblue" />
-            <Dot position={F0} radius={z * 3} color="dodgerblue" />
-            <Dot position={F1} radius={z * 3} color="dodgerblue" />
-            <Dot position={E1} radius={z * 3} color="dodgerblue" />
+            {/* <Dot position={E0} radius={z * 3} color="dodgerblue" />
+            <Dot position={E1} radius={z * 3} color="dodgerblue" /> 
+            <Dot position={E0p} radius={z * 3} color="orange" />
+            <Dot position={E1p} radius={z * 3} color="orange" /> */}
             <Dot position={D1} radius={z * 3} color="dodgerblue" />
             <Dot position={D2} radius={z * 3} color="dodgerblue" />
-            <Dot position={E0p} radius={z * 3} color="orange" />
-            <Dot position={E1p} radius={z * 3} color="orange" />
-            <Dot position={F0p} radius={z * 3} color="orange" />
-            <Dot position={F1p} radius={z * 3} color="orange" />
             <Dot position={Dp1} radius={z * 3} color="orange" />
             <Dot position={Dp2} radius={z * 3} color="orange" />
-            {glob.p0 && <Dot position={glob.p0} radius={z * 3} color="blue" />}
+            {/* {glob.p0 && <Dot position={glob.p0} radius={z * 3} color="blue" />} */}
           </g>
+          {/* Anchors */}
+          <Anchor
+            position={F0}
+            radius={z * 8}
+            color="dodgerblue"
+            onSelect={() =>
+              state.send("SELECTED_ANCHOR", { id: glob.id, anchor: "a" })
+            }
+          />
+          <Anchor
+            position={F1}
+            radius={z * 8}
+            color="dodgerblue"
+            onSelect={() =>
+              state.send("SELECTED_ANCHOR", { id: glob.id, anchor: "b" })
+            }
+          />
+          <Anchor
+            position={F0p}
+            radius={z * 8}
+            color="orange"
+            onSelect={() =>
+              state.send("SELECTED_ANCHOR", { id: glob.id, anchor: "ap" })
+            }
+          />
+          <Anchor
+            position={F1p}
+            radius={z * 8}
+            color="orange"
+            onSelect={() =>
+              state.send("SELECTED_ANCHOR", { id: glob.id, anchor: "bp" })
+            }
+          />
           {/* Left Handles */}
           <Handle
             color="dodgerblue"

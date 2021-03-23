@@ -9,8 +9,6 @@ export default function ContextMenu() {
     deepCompare
   )
 
-  console.log("updated", hoveredNode)
-
   return (
     // @ts-ignore
     <StyledContent disableOutsidePointerEvents={false}>

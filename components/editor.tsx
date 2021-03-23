@@ -18,6 +18,16 @@ import Toolbar from "components/ui/toolbar"
 import StatusBar from "components/ui/statusbar"
 import Brush from "components/canvas/brush"
 
+const letters = {
+  A: [-1864, 2707, 1.5],
+  B: [3423, 2736, 1.3],
+  C: [1500, -1025, 1],
+  D: [-2362, -5992, 1.2],
+  E: [900, 2000, 1.2],
+  F: [-3000, -2000, 1.2],
+  G: [500, 0, 1],
+}
+
 export default function Editor() {
   const rContainer = useRef<HTMLDivElement>(null)
   const rSvg = useRef<SVGSVGElement>(null)
@@ -73,6 +83,19 @@ export default function Editor() {
               onWheel={handleWheel}
             >
               <svg ref={rSvg} width="100%" height="100%">
+                {Object.entries(letters).map(([key, point], i) => (
+                  <text
+                    fontSize={1200 * point[2]}
+                    fontFamily="Crimson Pro"
+                    key={key}
+                    x={point[0]}
+                    y={point[1]}
+                    opacity={0.1}
+                    pointerEvents="none"
+                  >
+                    {key}
+                  </text>
+                ))}
                 <Globs />
                 <Nodes />
                 <HoveredNodes />

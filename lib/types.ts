@@ -107,7 +107,8 @@ export interface IData {
   nodes: Record<string, INode>
   globIds: string[]
   globs: Record<string, IGlob>
-  selectedHandle: { id: string; handle: string } | undefined
+  selectedAnchor: { id: string; anchor: string }
+  selectedHandle?: { id: string; handle: string }
   selectedGlobs: string[]
   hoveredNodes: string[]
   hoveredGlobs: string[]

@@ -126,6 +126,10 @@ const state = createState({
                   },
                   { if: "globIsHovered", to: "pointingGlobs" },
                 ],
+                SELECTED_ANCHOR: {
+                  do: "setSelectingAnchor",
+                  to: "pointingAnchor",
+                },
                 POINTED_HANDLE: {
                   do: "setSelectingHandle",
                   to: "pointingHandle",
@@ -190,11 +194,22 @@ const state = createState({
                 },
               },
             },
+            pointingAnchor: {
+              on: {
+                WHEELED: "moveSelectedAnchor",
+                MOVED_POINTER: "moveSelectedAnchor",
+                STOPPED_POINTING: {
+                  do: "clearSelectedAnchor",
+                  to: "notPointing",
+                },
+              },
+            },
             brushSelecting: {
               onEnter: "startBrush",
               onExit: "clearBrush",
               on: {
                 MOVED_POINTER: ["updateBrush", "updateBrushSelection"],
+                WHEELED: ["updateBrush", "updateBrushSelection"],
                 STOPPED_POINTING: { to: "notPointing" },
               },
             },
@@ -490,7 +505,7 @@ const state = createState({
       if (selectedNodes[0] !== hoveredNodes[0]) return
       const node = nodes[selectedNodes[0]]
       const point = screenToWorld(pointer.point, camera.point, camera.zoom)
-      node.radius = vec.dist(point, node.point)
+      node.radius = round(vec.dist(point, node.point))
 
       // const delta = screenToWorld(pointer.delta, camera.point, camera.zoom)
       // node.radius = Math.round(
@@ -504,6 +519,7 @@ const state = createState({
     },
     setSelectedNode(data, payload: { id: string }) {
       data.selectedHandle = undefined
+      data.selectedAnchor = undefined
       data.selectedGlobs = []
       data.selectedNodes = [payload.id]
     },
@@ -587,11 +603,13 @@ const state = createState({
     setSelectedGlob(data, payload: { id: string }) {
       data.selectedGlobs = [payload.id]
       data.selectedHandle = undefined
+      data.selectedAnchor = undefined
       data.selectedNodes = []
     },
     pushSelectedGlob(data, payload: { id: string }) {
       data.selectedGlobs.push(payload.id)
       data.selectedHandle = undefined
+      data.selectedAnchor = undefined
       data.selectedNodes = []
     },
     pullSelectedGlob(data, payload: { id: string }) {
@@ -830,6 +848,57 @@ const state = createState({
       data.selectedHandle = undefined
     },
 
+    // ANCHORS
+    setSelectingAnchor(data, payload: { id: string; anchor: string }) {
+      // const glob = data.globs[payload.id]
+      data.selectedGlobs = [payload.id]
+      data.selectedAnchor = payload
+      data.selectedNodes = []
+    },
+    moveSelectedAnchor(data) {
+      const { camera, nodes, globs, selectedAnchor, snaps } = data
+      const glob = globs[selectedAnchor.id]
+      const {
+        points: { E0, D, E1, E0p, Dp, E1p },
+        nodes: [start, end],
+      } = glob
+
+      let next = screenToWorld(pointer.point, camera.point, camera.zoom)
+      let n: number
+
+      if (selectedAnchor.anchor === "a") {
+        next = vec.nearestPointOnLine(E0, D, next)
+        n = vec.dist(E0, next) / vec.dist(E0, D)
+      } else if (selectedAnchor.anchor === "b") {
+        next = vec.nearestPointOnLine(E1, D, next)
+        n = vec.dist(E1, next) / vec.dist(E1, D)
+      } else if (selectedAnchor.anchor === "ap") {
+        next = vec.nearestPointOnLine(E0p, Dp, next)
+        n = vec.dist(E0p, next) / vec.dist(E0p, Dp)
+      } else if (selectedAnchor.anchor === "bp") {
+        next = vec.nearestPointOnLine(E1p, Dp, next)
+        n = vec.dist(E1p, next) / vec.dist(E1p, Dp)
+      }
+
+      glob.options[selectedAnchor.anchor] = n
+
+      glob.points = getGlob(
+        nodes[start].point,
+        nodes[start].radius,
+        nodes[end].point,
+        nodes[end].radius,
+        glob.options.D,
+        glob.options.Dp,
+        glob.options.a,
+        glob.options.b,
+        glob.options.ap,
+        glob.options.bp
+      )
+    },
+    clearSelectedAnchor(data) {
+      data.selectedAnchor = undefined
+    },
+
     // INITIAL POINTS
     setInitialPoints(data) {
       const { nodes, globs, initialPoints } = data
@@ -903,13 +972,13 @@ const state = createState({
     saveData(data) {
       if (typeof window === "undefined") return
       if (typeof localStorage === "undefined") return
-      localStorage.setItem("glob_aldata_v2", JSON.stringify(data))
+      localStorage.setItem("glob_aldata_v3", JSON.stringify(data))
     },
     // Setup and Mounting
     setup(data) {
       if (typeof window === "undefined") return
       if (typeof localStorage === "undefined") return
-      const saved = localStorage.getItem("glob_aldata_v2")
+      const saved = localStorage.getItem("glob_aldata_v3")
       if (saved) {
         Object.assign(data, JSON.parse(saved))
       }
