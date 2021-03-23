@@ -30,6 +30,8 @@ export default function Node({ id }: Props) {
 
   const hasGlobs = globs.length > 0
 
+  // if (hasGlobs) return null
+
   return (
     <>
       <circle
@@ -40,6 +42,7 @@ export default function Node({ id }: Props) {
         fill={hasGlobs ? "transparent" : undefined}
         stroke={isSelected ? "red" : undefined}
         className="stroke-m"
+        pointerEvents="none"
       />
       <circle
         cx={node.point[0]}

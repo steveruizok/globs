@@ -513,13 +513,12 @@ export function getGlob(
 }
 
 export function deepCompareArrays<T>(a: T[], b: T[]) {
-  return (
-    a === b || a.length === b.length || JSON.stringify(a) == JSON.stringify(b)
-  )
+  if (a?.length !== b?.length) return false
+  return deepCompare(a, b)
 }
 
 export function deepCompare<T>(a: T, b: T) {
-  return a === b || JSON.stringify(a) == JSON.stringify(b)
+  return a === b || JSON.stringify(a) === JSON.stringify(b)
 }
 
 /**

@@ -52,10 +52,10 @@ const state = createState({
       if: "hasSelectedNodes",
       to: "linkingNodes",
     },
-    SET_NODES_X: "setSelectedNodesPointX",
-    SET_NODES_Y: "setSelectedNodesPointY",
-    SET_NODES_RADIUS: "setSelectedNodesRadius",
-    SET_NODES_CAP: "setSelectedNodesCap",
+    SET_NODES_X: ["setSelectedNodesPointX", "updateNodeGlobPoints"],
+    SET_NODES_Y: ["setSelectedNodesPointY", "updateNodeGlobPoints"],
+    SET_NODES_RADIUS: ["setSelectedNodesRadius", "updateNodeGlobPoints"],
+    SET_NODES_CAP: ["setSelectedNodesCap", "updateNodeGlobPoints"],
     SET_NODES_LOCKED: "setSelectedNodesLocked",
     TOGGLED_FILL: "toggleFill",
     TOGGLED_NODE_LOCKED: "toggleNodeLocked",
@@ -139,7 +139,7 @@ const state = createState({
                     "saveData",
                   ],
                 },
-                TOGGLED_CAP: { do: "toggleNodeCap" },
+                TOGGLED_CAP: "toggleNodeCap",
                 HIGHLIT_GLOB: "pushHighlightGlob",
                 HIGHLIT_NODE: "pushHighlightNode",
                 UNHIGHLIT_GLOB: "pullHighlightGlob",
@@ -758,6 +758,30 @@ const state = createState({
       }
 
       // Now update the globs!
+    },
+    updateNodeGlobPoints(data) {
+      const { globs, nodes, selectedNodes, selectedGlobs } = data
+      Object.values(globs)
+        .filter((glob) => arrsIntersect(glob.nodes, selectedNodes))
+        .forEach((glob) => {
+          try {
+            const [start, end] = glob.nodes.map((id) => nodes[id])
+            glob.points = getGlob(
+              start.point,
+              start.radius,
+              end.point,
+              end.radius,
+              glob.options.D,
+              glob.options.Dp,
+              glob.options.a,
+              glob.options.b,
+              glob.options.ap,
+              glob.options.bp
+            )
+          } catch (e) {
+            glob.points = null
+          }
+        })
     },
     updateSelectedGlobsPoints(data) {
       const { globs, nodes, selectedNodes, selectedGlobs } = data

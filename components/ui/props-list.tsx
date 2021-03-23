@@ -196,7 +196,7 @@ function NumberProp({
       <label>{unit}</label>
       <input
         type="number"
-        value={state.toFixed(2) || 0}
+        value={state || 0}
         min={min}
         max={max}
         step={step}
