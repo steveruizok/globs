@@ -1,13 +1,12 @@
 import { useSelector } from "lib/state"
-import { deepCompare } from "lib/utils"
+import { deepCompareArrays } from "lib/utils"
 import HoverGlob from "./hover-glob"
 
 export default function HoveringNodes() {
-  const zoom = useSelector((s) => s.data.camera.zoom)
   const highlitGlobs = useSelector(
     ({ data: { highlightGlobs, hoveredGlobs } }) =>
       Array.from(new Set([...highlightGlobs, ...hoveredGlobs]).values()),
-    deepCompare
+    deepCompareArrays
   )
 
   return (

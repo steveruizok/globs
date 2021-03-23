@@ -4,13 +4,7 @@ import * as vec from "lib/vec"
 import { modulate } from "utils"
 import { useMemo, useRef } from "react"
 
-export default function Combs({
-  strokeWidth = 1,
-  points,
-}: {
-  strokeWidth: number
-  points: IGlobPoints
-}) {
+export default function Combs({ points }: { points: IGlobPoints }) {
   // Show normal points along line
   const rLeftPath = useRef<SVGPathElement>(null)
   const rRightPath = useRef<SVGPathElement>(null)
@@ -62,14 +56,14 @@ export default function Combs({
           y1={p0[1]}
           x2={p1[0]}
           y2={p1[1]}
-          strokeWidth={strokeWidth}
+          className="stroke-s"
           stroke={getNormalColor(m)}
         />
       ))}
       <polyline
         points={skeletonPts.map((p) => p[1]).join(" ")}
-        strokeWidth={1}
         opacity={0.5}
+        className="stroke-s"
         stroke="red"
         fill="transparent"
       />

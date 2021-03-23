@@ -1,8 +1,8 @@
 import state, { useSelector } from "lib/state"
-import { deepCompare } from "lib/utils"
+import { deepCompare, deepCompareArrays } from "lib/utils"
 
 export default function GlobList() {
-  const globIds = useSelector((s) => s.data.globIds, deepCompare)
+  const globIds = useSelector((s) => s.data.globIds, deepCompareArrays)
   const selected = useSelector((s) => s.data.selectedGlobs)
 
   return (
@@ -19,7 +19,7 @@ export default function GlobList() {
   )
 }
 
-function GlobListItem({ id, selected }, { id: string, selected: boolean }) {
+function GlobListItem({ id, selected }: { id: string; selected: boolean }) {
   const glob = useSelector((s) => s.data.globs[id], deepCompare)
 
   if (!glob) return null

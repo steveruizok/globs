@@ -1,5 +1,5 @@
 import state, { useSelector } from "lib/state"
-import { deepCompare } from "lib/utils"
+import { deepCompare, deepCompareArrays } from "lib/utils"
 import {
   RotateCcw,
   RotateCw,
@@ -12,10 +12,12 @@ import {
 import styled from "styled-components"
 
 export default function StatusBar() {
-  const selectedNodes = useSelector((s) => s.data.selectedNodes)
-  const active = useSelector(
-    (s) => s.active.slice(1).map((s) => s.split("root.")[1]),
-    deepCompare
+  const selectedNodes = useSelector(
+    (s) => s.data.selectedNodes,
+    deepCompareArrays
+  )
+  const active = useSelector((s) =>
+    s.active.slice(1).map((s) => s.split("root.")[1])
   )
   const log = useSelector((s) => s.log[0])
 

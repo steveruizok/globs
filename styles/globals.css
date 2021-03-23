@@ -19,6 +19,7 @@ a {
 * {
   box-sizing: border-box;
 }
+
 svg text {
   -webkit-user-select: none;
   -moz-user-select: none;
@@ -30,16 +31,34 @@ svg text {
   --left: dodgerblue;
   --right: orange;
   --select: #ff0000;
-}
-
-.light {
+  --zoom: 2px;
   --background: #ffffff;
   --text: #2d2d2d;
-  --muted: rgba(0, 0, 0, 0.07);
+  --muted: rgba(0, 0, 0, 0.05);
 }
 
 .dark {
   --background: #2d2d2d;
   --text: #efefef;
   --muted: rgba(255, 255, 255, 0.07);
+}
+
+.stroke-l {
+  stroke-width: calc(var(--zoom) * 3px);
+}
+
+.stroke-m {
+  stroke-width: calc(var(--zoom) * 2px);
+}
+
+.stroke-s {
+  stroke-width: calc(var(--zoom) * 1px);
+}
+
+.dash-array-normal {
+  stroke-dasharray: calc(var(--zoom) * 1px) calc(var(--zoom) * 3px);
+}
+
+.anchor-handle {
+  stroke-width: calc(var(--zoom) * 4px);
 }

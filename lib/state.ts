@@ -41,12 +41,6 @@ const state = createState({
     MOUNTED: { do: ["setup", "setViewport"], to: "selecting" },
     UNMOUNTED: ["teardown"],
     RESIZED: "setViewport",
-    WHEELED: {
-      ifAny: ["hasShift", "isTrackpadZoom"],
-      get: "wheelZoomDelta",
-      do: "zoomCamera",
-      else: "wheelPanCamera",
-    },
     STARTED_CREATING_NODES: {
       to: "creatingNodes",
     },
@@ -62,11 +56,69 @@ const state = createState({
     SET_NODES_Y: "setSelectedNodesPointY",
     SET_NODES_RADIUS: "setSelectedNodesRadius",
     SET_NODES_CAP: "setSelectedNodesCap",
+    SET_NODES_LOCKED: "setSelectedNodesLocked",
     TOGGLED_FILL: "toggleFill",
     TOGGLED_NODE_LOCKED: "toggleNodeLocked",
+    WHEELED: {
+      ifAny: ["hasShift", "isTrackpadZoom"],
+      get: "wheelZoomDelta",
+      do: "zoomCamera",
+      else: {
+        do: "wheelPanCamera",
+      },
+    },
   },
   onEnter: ["setup"],
   states: {
+    // camera: {
+    //   initial: "stable",
+    //   states: {
+    //     stable: {
+    //       on: {
+    //         WHEELED: {
+    //           ifAny: ["hasShift", "isTrackpadZoom"],
+    //           get: "wheelZoomDelta",
+    //           do: "zoomCamera",
+    //           to: "zooming",
+    //           else: {
+    //             do: "wheelPanCamera",
+    //             to: "panning",
+    //           },
+    //         },
+    //       },
+    //     },
+    //     rezooming: { onEnter: { to: "zooming" } },
+    //     zooming: {
+    //       onEnter: { wait: 0.2, to: "stable" },
+    //       on: {
+    //         WHEELED: {
+    //           get: "wheelZoomDelta",
+    //           do: "zoomCamera",
+    //           to: "rezooming",
+    //         },
+    //         STOPPED_POINTING: {
+    //           do: () => console.log("stopped zooming!"),
+    //           to: "stable",
+    //         },
+    //       },
+    //     },
+    //     repanning: { onEnter: { to: "panning" } },
+    //     panning: {
+    //       onEnter: { wait: 0.2, to: "stable" },
+    //       on: {
+    //         WHEELED: {
+    //           get: "wheelZoomDelta",
+    //           do: "wheelPanCamera",
+    //           to: "repanning",
+    //         },
+    //         STOPPED_POINTING: {
+    //           do: () => console.log("stopped panning!"),
+    //           to: "stable",
+    //         },
+    //       },
+    //     },
+    //   },
+    // },
     tool: {
       initial: "selecting",
       states: {
@@ -189,7 +241,7 @@ const state = createState({
                 WHEELED: "moveSelectedHandle",
                 MOVED_POINTER: "moveSelectedHandle",
                 STOPPED_POINTING: {
-                  do: "clearSelectedHandle",
+                  do: ["clearSelectedHandle"],
                   to: "notPointing",
                 },
               },
@@ -553,6 +605,11 @@ const state = createState({
         data.nodes[id].cap = payload.value
       }
     },
+    setSelectedNodesLocked(data, payload: { value: boolean }) {
+      for (let id of data.selectedNodes) {
+        data.nodes[id].locked = payload.value
+      }
+    },
     clearSelectedNodes(data) {
       data.selectedNodes = []
     },
@@ -880,6 +937,15 @@ const state = createState({
         n = vec.dist(E1p, next) / vec.dist(E1p, Dp)
       }
 
+      n = Math.round(n * 100) / 100
+
+      // Round to midpoint
+      if (!keys.Alt) {
+        if (Math.abs(n - 0.5) < 0.025) {
+          n = 0.5
+        }
+      }
+
       glob.options[selectedAnchor.anchor] = n
 
       glob.points = getGlob(
@@ -989,6 +1055,9 @@ const state = createState({
       data.highlightNodes = []
       data.hoveredNodes = []
       data.hoveredGlobs = []
+      data.selectedAnchor = undefined
+      data.selectedHandle = undefined
+      data.fill = false
 
       if (typeof window !== "undefined") {
         window.addEventListener("pointermove", handlePointerMove)

@@ -1,4 +1,4 @@
-import { useSelector } from "lib/state"
+import state, { useSelector } from "lib/state"
 import { deepCompare, getGlob } from "lib/utils"
 import { useRef } from "react"
 import { getGlobOutline } from "./glob"
@@ -9,10 +9,12 @@ interface Props {
 
 export default function HoverGlob({ id }: Props) {
   const glob = useSelector((s) => s.data.globs[id], deepCompare)
-  const nodes = useSelector((s) => glob?.nodes.map((id) => s.data.nodes[id]))
+
   const rPrevPts = useRef<ReturnType<typeof getGlob>>()
 
   if (!glob) return null
+
+  const nodes = glob?.nodes.map((id) => state.data.nodes[id])
 
   const { D, Dp, a, b, ap, bp } = glob.options
 

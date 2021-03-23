@@ -173,6 +173,20 @@ export function dist(A: number[], B: number[]) {
 }
 
 /**
+ * A faster, though less accurate method for testing distances.
+ * @param A
+ * @param B
+ * @returns
+ */
+export function fastDist(A: number[], B: number[]) {
+  const V = [B[0] - A[0], B[1] - A[1]]
+  const aV = [Math.abs(V[0]), Math.abs(V[1])]
+  let r = 1 / Math.max(aV[0], aV[1])
+  r = r * (1.29289 - (aV[0] + aV[1]) * r * 0.29289)
+  return [V[0] * r, V[1] * r]
+}
+
+/**
  * Angle between vector A and vector B in radians
  * @param A
  * @param B
@@ -274,6 +288,15 @@ export function ang3(p1: number[], pc: number[], p2: number[]) {
   return ang(v1, v2)
 }
 
+/**
+ * Absolute value of a vector.
+ * @param A
+ * @returns
+ */
+export function abs(A: number[]) {
+  return [Math.abs(A[0]), Math.abs(A[1])]
+}
+
 export function rescale(a: number[], n: number) {
   const l = len(a)
   return [(n * a[0]) / l, (n * a[1]) / l]
@@ -344,4 +367,15 @@ export function nearestPointOnLine(
   }
 
   return add(A, div(mul(delta, dir[0]), length))
+}
+
+/**
+ * Get a vector d distance from A towards B.
+ * @param A
+ * @param B
+ * @param d
+ * @returns
+ */
+export function nudge(A: number[], B: number[], d: number) {
+  return add(A, mul(uni(vec(A, B)), d))
 }

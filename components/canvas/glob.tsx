@@ -1,22 +1,25 @@
 import React, { useRef, useMemo, useCallback, useEffect, useState } from "react"
 import * as svg from "lib/svg"
 import * as vec from "lib/vec"
-import { projectPoint } from "utils"
+import { deepCompare, deepCompareArrays } from "utils"
 import Dot from "./dot"
-import Handle from "./handle"
+import Handle from "./glob-elements/handle"
 import { IGlobPoints } from "types"
 import state, { useSelector } from "lib/state"
-import Anchor from "./anchor"
+import Anchor from "./glob-elements/anchor"
+import Handles from "./glob-elements/handles"
 
 interface Props {
   id: string
 }
 
 export default function Glob({ id }: Props) {
-  const zoom = useSelector((s) => s.data.camera.zoom)
-  const glob = useSelector((s) => s.data.globs[id])
-  const nodes = useSelector((s) => glob?.nodes.map((id) => s.data.nodes[id]))
   const fill = useSelector((s) => s.data.fill)
+  const glob = useSelector((s) => s.data.globs[id], deepCompare)
+  const nodes = useSelector(
+    (s) => glob?.nodes.map((id) => s.data.nodes[id]),
+    deepCompareArrays
+  )
 
   const rOutline = useRef<SVGPathElement>(null)
 
@@ -51,27 +54,37 @@ export default function Glob({ id }: Props) {
   const { D, Dp } = glob.options
 
   const [start, end] = nodes
-  const { point: C0, radius: r0 } = start
-  const { point: C1, radius: r1 } = end
+  const { point: C0 } = start
+  const { point: C1 } = end
 
-  const { E0, E0p, E1, E1p, F0, F1, F0p, F1p, N0, N0p, N1, N1p } = globPts
-
-  const D1 = projectPoint(D, vec.angle(D, E0), vec.dist(D, E0) * 2)
-  const Dp1 = projectPoint(Dp, vec.angle(Dp, E0p), vec.dist(Dp, E0p) * 2)
-  const D2 = projectPoint(D, vec.angle(D, E1), vec.dist(D, E1) * 2)
-  const Dp2 = projectPoint(Dp, vec.angle(Dp, E1p), vec.dist(Dp, E1p) * 2)
+  const {
+    E0,
+    E0p,
+    E1,
+    E1p,
+    F0,
+    F1,
+    F0p,
+    F1p,
+    D1,
+    Dp1,
+    D2,
+    Dp2,
+    N0,
+    N0p,
+    N1,
+    N1p,
+  } = globPts
 
   const outline = getGlobOutline(globPts, start.cap, end.cap)
 
-  const z = zoom < 1 ? 1 : 1 / zoom
-  const stroke = 2 // * z
-
   return (
-    <g strokeWidth={zoom > 1 ? stroke / zoom : stroke} strokeLinecap="round">
+    <>
       {safe ? (
         <path
           ref={rOutline}
           d={outline}
+          className="stroke-m"
           stroke={isSelected ? "red" : "black"}
           onPointerLeave={() => state.send("UNHOVERED_GLOB", { id: glob.id })}
           onPointerEnter={() => state.send("HOVERED_GLOB", { id: glob.id })}
@@ -84,81 +97,28 @@ export default function Glob({ id }: Props) {
           x2={C1[0]}
           y2={C1[1]}
           stroke="red"
-          strokeWidth={2 / zoom}
+          className="stroke-m"
         />
       )}
-      {/* Skeleton + Outline */}
       {!fill && safe && (
-        <g pointerEvents="none">
-          <path
-            ref={rOutline}
-            d={outline}
-            stroke={isSelected ? "red" : "black"}
-            fill="transparent"
-            pointerEvents="none"
-          />
-        </g>
-      )}
-      {!fill && (
-        <g>
-          {safe && (
-            <g fill="none" strokeWidth={z * 1.5} pointerEvents="none">
-              {isDraggingD ? (
-                <path
-                  d={[
-                    svg.moveTo(projectPoint(D, vec.angle(D, E0), 10000)),
-                    svg.lineTo(projectPoint(D, vec.angle(D, E0), -10000)),
-                    svg.moveTo(projectPoint(D, vec.angle(D, E1), 10000)),
-                    svg.lineTo(projectPoint(D, vec.angle(D, E1), -10000)),
-                  ].join(" ")}
-                  stroke="red"
-                  opacity={0.5}
-                />
-              ) : (
-                <path
-                  d={[svg.moveTo(E0), svg.lineTo(D), svg.lineTo(E1)].join(" ")}
-                  stroke={isSelected ? "red" : "dodgerblue"}
-                  strokeDasharray={`${z * 1} ${z * 3}`}
-                />
-              )}
-              {isDraggingDp ? (
-                <path
-                  d={[
-                    svg.moveTo(projectPoint(Dp, vec.angle(Dp, E0p), 10000)),
-                    svg.lineTo(projectPoint(Dp, vec.angle(Dp, E0p), -10000)),
-                    svg.moveTo(projectPoint(Dp, vec.angle(Dp, E1p), 10000)),
-                    svg.lineTo(projectPoint(Dp, vec.angle(Dp, E1p), -10000)),
-                  ].join(" ")}
-                  stroke="red"
-                  opacity={0.5}
-                />
-              ) : (
-                <path
-                  d={[svg.moveTo(E0p), svg.lineTo(Dp), svg.lineTo(E1p)].join(
-                    " "
-                  )}
-                  stroke={isSelected ? "red" : "orange"}
-                  strokeDasharray={`${z * 1} ${z * 3}`}
-                />
-              )}
+        <>
+          <g pointerEvents="none">
+            <path
+              stroke={isSelected ? "red" : "black"}
+              fill="transparent"
+              pointerEvents="none"
+              className="stroke-m"
+            />
+            <g opacity=".5">
+              <Dot position={D1} color="dodgerblue" />
+              <Dot position={D2} color="dodgerblue" />
+              <Dot position={Dp1} color="orange" />
+              <Dot position={Dp2} color="orange" />
             </g>
-          )}
-          {/* Dots */}
-          <g opacity=".5">
-            {/* <Dot position={E0} radius={z * 3} color="dodgerblue" />
-            <Dot position={E1} radius={z * 3} color="dodgerblue" /> 
-            <Dot position={E0p} radius={z * 3} color="orange" />
-            <Dot position={E1p} radius={z * 3} color="orange" /> */}
-            <Dot position={D1} radius={z * 3} color="dodgerblue" />
-            <Dot position={D2} radius={z * 3} color="dodgerblue" />
-            <Dot position={Dp1} radius={z * 3} color="orange" />
-            <Dot position={Dp2} radius={z * 3} color="orange" />
-            {/* {glob.p0 && <Dot position={glob.p0} radius={z * 3} color="blue" />} */}
           </g>
-          {/* Anchors */}
           <Anchor
             position={F0}
-            radius={z * 8}
+            isSelected={isSelected}
             color="dodgerblue"
             onSelect={() =>
               state.send("SELECTED_ANCHOR", { id: glob.id, anchor: "a" })
@@ -166,7 +126,7 @@ export default function Glob({ id }: Props) {
           />
           <Anchor
             position={F1}
-            radius={z * 8}
+            isSelected={isSelected}
             color="dodgerblue"
             onSelect={() =>
               state.send("SELECTED_ANCHOR", { id: glob.id, anchor: "b" })
@@ -174,7 +134,7 @@ export default function Glob({ id }: Props) {
           />
           <Anchor
             position={F0p}
-            radius={z * 8}
+            isSelected={isSelected}
             color="orange"
             onSelect={() =>
               state.send("SELECTED_ANCHOR", { id: glob.id, anchor: "ap" })
@@ -182,33 +142,43 @@ export default function Glob({ id }: Props) {
           />
           <Anchor
             position={F1p}
-            radius={z * 8}
+            isSelected={isSelected}
             color="orange"
             onSelect={() =>
               state.send("SELECTED_ANCHOR", { id: glob.id, anchor: "bp" })
             }
           />
-          {/* Left Handles */}
-          <Handle
-            color="dodgerblue"
+          <Handles
             position={D}
-            radius={z * 12}
+            start={E0}
+            end={E1}
+            color="dodgerblue"
+            isSelected={isSelected}
+            isDragging={isDraggingD}
             onSelect={() =>
-              state.send("POINTED_HANDLE", { id: glob.id, handle: "D" })
+              state.send("POINTED_HANDLE", {
+                id: glob.id,
+                handle: "D",
+              })
             }
           />
-          {/* Right Handles */}
-          <Handle
-            color="orange"
+          <Handles
             position={Dp}
-            radius={z * 12}
+            start={E0p}
+            end={E1p}
+            color="orange"
+            isSelected={isSelected}
+            isDragging={isDraggingDp}
             onSelect={() =>
-              state.send("POINTED_HANDLE", { id: glob.id, handle: "Dp" })
+              state.send("POINTED_HANDLE", {
+                id: glob.id,
+                handle: "Dp",
+              })
             }
           />
-        </g>
+        </>
       )}
-    </g>
+    </>
   )
 }
 

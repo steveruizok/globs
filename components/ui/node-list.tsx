@@ -1,10 +1,13 @@
 import state, { useSelector } from "lib/state"
-import { deepCompare } from "lib/utils"
+import { deepCompareArrays, deepCompare } from "lib/utils"
 import { Lock, Unlock } from "react-feather"
 
 export default function NodeList() {
-  const nodeIds = useSelector((s) => s.data.nodeIds, deepCompare)
-  const selectedNodeIds = useSelector((s) => s.data.selectedNodes, deepCompare)
+  const nodeIds = useSelector((s) => s.data.nodeIds, deepCompareArrays)
+  const selectedNodeIds = useSelector(
+    (s) => s.data.selectedNodes,
+    deepCompareArrays
+  )
 
   return (
     <>
@@ -24,7 +27,7 @@ export default function NodeList() {
   )
 }
 
-function NodeListItem({ id, selected }, { id: string, selected: boolean }) {
+function NodeListItem({ id, selected }: { id: string; selected: boolean }) {
   const node = useSelector((s) => s.data.nodes[id], deepCompare)
 
   if (!node) return null

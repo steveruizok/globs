@@ -1,23 +1,22 @@
 import state, { useSelector } from "lib/state"
-import { deepCompare } from "lib/utils"
+import { deepCompareArrays, deepCompare } from "lib/utils"
 import { useEffect, useRef } from "react"
+import Dot from "./dot"
 
 interface Props {
   id: string
 }
 
 export default function Node({ id }: Props) {
-  const zoom = useSelector((s) => s.data.camera.zoom)
   const fill = useSelector((s) => s.data.fill)
-
   const node = useSelector((s) => s.data.nodes[id], deepCompare)
-  const globs = useSelector((s) =>
-    Object.values(s.data.globs).filter((glob) => glob.nodes.includes(id))
+  const globs = useSelector(
+    (s) =>
+      Object.values(s.data.globs).filter((glob) => glob.nodes.includes(id)),
+    deepCompareArrays
   )
 
   const isSelected = useSelector((s) => s.data.selectedNodes.includes(id))
-
-  const hasGlobs = globs.length > 0
 
   const rOutline = useRef<SVGCircleElement>(null)
   useEffect(() => {
@@ -29,6 +28,8 @@ export default function Node({ id }: Props) {
     return null
   }
 
+  const hasGlobs = globs.length > 0
+
   return (
     <g>
       <circle
@@ -38,7 +39,7 @@ export default function Node({ id }: Props) {
         r={node.radius}
         fill={hasGlobs ? "transparent" : undefined}
         stroke={isSelected ? "red" : undefined}
-        strokeWidth={zoom < 1 ? 2 : 2 / zoom}
+        className="stroke-m"
       />
       <circle
         cx={node.point[0]}
@@ -51,26 +52,16 @@ export default function Node({ id }: Props) {
         onPointerOver={() => state.send("HOVERED_NODE", { id })}
         onPointerOut={() => state.send("UNHOVERED_NODE", { id })}
       />
-      {!fill && !node.locked && (
-        <circle
+      {!fill && node.locked ? (
+        <use
+          href="#anchor"
+          x={node.point[0]}
+          y={node.point[1]}
+          className="stroke-m dash-array-normal"
           pointerEvents="none"
-          cx={node.point[0]}
-          cy={node.point[1]}
-          r={zoom < 1 ? 2 : 2 / zoom}
-          fill={"black"}
         />
-      )}
-      {node.locked && (
-        <circle
-          pointerEvents="none"
-          cx={node.point[0]}
-          cy={node.point[1]}
-          r={zoom < 1 ? 4 : 4 / zoom}
-          strokeWidth={zoom < 1 ? 2 : 2 / zoom}
-          strokeDasharray={zoom < 1 ? "1,3" : [1 / zoom, 3 / zoom].toString()}
-          stroke={"black"}
-          strokeLinecap="round"
-        />
+      ) : (
+        <Dot position={node.point} />
       )}
     </g>
   )

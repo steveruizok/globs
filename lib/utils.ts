@@ -13,6 +13,8 @@ import {
   per,
   uni,
   div,
+  fastDist,
+  nudge,
   mulV,
 } from "./vec"
 
@@ -510,8 +512,14 @@ export function getGlob(
   }
 }
 
+export function deepCompareArrays<T>(a: T[], b: T[]) {
+  return (
+    a === b || a.length === b.length || JSON.stringify(a) == JSON.stringify(b)
+  )
+}
+
 export function deepCompare<T>(a: T, b: T) {
-  return JSON.stringify(a) === JSON.stringify(b)
+  return a === b || JSON.stringify(a) == JSON.stringify(b)
 }
 
 /**
