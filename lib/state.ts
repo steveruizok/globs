@@ -334,35 +334,33 @@ const state = createState({
     startBrush(data) {
       const { nodes, globs, camera } = data
 
+      const targets = [
+        ...Object.values(nodes).map((node) => {
+          return {
+            id: node.id,
+            type: "node" as const,
+            path: svg.ellipse(node.point, node.radius),
+          }
+        }),
+        ...Object.values(globs).map((glob) => {
+          let path = ""
+
+          try {
+            path = getGlobPath(glob, nodes[glob.nodes[0]], nodes[glob.nodes[1]])
+          } catch (e) {}
+
+          return {
+            id: glob.id,
+            type: "glob" as const,
+            path,
+          }
+        }),
+      ]
+
       data.brush = {
         start: screenToWorld(pointer.point, camera.point, camera.zoom),
         end: screenToWorld(pointer.point, camera.point, camera.zoom),
-        targets: [
-          ...Object.values(nodes).map((node) => {
-            return {
-              id: node.id,
-              type: "node" as const,
-              path: svg.ellipse(node.point, node.radius),
-            }
-          }),
-          ...Object.values(globs).map((glob) => {
-            let path = ""
-
-            try {
-              path = getGlobPath(
-                glob,
-                nodes[glob.nodes[0]],
-                nodes[glob.nodes[1]]
-              )
-            } catch (e) {}
-
-            return {
-              id: glob.id,
-              type: "glob" as const,
-              path,
-            }
-          }),
-        ],
+        targets,
       }
     },
     updateBrush(data) {
@@ -604,6 +602,8 @@ const state = createState({
       const newNode = createNode(
         screenToWorld(pointer.point, camera.point, camera.zoom)
       )
+
+      newNode.radius = minRadius
 
       const id = "node_" + Date.now()
 

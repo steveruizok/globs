@@ -601,10 +601,10 @@ export function rectContainsRect(
   box: { x: number; y: number; width: number; height: number }
 ) {
   return !(
-    x0 > box[0] ||
-    x1 < box[0] + box.width ||
-    y0 > box[1] ||
-    y1 < box[1] + box.height
+    x0 > box.x ||
+    x1 < box.x + box.width ||
+    y0 > box.y ||
+    y1 < box.y + box.height
   )
 }
 
