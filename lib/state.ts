@@ -9,6 +9,7 @@ import {
   getClosestPointOnCircle,
   getGlob,
   getGlobPath,
+  getNearestPointOnCurve,
   getOuterTangents,
   getTouchDisplay,
   projectPoint,
@@ -17,6 +18,7 @@ import {
 } from "utils"
 import { initialData } from "./data"
 import { getGlobOutline } from "components/canvas/glob"
+import { motionValue } from "framer-motion"
 
 /*
 - [ ] Keep camera centered when resizing
@@ -62,63 +64,15 @@ const state = createState({
     WHEELED: {
       ifAny: ["hasShift", "isTrackpadZoom"],
       get: "wheelZoomDelta",
-      do: "zoomCamera",
+      do: ["zoomCamera", "updateMvPointer"],
       else: {
-        do: "wheelPanCamera",
+        do: ["wheelPanCamera", "updateMvPointer"],
       },
     },
+    MOVED_POINTER: { secretlyDo: "updateMvPointer" },
   },
   onEnter: ["setup"],
   states: {
-    // camera: {
-    //   initial: "stable",
-    //   states: {
-    //     stable: {
-    //       on: {
-    //         WHEELED: {
-    //           ifAny: ["hasShift", "isTrackpadZoom"],
-    //           get: "wheelZoomDelta",
-    //           do: "zoomCamera",
-    //           to: "zooming",
-    //           else: {
-    //             do: "wheelPanCamera",
-    //             to: "panning",
-    //           },
-    //         },
-    //       },
-    //     },
-    //     rezooming: { onEnter: { to: "zooming" } },
-    //     zooming: {
-    //       onEnter: { wait: 0.2, to: "stable" },
-    //       on: {
-    //         WHEELED: {
-    //           get: "wheelZoomDelta",
-    //           do: "zoomCamera",
-    //           to: "rezooming",
-    //         },
-    //         STOPPED_POINTING: {
-    //           do: () => console.log("stopped zooming!"),
-    //           to: "stable",
-    //         },
-    //       },
-    //     },
-    //     repanning: { onEnter: { to: "panning" } },
-    //     panning: {
-    //       onEnter: { wait: 0.2, to: "stable" },
-    //       on: {
-    //         WHEELED: {
-    //           get: "wheelZoomDelta",
-    //           do: "wheelPanCamera",
-    //           to: "repanning",
-    //         },
-    //         STOPPED_POINTING: {
-    //           do: () => console.log("stopped panning!"),
-    //           to: "stable",
-    //         },
-    //       },
-    //     },
-    //   },
-    // },
     tool: {
       initial: "selecting",
       states: {
@@ -163,6 +117,9 @@ const state = createState({
                   },
                   { if: "nodeIsHovered", to: "pointingNodes" },
                 ],
+                SPLIT_GLOB: {
+                  do: (d, p) => console.log("split at", p),
+                },
                 SELECTED_GLOB: [
                   {
                     if: "globIsSelected",
@@ -303,7 +260,6 @@ const state = createState({
     },
   },
   results: {
-    shiftZoomDelta(data) {},
     wheelZoomDelta(data, payload: { ctrlKey: boolean; delta: number[] }) {
       const { camera } = data
       if (payload.ctrlKey) payload.delta = vec.mul(vec.neg(payload.delta), 5)
@@ -364,6 +320,9 @@ const state = createState({
     },
   },
   actions: {
+    updateMvPointer(data) {
+      updateMvPointer(pointer, data.camera)
+    },
     // DISPLAY
     toggleFill(data) {
       data.fill = !data.fill
@@ -446,7 +405,6 @@ const state = createState({
     },
 
     // CAMERA
-    updateCamera(data) {},
     panCamera(data) {
       const { camera, document } = data
       camera.point = vec.sub(camera.point, vec.div(pointer.delta, camera.zoom))
@@ -1113,6 +1071,11 @@ const state = createState({
 
 /* --------------------- INPUTS --------------------- */
 
+export const mvPointer = {
+  screen: motionValue([0, 0]),
+  world: motionValue([0, 0]),
+}
+
 const pointer = {
   id: -1,
   type: "mouse",
@@ -1121,6 +1084,11 @@ const pointer = {
   origin: [0, 0],
   buttons: 0,
   points: new Set<number>(),
+}
+
+function updateMvPointer(point: typeof pointer, camera: IData["camera"]) {
+  mvPointer.screen.set(pointer.point)
+  mvPointer.world.set(screenToWorld(pointer.point, camera.point, camera.zoom))
 }
 
 const keys: Record<string, boolean> = {}
@@ -1148,6 +1116,7 @@ function handlePointerDown(e: PointerEvent) {
   pointer.origin = [x, y]
   pointer.point = [x, y]
   pointer.delta = [0, 0]
+
   state.send("STARTED_POINTING")
 }
 

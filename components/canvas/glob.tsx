@@ -1,13 +1,21 @@
 import React, { useRef, useMemo, useCallback, useEffect, useState } from "react"
+
 import * as svg from "lib/svg"
 import * as vec from "lib/vec"
-import { deepCompare, deepCompareArrays } from "utils"
+import {
+  closestPointOnPath,
+  deepCompare,
+  deepCompareArrays,
+  circleFromThreePoints,
+  getNearestPointOnCurve,
+} from "utils"
 import Dot from "./dot"
-import Handle from "./glob-elements/handle"
+import Combs from "./glob-elements/combs"
 import { IGlobPoints } from "types"
-import state, { useSelector } from "lib/state"
+import state, { useSelector, mvPointer } from "lib/state"
 import Anchor from "./glob-elements/anchor"
 import Handles from "./glob-elements/handles"
+import { motion, useTransform } from "framer-motion"
 
 interface Props {
   id: string
@@ -37,12 +45,36 @@ export default function Glob({ id, fill }: Props) {
       selectedHandle?.id === id && selectedHandle.handle === "Dp"
   )
 
+  const rPrevPts = useRef<IGlobPoints>()
+  const rLeftPath = useRef<SVGPathElement>(null)
+  const rRightPath = useRef<SVGPathElement>(null)
+  const rMiddlePath = useRef<SVGPathElement>(null)
+
+  const MP = useTransform(mvPointer.world, (point) => {
+    const path = rMiddlePath.current
+    const left = rLeftPath.current
+    const right = rRightPath.current
+
+    if (!isSelected || !(path && left && right)) return null
+    const { C0, r0, C1, r1, N0, N1, F0, F1, F0p, F1p } = glob.points
+    // const PL = svg.getPointAtLength(left, t * left.getTotalLength())
+    // const PR = svg.getPointAtLength(right, t * right.getTotalLength())
+    // const N = vec.lrp(N0, vec.neg(N1), t)
+
+    const { point: P } = closestPointOnPath(path, point)
+    return P
+  })
+
+  const MP0 = useTransform(MP, (P) => {
+    const { zoom } = state.data.camera
+    if (!P) return ""
+    return [svg.ellipse(P, zoom < 1 ? 3 : 3 / zoom)].join()
+  })
+
   useEffect(() => {
     state.send("MOUNTED_ELEMENT", { id: glob.id, elm: rOutline.current })
     return () => void state.send("UNMOUNTED_ELEMENT", { id: glob.id })
   }, [])
-
-  const rPrevPts = useRef<IGlobPoints>()
 
   if (!glob) return null
 
@@ -79,7 +111,7 @@ export default function Glob({ id, fill }: Props) {
   const outline = getGlobOutline(globPts, start.cap, end.cap)
 
   return (
-    <>
+    <g>
       {safe ? (
         <path
           ref={rOutline}
@@ -103,6 +135,43 @@ export default function Glob({ id, fill }: Props) {
       )}
       {!fill && safe && (
         <>
+          <g opacity="0">
+            {/* Middle Point / Path */}
+            <path
+              ref={rMiddlePath}
+              d={[
+                svg.moveTo(C0),
+                svg.bezierTo(vec.med(F0, F0p), vec.med(F1, F1p), C1),
+              ].join()}
+              stroke="black"
+              fill="none"
+              className="stroke-s hover-hidey"
+              pointerEvents="none"
+            />
+            <path
+              ref={rLeftPath}
+              d={[svg.moveTo(E0), svg.bezierTo(F0, F1, E1)].join()}
+              opacity="0"
+              pointerEvents="none"
+            />
+            <path
+              ref={rRightPath}
+              d={[svg.moveTo(E0p), svg.bezierTo(F0p, F1p, E1p)].join()}
+              opacity="0"
+              pointerEvents="none"
+            />
+            <motion.path
+              d={MP0}
+              stroke="black"
+              className="stroke-s hover-hidey"
+              fill="black"
+              cursor="pointer"
+              onPointerDown={() =>
+                state.send("SPLIT_GLOB", { id: glob.id, point: MP.get() })
+              }
+            />
+          </g>
+          {/* <Combs id={glob.id} points={glob.points} /> */}
           <path
             stroke={isSelected ? "red" : "black"}
             fill="transparent"
@@ -114,6 +183,9 @@ export default function Glob({ id, fill }: Props) {
             <Dot position={D2} color="dodgerblue" />
             <Dot position={Dp1} color="orange" />
             <Dot position={Dp2} color="orange" />
+            {/* {glob.p0 && (
+              <circle cx={glob.p0[0]} cy={glob.p0[1]} r={4} color="red" />
+            )} */}
           </g>
           <Anchor
             position={F0}
@@ -177,7 +249,7 @@ export default function Glob({ id, fill }: Props) {
           />
         </>
       )}
-    </>
+    </g>
   )
 }
 

@@ -16,6 +16,7 @@ import {
   fastDist,
   nudge,
   mulV,
+  dist2,
 } from "./vec"
 
 // A helper for getting tangents.
@@ -600,10 +601,10 @@ export function rectContainsRect(
   box: { x: number; y: number; width: number; height: number }
 ) {
   return !(
-    x0 > box.x ||
-    x1 < box.x + box.width ||
-    y0 > box.y ||
-    y1 < box.y + box.height
+    x0 > box[0] ||
+    x1 < box[0] + box.width ||
+    y0 > box[1] ||
+    y1 < box[1] + box.height
   )
 }
 
@@ -665,4 +666,244 @@ export function clamp(n: number, min: number): number
 export function clamp(n: number, min: number, max: number): number
 export function clamp(n: number, min: number, max?: number): number {
   return Math.max(min, typeof max !== "undefined" ? Math.min(n, max) : n)
+}
+
+// CURVES
+// Mostly adapted from https://github.com/Pomax/bezierjs
+
+export function computePointOnCurve(t: number, points: number[][]) {
+  // shortcuts
+  if (t === 0) {
+    return points[0]
+  }
+
+  const order = points.length - 1
+
+  if (t === 1) {
+    return points[order]
+  }
+
+  const mt = 1 - t
+  let p = points // constant?
+
+  if (order === 0) {
+    return points[0]
+  } // linear?
+
+  if (order === 1) {
+    return [mt * p[0][0] + t * p[1][0], mt * p[0][1] + t * p[1][1]]
+  } // quadratic/cubic curve?
+
+  if (order < 4) {
+    let mt2 = mt * mt,
+      t2 = t * t,
+      a: number,
+      b: number,
+      c: number,
+      d = 0
+
+    if (order === 2) {
+      p = [p[0], p[1], p[2], [0, 0]]
+      a = mt2
+      b = mt * t * 2
+      c = t2
+    } else if (order === 3) {
+      a = mt2 * mt
+      b = mt2 * t * 3
+      c = mt * t2 * 3
+      d = t * t2
+    }
+
+    return [
+      a * p[0][0] + b * p[1][0] + c * p[2][0] + d * p[3][0],
+      a * p[0][1] + b * p[1][1] + c * p[2][1] + d * p[3][1],
+    ]
+  } // higher order curves: use de Casteljau's computation
+}
+
+// Generate a lookup table by sampling the curve.
+function getBezierCurveLUT(points: number[][], samples = 100) {
+  return Array.from(Array(samples)).map((_, i) =>
+    computePointOnCurve(i / (samples - 1 - i), points)
+  )
+}
+
+// Find the closest point among points in a lookup table
+function closestPointInLUT(A: number[], LUT: number[][]) {
+  let mdist = Math.pow(2, 63),
+    mpos: number,
+    d: number
+  LUT.forEach(function(p, idx) {
+    d = dist(A, p)
+
+    if (d < mdist) {
+      mdist = d
+      mpos = idx
+    }
+  })
+  return {
+    mdist: mdist,
+    mpos: mpos,
+  }
+}
+
+export function getNearestPointOnCurve(A: number[], points: number[][]) {
+  // Create lookup table
+  const LUT = getBezierCurveLUT(points)
+
+  // step 1: coarse check
+  const l = LUT.length - 1,
+    closest = closestPointInLUT(A, LUT),
+    mpos = closest.mpos,
+    t1 = (mpos - 1) / l,
+    t2 = (mpos + 1) / l,
+    step = 0.1 / l // step 2: fine check
+
+  let mdist = closest.mdist,
+    t = t1,
+    ft = t,
+    p: number[]
+  mdist += 1
+
+  for (let d: number; t < t2 + step; t += step) {
+    p = computePointOnCurve(t, points)
+    d = dist(A, p)
+
+    if (d < mdist) {
+      mdist = d
+      ft = t
+    }
+  }
+
+  ft = ft < 0 ? 0 : ft > 1 ? 1 : ft
+  p = computePointOnCurve(ft, points)
+  // p.t = ft
+  // p.d = mdist
+  return p
+}
+
+function distance2(p: DOMPoint, point: number[]) {
+  var dx = p.x - point[0],
+    dy = p.y - point[1]
+  return dx * dx + dy * dy
+}
+
+/**
+ * Find the closest point on a path to an off-path point.
+ * @param pathNode
+ * @param point
+ * @returns
+ */
+export function closestPointOnPath(pathNode: SVGPathElement, point: number[]) {
+  var pathLen = pathNode.getTotalLength(),
+    p = 8,
+    best: DOMPoint,
+    bestLen: number,
+    bestDist = Infinity
+
+  // linear scan for coarse approximation
+  for (
+    var scan: DOMPoint, scanLen = 0, scanDist: number;
+    scanLen <= pathLen;
+    scanLen += p
+  ) {
+    if (
+      (scanDist = distance2(
+        (scan = pathNode.getPointAtLength(scanLen)),
+        point
+      )) < bestDist
+    ) {
+      ;(best = scan), (bestLen = scanLen), (bestDist = scanDist)
+    }
+  }
+
+  // binary search for precise estimate
+  p /= 2
+  while (p > 0.5) {
+    var before: DOMPoint,
+      after: DOMPoint,
+      bl: number,
+      al: number,
+      bd: number,
+      ad: number
+    if (
+      (bl = bestLen - p) >= 0 &&
+      (bd = distance2((before = pathNode.getPointAtLength(bl)), point)) <
+        bestDist
+    ) {
+      ;(best = before), (bestLen = bl), (bestDist = bd)
+    } else if (
+      (al = bestLen + p) <= pathLen &&
+      (ad = distance2((after = pathNode.getPointAtLength(al)), point)) <
+        bestDist
+    ) {
+      ;(best = after), (bestLen = al), (bestDist = ad)
+    } else {
+      p /= 2
+    }
+  }
+
+  return {
+    point: [best.x, best.y],
+    length: (bl + al) / 2,
+    t: (bl + al) / 2 / pathLen,
+  }
+}
+
+export function det(
+  a: number,
+  b: number,
+  c: number,
+  d: number,
+  e: number,
+  f: number,
+  g: number,
+  h: number,
+  i: number
+) {
+  return a * e * i + b * f * g + c * d * h - a * f * h - b * d * i - c * e * g
+}
+
+// Get a circle from three points.
+export function circleFromThreePoints(A: number[], B: number[], C: number[]) {
+  var a = det(A[0], A[1], 1, B[0], B[1], 1, C[0], C[1], 1)
+
+  var bx = -det(
+    A[0] * A[0] + A[1] * A[1],
+    A[1],
+    1,
+    B[0] * B[0] + B[1] * B[1],
+    B[1],
+    1,
+    C[0] * C[0] + C[1] * C[1],
+    C[1],
+    1
+  )
+  var by = det(
+    A[0] * A[0] + A[1] * A[1],
+    A[0],
+    1,
+    B[0] * B[0] + B[1] * B[1],
+    B[0],
+    1,
+    C[0] * C[0] + C[1] * C[1],
+    C[0],
+    1
+  )
+  var c = -det(
+    A[0] * A[0] + A[1] * A[1],
+    A[0],
+    A[1],
+    B[0] * B[0] + B[1] * B[1],
+    B[0],
+    B[1],
+    C[0] * C[0] + C[1] * C[1],
+    C[0],
+    C[1]
+  )
+  return [
+    -bx / (2 * a),
+    -by / (2 * a),
+    Math.sqrt(bx * bx + by * by - 4 * a * c) / (2 * Math.abs(a)),
+  ]
 }

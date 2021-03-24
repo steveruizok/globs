@@ -51,3 +51,8 @@ export function closePath() {
 export function rectTo(A: number[]) {
   return ["R", A[0], A[1]].join(" ")
 }
+
+export function getPointAtLength(path: SVGPathElement, length: number) {
+  const point = path.getPointAtLength(length)
+  return [point.x, point.y]
+}

@@ -192,6 +192,14 @@ const EditorContainer = styled.div`
     z-index: 1;
     touch-action: none;
   }
+
+  g > *.hover-hidey {
+    visibility: hidden;
+  }
+
+  g:hover > *.hover-hidey {
+    visibility: visible;
+  }
 `
 
 const Layout = styled.div`
