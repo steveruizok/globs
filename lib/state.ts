@@ -408,13 +408,15 @@ const state = createState({
     // CAMERA
     panCamera(data) {
       const { camera, document } = data
-      camera.point = vec.sub(camera.point, vec.div(pointer.delta, camera.zoom))
+      camera.point = vec.round(
+        vec.sub(camera.point, vec.div(pointer.delta, camera.zoom))
+      )
       document.point = camera.point
     },
     wheelPanCamera(data, payload: { delta: number[] }) {
       const { camera, document } = data
       const delta = vec.div(vec.neg(payload.delta), camera.zoom)
-      camera.point = vec.sub(camera.point, delta)
+      camera.point = vec.round(vec.sub(camera.point, delta))
       pointer.delta = vec.mul(vec.neg(delta), camera.zoom)
       document.point = camera.point
     },
@@ -429,7 +431,7 @@ const state = createState({
 
       const pt1 = vec.add(vec.div(point, camera.zoom), camera.point)
 
-      camera.point = vec.sub(camera.point, vec.sub(pt1, pt0))
+      camera.point = vec.round(vec.sub(camera.point, vec.sub(pt1, pt0)))
 
       document.size = vec.round(vec.div(viewport.size, camera.zoom))
       document.point = camera.point
@@ -1038,7 +1040,7 @@ const state = createState({
       if (typeof localStorage === "undefined") return
       const saved = localStorage.getItem("glob_aldata_v3")
       if (saved) {
-        Object.assign(data, JSON.parse(saved))
+        // Object.assign(data, JSON.parse(saved))
       }
 
       data.selectedNodes = []
@@ -1074,7 +1076,7 @@ const state = createState({
       const { viewport, camera, document } = data
       viewport.size = payload.size
       document.point = [...camera.point]
-      document.size = vec.div(viewport.size, camera.zoom)
+      document.size = vec.round(vec.div(viewport.size, camera.zoom))
     },
   },
 })

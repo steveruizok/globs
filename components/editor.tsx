@@ -60,7 +60,8 @@ export default function Editor() {
       } = s.data
 
       // Update view box when panning or zooming
-      const next = [point, size].toString()
+      const next = [``, point, size].join(`
+`)
       if (next !== prev) {
         svg.setAttribute("viewBox", next)
         prev = next
