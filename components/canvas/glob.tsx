@@ -46,30 +46,30 @@ export default function Glob({ id, fill }: Props) {
   )
 
   const rPrevPts = useRef<IGlobPoints>()
-  const rLeftPath = useRef<SVGPathElement>(null)
-  const rRightPath = useRef<SVGPathElement>(null)
-  const rMiddlePath = useRef<SVGPathElement>(null)
+  // const rLeftPath = useRef<SVGPathElement>(null)
+  // const rRightPath = useRef<SVGPathElement>(null)
+  // const rMiddlePath = useRef<SVGPathElement>(null)
 
-  const MP = useTransform(mvPointer.world, (point) => {
-    const path = rMiddlePath.current
-    const left = rLeftPath.current
-    const right = rRightPath.current
+  // const MP = useTransform(mvPointer.world, (point) => {
+  //   const path = rMiddlePath.current
+  //   const left = rLeftPath.current
+  //   const right = rRightPath.current
 
-    if (!isSelected || !(path && left && right)) return null
-    const { C0, r0, C1, r1, N0, N1, F0, F1, F0p, F1p } = glob.points
-    // const PL = svg.getPointAtLength(left, t * left.getTotalLength())
-    // const PR = svg.getPointAtLength(right, t * right.getTotalLength())
-    // const N = vec.lrp(N0, vec.neg(N1), t)
+  //   if (!isSelected || !(path && left && right)) return null
+  //   const { C0, r0, C1, r1, N0, N1, F0, F1, F0p, F1p } = glob.points
+  //   // const PL = svg.getPointAtLength(left, t * left.getTotalLength())
+  //   // const PR = svg.getPointAtLength(right, t * right.getTotalLength())
+  //   // const N = vec.lrp(N0, vec.neg(N1), t)
 
-    const { point: P } = closestPointOnPath(path, point)
-    return P
-  })
+  //   const { point: P } = closestPointOnPath(path, point)
+  //   return P
+  // })
 
-  const MP0 = useTransform(MP, (P) => {
-    const { zoom } = state.data.camera
-    if (!P) return ""
-    return [svg.ellipse(P, zoom < 1 ? 3 : 3 / zoom)].join()
-  })
+  // const MP0 = useTransform(MP, (P) => {
+  //   const { zoom } = state.data.camera
+  //   if (!P) return ""
+  //   return [svg.ellipse(P, zoom < 1 ? 3 : 3 / zoom)].join()
+  // })
 
   useEffect(() => {
     state.send("MOUNTED_ELEMENT", { id: glob.id, elm: rOutline.current })
@@ -137,7 +137,7 @@ export default function Glob({ id, fill }: Props) {
         <>
           <g opacity="0">
             {/* Middle Point / Path */}
-            <path
+            {/* <path
               ref={rMiddlePath}
               d={[
                 svg.moveTo(C0),
@@ -169,7 +169,7 @@ export default function Glob({ id, fill }: Props) {
               onPointerDown={() =>
                 state.send("SPLIT_GLOB", { id: glob.id, point: MP.get() })
               }
-            />
+            /> */}
           </g>
           {/* <Combs id={glob.id} points={glob.points} /> */}
           <path

@@ -907,3 +907,27 @@ export function circleFromThreePoints(A: number[], B: number[], C: number[]) {
     Math.sqrt(bx * bx + by * by - 4 * a * c) / (2 * Math.abs(a)),
   ]
 }
+
+export function throttle<T extends (...args: any[]) => any>(
+  fn: T,
+  wait: number
+) {
+  let inThrottle: boolean, lastFn: any, lastTime: number
+  return function() {
+    const context = this,
+      args = arguments
+    if (!inThrottle) {
+      fn.apply(context, args)
+      lastTime = Date.now()
+      inThrottle = true
+    } else {
+      clearTimeout(lastFn)
+      lastFn = setTimeout(function() {
+        if (Date.now() - lastTime >= wait) {
+          fn.apply(context, args)
+          lastTime = Date.now()
+        }
+      }, Math.max(wait - (Date.now() - lastTime), 0))
+    }
+  }
+}

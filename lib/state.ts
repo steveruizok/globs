@@ -5,6 +5,7 @@ import { ICanvasItems, INode, IGlob, IData } from "lib/types"
 import intersect from "path-intersection"
 import {
   arrsIntersect,
+  clamp,
   getCircleTangentToPoint,
   getClosestPointOnCircle,
   getGlob,
@@ -15,6 +16,7 @@ import {
   projectPoint,
   rectContainsRect,
   round,
+  throttle,
 } from "utils"
 import { initialData } from "./data"
 import { getGlobOutline } from "components/canvas/glob"
@@ -59,6 +61,7 @@ const state = createState({
     SET_NODES_RADIUS: ["setSelectedNodesRadius", "updateNodeGlobPoints"],
     SET_NODES_CAP: ["setSelectedNodesCap", "updateNodeGlobPoints"],
     SET_NODES_LOCKED: "setSelectedNodesLocked",
+    SET_GLOB_OPTIONS: ["setSelectedGlobOptions", "updateSelectedGlobsPoints"],
     TOGGLED_FILL: "toggleFill",
     TOGGLED_NODE_LOCKED: "toggleNodeLocked",
     WHEELED: {
@@ -717,6 +720,13 @@ const state = createState({
 
       // Now update the globs!
     },
+    setSelectedGlobOptions(data, payload: Partial<IGlob["options"]>) {
+      const { globs, selectedGlobs } = data
+      for (let id of selectedGlobs) {
+        const glob = globs[id]
+        Object.assign(glob.options, payload)
+      }
+    },
     updateNodeGlobPoints(data) {
       const { globs, nodes, selectedNodes, selectedGlobs } = data
       Object.values(globs)
@@ -868,7 +878,7 @@ const state = createState({
         }
       }
 
-      glob.options[selectedHandle.handle] = next
+      glob.options[selectedHandle.handle] = vec.round(next)
 
       glob.points = getGlob(
         nodes[start].point,
@@ -1134,7 +1144,7 @@ function handlePointerUp(e: PointerEvent) {
   state.send("STOPPED_POINTING")
 }
 
-function handlePointerMove(e: PointerEvent) {
+const handlePointerMove = throttle((e: PointerEvent) => {
   if (pointer.id > -1 && e.pointerId !== pointer.id) return
   const x = e.clientX
   const y = e.clientY
@@ -1143,7 +1153,7 @@ function handlePointerMove(e: PointerEvent) {
   pointer.delta = vec.sub([x, y], pointer.point)
   pointer.point = [x, y]
   state.send("MOVED_POINTER")
-}
+}, 16)
 
 const downCommands = {
   Escape: "CANCELLED",

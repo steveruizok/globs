@@ -1,10 +1,11 @@
 import state, { useSelector } from "lib/state"
-import { deepCompare, deepCompareArrays } from "lib/utils"
+import { clamp, deepCompareArrays } from "lib/utils"
 import styled from "styled-components"
 import React, { useEffect, useRef, useState } from "react"
 import { ArrowRight, ArrowUp, Disc, X } from "react-feather"
 import Docs from "./docs"
 import { IGlob, INode } from "lib/types"
+import { motion, PanInfo } from "framer-motion"
 
 export default function PropsList() {
   // const selectedNodeIds = useSelector((s) => s.data.selectedNodes, deepCompare)
@@ -72,7 +73,9 @@ function GlobsProps({ selectedGlobs }: { selectedGlobs: IGlob[] }) {
         min={0}
         max={1}
         step={0.01}
-        onChange={(value) => state.send("SET_GLOB_OPTIONS", { a: value })}
+        onChange={(value) =>
+          state.send("SET_GLOB_OPTIONS", { a: clamp(value, 0, 1) })
+        }
       />
       <NumberProp
         value={b}
@@ -80,7 +83,9 @@ function GlobsProps({ selectedGlobs }: { selectedGlobs: IGlob[] }) {
         min={0}
         max={1}
         step={0.01}
-        onChange={(value) => state.send("SET_GLOB_OPTIONS", { b: value })}
+        onChange={(value) =>
+          state.send("SET_GLOB_OPTIONS", { b: clamp(value, 0, 1) })
+        }
       />
       <NumberProp
         value={ap}
@@ -88,7 +93,9 @@ function GlobsProps({ selectedGlobs }: { selectedGlobs: IGlob[] }) {
         min={0}
         max={1}
         step={0.01}
-        onChange={(value) => state.send("SET_GLOB_OPTIONS", { ap: value })}
+        onChange={(value) =>
+          state.send("SET_GLOB_OPTIONS", { ap: clamp(value, 0, 1) })
+        }
       />
       <NumberProp
         value={bp}
@@ -96,8 +103,50 @@ function GlobsProps({ selectedGlobs }: { selectedGlobs: IGlob[] }) {
         min={0}
         max={1}
         step={0.01}
-        onChange={(value) => state.send("SET_GLOB_OPTIONS", { bp: value })}
+        onChange={(value) =>
+          state.send("SET_GLOB_OPTIONS", { bp: clamp(value, 0, 1) })
+        }
       />
+      {selectedGlobs.length === 1 && (
+        <>
+          <NumberProp
+            value={selectedGlobs[0].options.D[0]}
+            unit="Dx"
+            onChange={(value) =>
+              state.send("SET_GLOB_OPTIONS", {
+                D: [value, selectedGlobs[0].options.D[1]],
+              })
+            }
+          />
+          <NumberProp
+            value={selectedGlobs[0].options.D[1]}
+            unit="Dy"
+            onChange={(value) =>
+              state.send("SET_GLOB_OPTIONS", {
+                D: [selectedGlobs[0].options.D[0], value],
+              })
+            }
+          />
+          <NumberProp
+            value={selectedGlobs[0].options.Dp[0]}
+            unit="Dpx"
+            onChange={(value) =>
+              state.send("SET_GLOB_OPTIONS", {
+                Dp: [value, selectedGlobs[0].options.Dp[1]],
+              })
+            }
+          />
+          <NumberProp
+            value={selectedGlobs[0].options.Dp[1]}
+            unit="Dpy"
+            onChange={(value) =>
+              state.send("SET_GLOB_OPTIONS", {
+                Dp: [selectedGlobs[0].options.Dp[0], value],
+              })
+            }
+          />
+        </>
+      )}
     </>
   )
 }
@@ -143,6 +192,7 @@ function NodesProps({ selectedNodes }: { selectedNodes: INode[] }) {
       <NumberProp
         value={radius}
         unit="radius"
+        min={0}
         onChange={(value) => state.send("SET_NODES_RADIUS", { value })}
       />
       <EnumProp
@@ -180,30 +230,78 @@ function NumberProp({
   unit,
   onChange,
 }: NumberPropProps) {
-  const [state, setState] = useState<number>(Number(value))
+  const rInput = useRef<HTMLInputElement>(null)
+  const [isHovered, setIsHovered] = useState(false)
+  const [isFocused, setIsFocused] = useState(false)
 
-  useEffect(() => {
-    setState(Number(value))
-  }, [value])
+  // const [state, setState] = useState(Math.round(Number(value) * 100) / 100)
 
   function handleKeyDown(e: React.KeyboardEvent) {
     e.stopPropagation()
-    e.key === "Enter" && onChange(state)
+    // e.key === "Enter" && onChange(state)
+  }
+
+  function handleChange({
+    currentTarget: { value },
+  }: React.ChangeEvent<HTMLInputElement>) {
+    const next = Math.round(Number(rPanStart.current) * 100) / 100
+    onChange(min !== undefined ? clamp(next, min, max) : next)
+    // setState(min !== undefined ? clamp(Number(value), min, max) : Number(value))
+  }
+
+  function handlePanStart() {
+    document.body.style.cursor = "ew-resize"
+  }
+
+  function handlePanEnd() {
+    document.body.style.cursor = "default"
+  }
+
+  let rPanStart = useRef(Math.round(Number(value) * 100) / 100)
+
+  function handlePan(e: PointerEvent, info: PanInfo) {
+    if (!isFocused && value !== "mixed") {
+      rPanStart.current += info.delta.x
+      const next = Math.round(Number(rPanStart.current) * 100) / 100
+      onChange(min !== undefined ? clamp(next, min, max) : next)
+    }
+  }
+
+  function handleTap() {
+    if (isHovered) {
+      setIsFocused(true)
+      rInput.current!.focus()
+    }
   }
 
   return (
     <PropContainer>
-      <label>{unit}</label>
-      <input
-        type="number"
-        value={state || 0}
-        min={min}
-        max={max}
-        step={step}
-        onKeyDown={handleKeyDown}
-        onChange={({ currentTarget: { value } }) => setState(Number(value))}
-        onBlur={() => onChange(state)}
-      />
+      <label style={{ pointerEvents: "none" }}>{unit}</label>
+      <motion.div
+        className="dragWrapper"
+        onPointerEnter={() => setIsHovered(true)}
+        onPointerLeave={() => setIsHovered(false)}
+        onPanStart={handlePanStart}
+        onPanEnd={handlePanEnd}
+        onPan={handlePan}
+        onTap={handleTap}
+      >
+        <input
+          ref={rInput}
+          type="number"
+          value={value || 0}
+          min={min}
+          max={max}
+          step={step}
+          onKeyDown={handleKeyDown}
+          onChange={handleChange}
+          onBlur={(e) => {
+            setIsFocused(false)
+            if (value !== "mixed") handleChange(e)
+          }}
+          style={{ pointerEvents: isFocused ? "all" : "none" }}
+        />
+      </motion.div>
     </PropContainer>
   )
 }
@@ -272,7 +370,7 @@ function BoolProp({ value, unit, onChange }: BoolPropProps) {
   )
 }
 
-const PropContainer = styled.div`
+const PropContainer = styled(motion.div)`
   display: flex;
   justify-content: space-between;
   overflow: hidden;
@@ -281,6 +379,10 @@ const PropContainer = styled.div`
 
   & label {
     width: 80px;
+  }
+
+  .dragWrapper {
+    width: 100%;
   }
 
   & input,
