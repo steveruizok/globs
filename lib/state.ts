@@ -39,6 +39,7 @@ const elms: Record<string, SVGPathElement> = {}
 
 const state = createState({
   data: initialData,
+  onEnter: ["setup"],
   on: {
     MOUNTED_ELEMENT: { secretlyDo: "mountElement" },
     UNMOUNTED_ELEMENT: { secretlyDo: "deleteElement" },
@@ -74,7 +75,6 @@ const state = createState({
     },
     MOVED_POINTER: { secretlyDo: "updateMvPointer" },
   },
-  onEnter: ["setup"],
   states: {
     tool: {
       initial: "selecting",
@@ -120,9 +120,7 @@ const state = createState({
                   },
                   { if: "nodeIsHovered", to: "pointingNodes" },
                 ],
-                SPLIT_GLOB: {
-                  do: (d, p) => console.log("split at", p),
-                },
+                SPLIT_GLOB: "splitGlobAtPoint",
                 SELECTED_GLOB: [
                   {
                     if: "globIsSelected",
@@ -729,6 +727,9 @@ const state = createState({
       }
 
       // Now update the globs!
+    },
+    splitGlobAtPoint(data) {
+      // TODO
     },
     setSelectedGlobOptions(data, payload: Partial<IGlob["options"]>) {
       const { globs, selectedGlobs } = data
