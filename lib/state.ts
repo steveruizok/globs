@@ -813,7 +813,6 @@ const state = createState({
       const globsArr = Object.values(data.globs)
 
       for (let id of selectedNodes) {
-        // for (let id1 of selectedNodes) {
         if (payload.id === id) continue
 
         for (let glob of globsArr) {
@@ -824,8 +823,6 @@ const state = createState({
         globs[newGlob.id] = newGlob
         globIds.push(newGlob.id)
       }
-
-      data.selectedNodes = [payload.id]
     },
     deleteSelectedGlobs(data) {
       const { globs, selectedGlobs } = data
