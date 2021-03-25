@@ -169,6 +169,7 @@ const state = createState({
               },
             },
             pointingGlobs: {
+              onExit: "saveData",
               onEnter: ["setInitialPoints", "setSnapPoints"],
               on: {
                 CANCELLED: { do: "returnSelected", to: "notPointing" },
@@ -180,6 +181,7 @@ const state = createState({
               },
             },
             pointingNodes: {
+              onExit: "saveData",
               onEnter: ["setInitialPoints", "setSnapPoints"],
               on: {
                 CANCELLED: { do: "returnSelected", to: "notPointing" },
@@ -195,6 +197,7 @@ const state = createState({
               },
             },
             pointingHandle: {
+              onExit: "saveData",
               onEnter: ["setSnapPoints"],
               on: {
                 WHEELED: "moveSelectedHandle",
@@ -206,6 +209,7 @@ const state = createState({
               },
             },
             pointingAnchor: {
+              onExit: "saveData",
               on: {
                 WHEELED: "moveSelectedAnchor",
                 MOVED_POINTER: "moveSelectedAnchor",
@@ -226,27 +230,32 @@ const state = createState({
             },
           },
         },
-        cloningNodes: {},
+        cloningNodes: {
+          onExit: "saveData",
+        },
         creatingNodes: {
+          onExit: "saveData",
           on: {
             CANCELLED: { to: "selecting" },
             POINTED_CANVAS: {
-              do: ["createNode", "saveData"],
+              do: "createNode",
               to: "selecting",
             },
           },
         },
         linkingNodes: {
+          onExit: "saveData",
           on: {
             CANCELLED: { to: "selecting" },
             POINTED_CANVAS: { to: "selecting" },
             SELECTED_NODE: {
-              do: ["createGlobBetweenNodes", "saveData"],
+              do: "createGlobBetweenNodes",
               to: "selecting",
             },
           },
         },
         branchingNodes: {
+          onExit: "saveData",
           on: {
             CANCELLED: { to: "selecting" },
             POINTED_CANVAS: {
@@ -620,16 +629,16 @@ const state = createState({
 
       newNode.radius = minRadius
 
-      const id = "node_" + Date.now()
-
       data.nodeIds.push(newNode.id)
       data.nodes[newNode.id] = newNode
 
       for (let nodeId of selectedNodes) {
-        const glob = createGlob(nodes[nodeId], nodes[id])
+        const glob = createGlob(nodes[nodeId], nodes[newNode.id])
         globIds.push(glob.id)
         data.globs[glob.id] = glob
       }
+
+      data.selectedNodes = [newNode.id]
     },
 
     // GLOBS
@@ -815,6 +824,8 @@ const state = createState({
         globs[newGlob.id] = newGlob
         globIds.push(newGlob.id)
       }
+
+      data.selectedNodes = [payload.id]
     },
     deleteSelectedGlobs(data) {
       const { globs, selectedGlobs } = data
@@ -1245,8 +1256,10 @@ function createGlob(A: INode, B: INode): IGlob {
     ap = 0.5,
     bp = 0.5
 
+  const id = "node_" + Math.random() * Date.now()
+
   return {
-    id: "glob_" + Date.now(),
+    id,
     name: "Glob",
     nodes: [A.id, B.id],
     options: { D, Dp, a, b, ap, bp },
@@ -1256,7 +1269,7 @@ function createGlob(A: INode, B: INode): IGlob {
 }
 
 function createNode(point: number[]): INode {
-  const id = "node_" + Date.now()
+  const id = "node_" + Math.random() * Date.now()
 
   return {
     id,

@@ -9,5 +9,11 @@ export default function HoveringNodes() {
     deepCompareArrays
   )
 
-  return highlitNodes.map((id) => <HoverNode key={id} id={id} />)
+  return (
+    <>
+      {highlitNodes.map((id) => (
+        <HoverNode key={id} id={id} />
+      ))}
+    </>
+  )
 }
