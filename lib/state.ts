@@ -35,13 +35,13 @@ import { motionValue } from "framer-motion"
 - [ ] Copy and paste
 */
 
-const elms: Record<string, SVGSVGElement> = {}
+const elms: Record<string, SVGPathElement> = {}
 
 const state = createState({
   data: initialData,
   on: {
-    MOUNTED_ELEMENT: (d, p) => (elms[p.id] = p.elm),
-    UNMOUNTED_ELEMENT: (d, p) => delete elms[p.id],
+    MOUNTED_ELEMENT: { secretlyDo: "mountElement" },
+    UNMOUNTED_ELEMENT: { secretlyDo: "deleteElement" },
     MOUNTED: { do: ["setup", "setViewport"], to: "selecting" },
     UNMOUNTED: ["teardown"],
     RESIZED: "setViewport",
@@ -323,6 +323,14 @@ const state = createState({
     },
   },
   actions: {
+    // ELEMENT REFERENCES
+    mountElement(data, payload: { id: string; elm: SVGPathElement }) {
+      elms[payload.id] = payload.elm
+    },
+    deleteElement(data, payload: { id: string; elm: SVGPathElement }) {
+      elms[payload.id] = payload.elm
+    },
+    // POINTER
     updateMvPointer(data) {
       updateMvPointer(pointer, data.camera)
     },
