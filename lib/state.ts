@@ -301,6 +301,9 @@ const state = createState({
     isTrackpadZoom(data, payload: { ctrlKey: boolean }) {
       return keys.Alt || payload.ctrlKey
     },
+    hasControl() {
+      return keys.Control
+    },
     hasMeta() {
       return keys.Meta
     },
@@ -889,8 +892,23 @@ const state = createState({
         }
       }
 
+      // Move the other handle, too.
+      if (keys.Meta) {
+        const otherHandle = selectedHandle.handle === "D" ? "Dp" : "D"
+        glob.options[otherHandle] = getSafeHandlePoint(
+          nodes[start],
+          nodes[end],
+          vec.add(
+            glob.options[otherHandle],
+            vec.sub(next, glob.options[selectedHandle.handle])
+          )
+        )
+      }
+
+      // Apply the change to the handle
       glob.options[selectedHandle.handle] = vec.round(next)
 
+      // Rebuild the glob points
       glob.points = getGlob(
         nodes[start].point,
         nodes[start].radius,
@@ -947,6 +965,12 @@ const state = createState({
         if (Math.abs(n - 0.5) < 0.025) {
           n = 0.5
         }
+      }
+
+      if (keys.Meta) {
+        const otherAnchor =
+          selectedAnchor.anchor === "a" ? "ap" : "b" ? "bp" : "ap" ? "a" : "b"
+        glob.options[otherAnchor] = n
       }
 
       glob.options[selectedAnchor.anchor] = n

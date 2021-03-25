@@ -38,6 +38,14 @@ export default function Docs() {
       <p>
         To <b>move</b> a glob, drag it on the canvas.
       </p>
+      <p>
+        To <b>change</b> a glob, drag its handles. Hold <b>Command</b> to move
+        both handles at once.
+      </p>
+      <p>
+        To <b>adjust</b> a glob more precisely, drag its anchors. Hold{" "}
+        <b>Command</b> to move both anchors at once.
+      </p>
       <hr />
       <p>Hold Shift to select multiple nodes or globs.</p>
       <p>Click on the canvas and drag to select multiple nodes and/or globs.</p>
