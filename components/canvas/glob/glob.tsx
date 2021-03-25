@@ -9,12 +9,12 @@ import {
   circleFromThreePoints,
   getNearestPointOnCurve,
 } from "utils"
-import Dot from "./dot"
-import Combs from "./glob-elements/combs"
+import Dot from "../dot"
+import Combs from "./combs"
 import { IGlobPoints } from "types"
 import state, { useSelector, mvPointer } from "lib/state"
-import Anchor from "./glob-elements/anchor"
-import Handles from "./glob-elements/handles"
+import Anchor from "./anchor"
+import Handles from "./handles"
 import { motion, useTransform } from "framer-motion"
 
 interface Props {

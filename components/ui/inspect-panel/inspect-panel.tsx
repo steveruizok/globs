@@ -1,7 +1,6 @@
 import styled from "styled-components"
 import { motion, useMotionValue, useTransform } from "framer-motion"
 import PropsList from "./props-list"
-import { useSelector } from "lib/state"
 
 const MIN = 200,
   MAX = 320
@@ -9,8 +8,6 @@ const MIN = 200,
 export default function InspectPanel() {
   const mvOffsetX = useMotionValue(0)
   const mvWidth = useTransform(mvOffsetX, (v) => MIN + -v)
-
-  const showProps = useSelector((s) => !s.isIn("pointingHandle"))
 
   function handleDragStart() {
     document.body.style.cursor = "col-resize"

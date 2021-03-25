@@ -19,7 +19,7 @@ import {
   throttle,
 } from "utils"
 import { initialData } from "./data"
-import { getGlobOutline } from "components/canvas/glob"
+import { getGlobOutline } from "components/canvas/glob/glob"
 import { motionValue } from "framer-motion"
 
 /*
@@ -63,7 +63,8 @@ const state = createState({
     SET_NODES_CAP: ["setSelectedNodesCap", "updateNodeGlobPoints"],
     SET_NODES_LOCKED: "setSelectedNodesLocked",
     SET_GLOB_OPTIONS: ["setSelectedGlobOptions", "updateSelectedGlobsPoints"],
-    TOGGLED_FILL: "toggleFill",
+    ENABLED_FILL: "enableFill",
+    DISABLED_FILL: "disableFill",
     TOGGLED_NODE_LOCKED: "toggleNodeLocked",
     WHEELED: {
       ifAny: ["hasShift", "isTrackpadZoom"],
@@ -336,8 +337,11 @@ const state = createState({
       updateMvPointer(pointer, data.camera)
     },
     // DISPLAY
-    toggleFill(data) {
-      data.fill = !data.fill
+    enableFill(data) {
+      data.fill = true
+    },
+    disableFill(data) {
+      data.fill = false
     },
     // BRUSH
     startBrush(data) {
@@ -1073,7 +1077,7 @@ const state = createState({
       if (typeof localStorage === "undefined") return
       const saved = localStorage.getItem("glob_aldata_v3")
       if (saved) {
-        // Object.assign(data, JSON.parse(saved))
+        Object.assign(data, JSON.parse(saved))
       }
 
       data.selectedNodes = []
@@ -1195,12 +1199,12 @@ const downCommands = {
   Enter: "CONFIRMED",
   Delete: "DELETED",
   Backspace: "DELETED",
-  " ": "TOGGLED_FILL",
+  " ": "ENABLED_FILL",
   l: "LOCKED_NODES",
 }
 
 const upCommands = {
-  " ": "TOGGLED_FILL",
+  " ": "DISABLED_FILL",
 }
 
 function handleKeyDown(e: KeyboardEvent) {

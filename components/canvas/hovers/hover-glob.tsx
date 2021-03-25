@@ -1,7 +1,7 @@
 import state, { useSelector } from "lib/state"
 import { deepCompare, getGlob } from "lib/utils"
 import { useRef } from "react"
-import { getGlobOutline } from "./glob"
+import { getGlobOutline } from "../glob/glob"
 
 interface Props {
   id: string

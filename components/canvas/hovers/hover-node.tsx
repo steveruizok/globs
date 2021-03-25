@@ -1,6 +1,5 @@
 import { useSelector } from "lib/state"
 import { deepCompare } from "lib/utils"
-import { useRef } from "react"
 
 interface Props {
   id: string
