@@ -1,6 +1,14 @@
 // Includes a lot of extras here.
 import * as svg from "./svg"
-import { IGlob, IGlobPoints, INode } from "./types"
+import {
+  IBounds,
+  ICanvasItem,
+  ICanvasItems,
+  IGlob,
+  IGlobPoints,
+  INode,
+  INodeSnapshot,
+} from "./types"
 import {
   tangent,
   angle,
@@ -931,3 +939,202 @@ export function throttle<T extends (...args: any[]) => any>(
     }
   }
 }
+
+export const getBounds = (elements: SVGPathElement[]) => {
+  let bounds: IBounds = {
+    x: 0,
+    y: 0,
+    maxX: 0,
+    maxY: 0,
+    width: 0,
+    height: 0,
+  }
+
+  for (let i = 0; i < elements.length; i++) {
+    const elm = elements[i]
+
+    const bbox = elm.getBBox()
+
+    if (i === 0) {
+      bounds = {
+        x: bbox.x,
+        y: bbox.y,
+        maxX: bbox.x + bbox.width,
+        maxY: bbox.y + bbox.height,
+        width: 0,
+        height: 0,
+      }
+      continue
+    }
+
+    bounds.x = Math.min(bounds.x, bbox.x)
+    bounds.y = Math.min(bounds.y, bbox.y)
+    bounds.maxX = Math.max(bounds.maxX, bbox.x + bbox.width)
+    bounds.maxY = Math.max(bounds.maxY, bbox.y + bbox.height)
+  }
+
+  bounds.width = Math.abs(bounds.maxX - bounds.x)
+  bounds.height = Math.abs(bounds.maxY - bounds.y)
+
+  return bounds
+}
+
+function getSnapshots(
+  nodes: INode[],
+  bounds: IBounds
+): Record<string, INodeSnapshot> {
+  const acc = {} as Record<string, INodeSnapshot>
+
+  for (let node of nodes) {
+    let {
+      radius,
+      point: [x, y],
+    } = node
+
+    acc[node.id] = {
+      id: node.id,
+      x: x,
+      y: y,
+      nx: (x - bounds.x) / bounds.width,
+      ny: (y - bounds.y) / bounds.height,
+      nmx: 1 - (x - bounds.x) / bounds.width,
+      nmy: 1 - (y - bounds.y) / bounds.height,
+      nw: radius,
+      nh: radius,
+    }
+  }
+
+  return acc
+}
+
+function getSnapglobs(globs: IGlob[], bounds: IBounds) {
+  return Object.fromEntries(
+    globs.map((glob) => {
+      let {
+        D: [dx, dy],
+        Dp: [dpx, dpy],
+      } = glob.options
+
+      return [
+        glob.id,
+        {
+          D: {
+            nx: (dx - bounds.x) / bounds.width,
+            ny: (dy - bounds.y) / bounds.height,
+            nmx: 1 - (dx - bounds.x) / bounds.width,
+            nmy: 1 - (dy - bounds.y) / bounds.height,
+          },
+          Dp: {
+            nx: (dpx - bounds.x) / bounds.width,
+            ny: (dpy - bounds.y) / bounds.height,
+            nmx: 1 - (dpx - bounds.x) / bounds.width,
+            nmy: 1 - (dpy - bounds.y) / bounds.height,
+          },
+        },
+      ]
+    })
+  )
+}
+
+export function getEdgeResizer(
+  initialNodes: INode[],
+  initialGlobs: IGlob[],
+  bounds: IBounds,
+  edge: number
+) {
+  if (initialNodes.length === 0 && initialGlobs.length === 0) {
+    throw Error("Must have at least one thing!")
+  }
+
+  if (!bounds) {
+    throw Error("Must have bounds!")
+  }
+
+  const snapshots = getSnapshots(initialNodes, bounds)
+  const snapglobs = getSnapglobs(initialGlobs, bounds)
+
+  let { x: x0, maxX: y0, maxX: x1, maxY: y1 } = bounds
+  let { y: mx, maxX: my, width: mw, height: mh } = bounds
+
+  return function edgeResize(point: number[], nodes: INode[], globs: IGlob[]) {
+    const [x, y] = point
+    if (edge === 0 || edge === 2) {
+      edge === 0 ? (y0 = y) : (y1 = y)
+      my = y0 < y1 ? y0 : y1
+      mh = Math.abs(y1 - y0)
+      for (let node of nodes) {
+        const { ny, nmy } = snapshots[node.id]
+        node.point[1] = my + (y1 < y0 ? nmy : ny) * mh
+      }
+      for (let glob of globs) {
+        for (let handle of ["D", "Dp"]) {
+          const { ny, nmy } = snapglobs[glob.id][handle]
+          glob.options[handle][1] = my + (y1 < y0 ? nmy : ny) * mh
+        }
+      }
+    } else {
+      edge === 1 ? (x1 = x) : (x0 = x)
+      mx = x0 < x1 ? x0 : x1
+      mw = Math.abs(x1 - x0)
+      for (let node of nodes) {
+        const { nx, nmx } = snapshots[node.id]
+        node.point[0] = mx + (x1 < x0 ? nmx : nx) * mw
+      }
+      for (let glob of globs) {
+        for (let handle of ["D", "Dp"]) {
+          const { nx, nmx } = snapglobs[glob.id][handle]
+          glob.options[handle][0] = mx + (x1 < x0 ? nmx : nx) * mw
+        }
+      }
+    }
+  }
+}
+
+/**
+ * Returns a function that can be used to calculate corner resize transforms.
+ * @param boxes An array of the boxes being resized.
+ * @param corner A number representing the corner being dragged. Top Left: 0, Top Right: 1, Bottom Right: 2, Bottom Left: 3.
+ * @example
+ * const resizer = getCornerResizer(selectedBoxes, 3)
+ * resizer(selectedBoxes, )
+ */
+export function getCornerResizer(
+  initialNodes: INode[],
+  bounds: IBounds,
+  corner: number
+) {
+  if (initialNodes.length === 0) {
+    throw Error("Must have at least one node!")
+  }
+
+  if (!bounds) {
+    throw Error("Must have bounds!")
+  }
+
+  const snapshots = getSnapshots(initialNodes, bounds)
+
+  let { x: x0, maxX: y0, maxX: x1, maxY: y1 } = bounds
+  let { y: mx, maxX: my, width: mw, height: mh } = bounds
+
+  return function cornerResizer(point: number[], nodes: INode[]) {
+    const [x, y] = point
+    corner < 2 ? (y0 = y) : (y1 = y)
+    my = y0 < y1 ? y0 : y1
+    mh = Math.abs(y1 - y0)
+
+    corner === 1 || corner === 2 ? (x1 = x) : (x0 = x)
+    mx = x0 < x1 ? x0 : x1
+    mw = Math.abs(x1 - x0)
+
+    for (let node of nodes) {
+      const { nx, nmx, ny, nmy } = snapshots[node.id]
+      node.point = [
+        mx + (x1 < x0 ? nmx : nx) * mw,
+        my + (y1 < y0 ? nmy : ny) * mh,
+      ]
+    }
+  }
+}
+
+export type EdgeResizer = ReturnType<typeof getEdgeResizer>
+export type CornerResizer = ReturnType<typeof getCornerResizer>

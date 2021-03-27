@@ -65,7 +65,7 @@ function AnchorInput({ value, label, onChange }: Props) {
         <input
           ref={rInput}
           type="number"
-          value={value || 0}
+          value={value === "mixed" ? 0 : value}
           min={0}
           max={1}
           step={0.01}

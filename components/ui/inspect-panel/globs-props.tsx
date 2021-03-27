@@ -66,6 +66,8 @@ export default function GlobsProps() {
     []
   )
 
+  if (selectedGlobs.length === 0) return null
+
   const a = selectedGlobs.reduce(
     (a, c) => (c.options.a === a ? a : "mixed"),
     selectedGlobs[0].options.a

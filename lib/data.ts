@@ -17,6 +17,7 @@ export const initialData: IData = {
   },
   fill: false,
   brush: undefined,
+  bounds: undefined,
   nodes: {
     0: {
       id: "0",

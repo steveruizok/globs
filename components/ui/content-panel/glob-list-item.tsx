@@ -10,8 +10,6 @@ export default function GlobListItem({
 }) {
   const glob = useSelector((s) => s.data.globs[id])
 
-  if (!glob) return null
-
   const handlePointerLeave = useCallback(
     () => state.send("UNHIGHLIT_GLOB", { id }),
     [id]
@@ -25,6 +23,8 @@ export default function GlobListItem({
   const handleSelect = useCallback(() => state.send("SELECTED_GLOB", { id }), [
     id,
   ])
+
+  if (!glob) return null
 
   return (
     <li

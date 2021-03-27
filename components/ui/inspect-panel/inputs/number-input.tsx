@@ -61,7 +61,7 @@ function NumberInput({ min, max, step, value, label, onChange }: Props) {
         <input
           ref={rInput}
           type="number"
-          value={value || 0}
+          value={value === "mixed" ? 0 : value}
           min={min}
           max={max}
           step={step}

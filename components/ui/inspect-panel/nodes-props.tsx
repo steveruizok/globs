@@ -14,31 +14,6 @@ export default function NodesProps() {
     deepCompareArrays
   )
 
-  const x = selectedNodes.reduce(
-    (a, c) => (c.point[0] === a ? a : "mixed"),
-    selectedNodes[0].point[0]
-  )
-
-  const y = selectedNodes.reduce(
-    (a, c) => (c.point[1] === a ? a : "mixed"),
-    selectedNodes[0].point[1]
-  )
-
-  const radius = selectedNodes.reduce(
-    (a, c) => (c.radius === a ? a : "mixed"),
-    selectedNodes[0].radius
-  )
-
-  const cap = selectedNodes.reduce(
-    (a, c) => (c.cap === a ? a : "mixed"),
-    selectedNodes[0].cap
-  )
-
-  const locked = selectedNodes.reduce(
-    (a, c) => (c.locked === a ? a : "mixed"),
-    selectedNodes[0].locked
-  )
-
   const handleXChange = useCallback(
     (value: number) => state.send("SET_NODES_X", { value }),
     []
@@ -62,6 +37,33 @@ export default function NodesProps() {
   const handleLockedChange = useCallback(
     (value: boolean) => state.send("SET_NODES_LOCKED", { value }),
     []
+  )
+
+  if (!selectedNodes[0]) return null
+
+  const x = selectedNodes.reduce(
+    (a, c) => (c.point[0] === a ? a : "mixed"),
+    selectedNodes[0].point[0]
+  )
+
+  const y = selectedNodes.reduce(
+    (a, c) => (c.point[1] === a ? a : "mixed"),
+    selectedNodes[0].point[1]
+  )
+
+  const radius = selectedNodes.reduce(
+    (a, c) => (c.radius === a ? a : "mixed"),
+    selectedNodes[0].radius
+  )
+
+  const cap = selectedNodes.reduce(
+    (a, c) => (c.cap === a ? a : "mixed"),
+    selectedNodes[0].cap
+  )
+
+  const locked = selectedNodes.reduce(
+    (a, c) => (c.locked === a ? a : "mixed"),
+    selectedNodes[0].locked
   )
 
   return (

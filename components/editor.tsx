@@ -17,6 +17,8 @@ import ContentPanel from "components/ui/content-panel/content-panel"
 import Toolbar from "components/ui/toolbar"
 import StatusBar from "components/ui/statusbar"
 import Brush from "components/canvas/brush"
+import Bounds from "components/canvas/bounds"
+import BoundsBg from "components/canvas/bounds-bg"
 
 const DOT_RADIUS = 2,
   ANCHOR_RADIUS = 4,
@@ -156,10 +158,12 @@ export default function Editor() {
                     {key}
                   </text>
                 ))}
+                <BoundsBg />
                 <Globs />
                 <Nodes />
                 <HoveredNodes />
                 <HoveredGlobs />
+                <Bounds />
                 <Brush />
               </svg>
               <ContextMenu />

@@ -1,13 +1,18 @@
 import * as vec from "lib/vec"
 import * as svg from "lib/svg"
 import { createState, createSelectorHook } from "@state-designer/react"
-import { ICanvasItems, INode, IGlob, IData } from "lib/types"
+import { ICanvasItems, INode, IGlob, IData, IBounds } from "lib/types"
 import intersect from "path-intersection"
 import {
   arrsIntersect,
   clamp,
+  CornerResizer,
+  EdgeResizer,
+  getCornerResizer,
+  getBounds,
   getCircleTangentToPoint,
   getClosestPointOnCircle,
+  getEdgeResizer,
   getGlob,
   getGlobPath,
   getNearestPointOnCurve,
@@ -19,7 +24,6 @@ import {
   throttle,
 } from "utils"
 import { initialData } from "./data"
-import { getGlobOutline } from "components/canvas/glob/glob"
 import { motionValue } from "framer-motion"
 
 /*
@@ -33,9 +37,10 @@ import { motionValue } from "framer-motion"
 - [ ] Select two nodes and glob them
 - [ ] Keyboard shortcuts for toolbar
 - [ ] Copy and paste
+- [ ] Bounding box
 */
 
-const elms: Record<string, SVGPathElement> = {}
+export const elms: Record<string, SVGPathElement> = {}
 
 const state = createState({
   data: initialData,
@@ -94,6 +99,7 @@ const state = createState({
                   do: [
                     "deleteSelectedGlobs",
                     "deleteSelectedNodes",
+                    "clearSelection",
                     "saveData",
                   ],
                 },
@@ -108,17 +114,17 @@ const state = createState({
                 UNHOVERED_NODE: "pullHoveredNode",
                 SELECTED_NODE: [
                   {
-                    if: "nodeIsSelected",
+                    if: "hasShift",
                     then: {
-                      if: "hasShift",
+                      if: "nodeIsSelected",
                       do: "pullSelectedNode",
+                      else: "pushSelectedNode",
                     },
                     else: {
-                      if: "hasShift",
-                      do: "pushSelectedNode",
-                      else: "setSelectedNode",
+                      do: "setSelectedNode",
                     },
                   },
+
                   { if: "nodeIsHovered", to: "pointingNodes" },
                 ],
                 SPLIT_GLOB: "splitGlobAtPoint",
@@ -128,6 +134,7 @@ const state = createState({
                     then: {
                       if: "hasShift",
                       do: "pullSelectedGlob",
+                      else: "setSelectedGlob",
                     },
                     else: {
                       if: "hasShift",
@@ -135,18 +142,22 @@ const state = createState({
                       else: "setSelectedGlob",
                     },
                   },
-                  { if: "globIsHovered", to: "pointingGlobs" },
+
+                  { if: "globIsHovered", to: "pointingBounds" },
                 ],
                 SELECTED_ANCHOR: {
-                  do: "setSelectingAnchor",
+                  do: ["setSelectingAnchor"],
                   to: "pointingAnchor",
                 },
                 POINTED_HANDLE: {
-                  do: "setSelectingHandle",
+                  do: ["setSelectingHandle"],
                   to: "pointingHandle",
                 },
                 POINTED_CANVAS: [
-                  { if: "hasSelection", do: "clearSelection" },
+                  {
+                    if: "hasSelection",
+                    do: ["clearSelection"],
+                  },
                   {
                     wait: 0.01,
                     ifAny: ["hasSpace", "isMultitouch"],
@@ -156,6 +167,15 @@ const state = createState({
                     },
                   },
                 ],
+                POINTED_BOUNDS: {
+                  to: "pointingBounds",
+                },
+                POINTED_BOUNDS_EDGE: {
+                  to: "edgeResizing",
+                },
+                POINTED_BOUNDS_CORNER: {
+                  to: "cornerResizing",
+                },
               },
             },
             canvasPanning: {
@@ -168,9 +188,8 @@ const state = createState({
                 },
               },
             },
-            pointingGlobs: {
+            pointingBounds: {
               onExit: "saveData",
-              onEnter: ["setInitialPoints", "setSnapPoints"],
               on: {
                 CANCELLED: { do: "returnSelected", to: "notPointing" },
                 WHEELED: ["moveSelected", "updateSelectedGlobsPoints"],
@@ -186,11 +205,13 @@ const state = createState({
               on: {
                 CANCELLED: { do: "returnSelected", to: "notPointing" },
                 WHEELED: ["moveSelected", "updateSelectedGlobsPoints"],
-                MOVED_POINTER: {
-                  if: "hasMeta",
-                  do: ["resizeNode", "updateSelectedGlobsPoints"],
-                  else: ["moveSelected", "updateSelectedGlobsPoints"],
-                },
+                MOVED_POINTER: [
+                  {
+                    if: "hasMeta",
+                    do: ["resizeNode", "updateSelectedGlobsPoints"],
+                    else: ["moveSelected", "updateSelectedGlobsPoints"],
+                  },
+                ],
                 STOPPED_POINTING: {
                   to: "notPointing",
                 },
@@ -200,8 +221,8 @@ const state = createState({
               onExit: "saveData",
               onEnter: ["setSnapPoints"],
               on: {
-                WHEELED: "moveSelectedHandle",
-                MOVED_POINTER: "moveSelectedHandle",
+                WHEELED: ["moveSelectedHandle"],
+                MOVED_POINTER: ["moveSelectedHandle"],
                 STOPPED_POINTING: {
                   do: ["clearSelectedHandle"],
                   to: "notPointing",
@@ -211,8 +232,8 @@ const state = createState({
             pointingAnchor: {
               onExit: "saveData",
               on: {
-                WHEELED: "moveSelectedAnchor",
-                MOVED_POINTER: "moveSelectedAnchor",
+                WHEELED: ["moveSelectedAnchor"],
+                MOVED_POINTER: ["moveSelectedAnchor"],
                 STOPPED_POINTING: {
                   do: "clearSelectedAnchor",
                   to: "notPointing",
@@ -225,6 +246,24 @@ const state = createState({
               on: {
                 MOVED_POINTER: ["updateBrush", "updateBrushSelection"],
                 WHEELED: ["updateBrush", "updateBrushSelection"],
+                STOPPED_POINTING: { to: "notPointing" },
+              },
+            },
+            edgeResizing: {
+              onEnter: ["setBounds", "setResizingEdge"],
+              on: {
+                MOVED_POINTER: {
+                  do: ["edgeResize", "updateSelectedGlobsPoints"],
+                },
+                STOPPED_POINTING: { to: "notPointing" },
+              },
+            },
+            cornerResizing: {
+              onEnter: ["setBounds", "setResizingCorner"],
+              on: {
+                MOVED_POINTER: {
+                  do: ["cornerResize", "updateSelectedGlobsPoints"],
+                },
                 STOPPED_POINTING: { to: "notPointing" },
               },
             },
@@ -338,12 +377,64 @@ const state = createState({
     },
   },
   actions: {
+    setBounds(data, payload: { bounds: IBounds }) {
+      data.bounds = payload.bounds
+    },
+    clearBounds(data) {
+      data.bounds = undefined
+    },
+    setResizingCorner(data, payload: { corner: number }) {
+      const { selectedNodes, selectedGlobs, nodes } = data
+      data.resizing = {
+        type: "corner",
+        corner: payload.corner,
+      }
+
+      cornerResizer = getCornerResizer(
+        selectedNodes.map((id) => nodes[id]),
+        getBounds([...selectedNodes, ...selectedGlobs].map((id) => elms[id])),
+        payload.corner
+      )
+    },
+    cornerResize(data) {
+      const { selectedNodes, nodes, camera } = data
+
+      cornerResizer(
+        screenToWorld(pointer.point, camera.point, camera.zoom),
+        selectedNodes.map((id) => nodes[id])
+      )
+    },
+    setResizingEdge(data, payload: { edge: number }) {
+      const { selectedNodes, selectedGlobs, globs, nodes } = data
+
+      data.resizing = {
+        type: "edge",
+        edge: payload.edge,
+      }
+
+      edgeResizer = getEdgeResizer(
+        selectedNodes.map((id) => nodes[id]),
+        selectedGlobs.map((id) => globs[id]),
+        getBounds([...selectedNodes, ...selectedGlobs].map((id) => elms[id])),
+        payload.edge
+      )
+    },
+    edgeResize(data) {
+      const { selectedNodes, selectedGlobs, nodes, globs, camera } = data
+
+      edgeResizer(
+        screenToWorld(pointer.point, camera.point, camera.zoom),
+        selectedNodes.map((id) => nodes[id]),
+        selectedGlobs.map((id) => globs[id])
+      )
+    },
+
     // ELEMENT REFERENCES
     mountElement(data, payload: { id: string; elm: SVGPathElement }) {
       elms[payload.id] = payload.elm
     },
-    deleteElement(data, payload: { id: string; elm: SVGPathElement }) {
-      elms[payload.id] = payload.elm
+    deleteElement(data, payload: { id: string }) {
+      delete elms[payload.id]
     },
     // POINTER
     updateMvPointer(data) {
@@ -557,6 +648,7 @@ const state = createState({
       // node.radius = vec.dist(node.point, point)
     },
     setSelectedNode(data, payload: { id: string }) {
+      data.bounds = undefined
       data.selectedHandle = undefined
       data.selectedAnchor = undefined
       data.selectedGlobs = []
@@ -616,6 +708,8 @@ const state = createState({
           }
         }
       }
+
+      data.selectedNodes = []
     },
 
     // BRANCHING NODES
@@ -647,10 +741,11 @@ const state = createState({
 
     // GLOBS
     setSelectedGlob(data, payload: { id: string }) {
-      data.selectedGlobs = [payload.id]
+      data.bounds = undefined
       data.selectedHandle = undefined
       data.selectedAnchor = undefined
       data.selectedNodes = []
+      data.selectedGlobs = [payload.id]
     },
     pushSelectedGlob(data, payload: { id: string }) {
       data.selectedGlobs.push(payload.id)
@@ -1130,6 +1225,11 @@ const state = createState({
   },
 })
 
+/* -------------------- RESIZERS -------------------- */
+
+let edgeResizer: EdgeResizer | undefined = undefined
+let cornerResizer: CornerResizer | undefined = undefined
+
 /* --------------------- INPUTS --------------------- */
 
 export const mvPointer = {
@@ -1192,6 +1292,9 @@ function handlePointerUp(e: PointerEvent) {
   pointer.buttons = e.buttons
   pointer.delta = vec.sub([x, y], pointer.point)
   pointer.point = [x, y]
+
+  document.body.style.cursor = "default"
+
   state.send("STOPPED_POINTING")
 }
 

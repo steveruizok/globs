@@ -1,32 +1,19 @@
-import state, { useSelector } from "lib/state"
-import { deepCompare, deepCompareArrays } from "lib/utils"
-import {
-  RotateCcw,
-  RotateCw,
-  Disc,
-  ArrowRight,
-  Copy,
-  Sun,
-  ArrowUp,
-} from "react-feather"
+import state from "lib/state"
+import { useStateDesigner } from "@state-designer/react"
 import styled from "styled-components"
 
 export default function StatusBar() {
-  const selectedNodes = useSelector(
-    (s) => s.data.selectedNodes,
-    deepCompareArrays
-  )
-  const active = useSelector((s) =>
-    s.active.slice(1).map((s) => s.split("root.")[1])
-  )
-  const log = useSelector((s) => s.log[0])
+  const local = useStateDesigner(state)
+
+  const active = local.active.slice(1).map((s) => s.split("root.")[1])
+  const log = local.log[0]
 
   return (
     <StatusBarContainer>
       <Section>
         {active.join(" | ")} | {log}
       </Section>
-      <Section>{selectedNodes.join(", ")}</Section>
+      <Section></Section>
     </StatusBarContainer>
   )
 }

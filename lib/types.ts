@@ -89,11 +89,12 @@ export interface IData {
     zoom: number
     point: number[]
   }
-  brush: {
+  brush?: {
     start: number[]
     end: number[]
     targets: { id: string; type: "glob" | "handle" | "node"; path: string }[]
   }
+  bounds?: IBounds
   initialPoints: {
     nodes: Record<string, number[]>
     globs: Record<string, { D: number[]; Dp: number[] }>
@@ -116,4 +117,42 @@ export interface IData {
   highlightGlobs: string[]
   selectedNodes: string[]
   cloning: string[]
+  resizing?:
+    | {
+        type: "corner"
+        corner: number
+      }
+    | {
+        type: "edge"
+        edge: number
+      }
 }
+
+export type IBounds = {
+  x: number
+  y: number
+  maxX: number
+  maxY: number
+  width: number
+  height: number
+}
+
+export interface INodeSnapshot {
+  id: string
+  x: number
+  y: number
+  nx: number
+  ny: number
+  nmx: number
+  nmy: number
+  nw: number
+  nh: number
+}
+
+// export interface IGlobSnapshot {
+//   id: string
+// 	x: number
+// 	y: number
+//   nx: number
+//   ny: number
+// }

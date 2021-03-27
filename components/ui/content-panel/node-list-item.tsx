@@ -11,8 +11,6 @@ export default function NodeListItem({
 }) {
   const node = useSelector((s) => s.data.nodes[id])
 
-  if (!node) return null
-
   const handlePointerLeave = useCallback(
     () => state.send("UNHIGHLIT_NODE", { id }),
     [id]
@@ -31,6 +29,8 @@ export default function NodeListItem({
     () => state.send("TOGGLED_NODE_LOCKED", { id }),
     [id]
   )
+
+  if (!node) return null
 
   return (
     <li
