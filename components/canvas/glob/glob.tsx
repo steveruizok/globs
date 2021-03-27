@@ -25,8 +25,8 @@ interface Props {
 export default function Glob({ id, fill }: Props) {
   const glob = useSelector((s) => s.data.globs[id], deepCompare)
   const nodes = useSelector(
-    (s) => glob?.nodes.map((id) => s.data.nodes[id]),
-    deepCompareArrays
+    (s) => glob?.nodes.map((id) => s.data.nodes[id])
+    // deepCompareArrays
   )
 
   const rOutline = useRef<SVGPathElement>(null)

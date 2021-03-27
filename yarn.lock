@@ -1456,10 +1456,10 @@
   dependencies:
     type-detect "4.0.8"
 
-"@state-designer/core@^1.6.7":
-  version "1.6.7"
-  resolved "https://registry.yarnpkg.com/@state-designer/core/-/core-1.6.7.tgz#6cdb6ce01da22db0271387399987dccc556d162f"
-  integrity sha512-iNNbIo7WZ+3MG/j6GlCdkwv582SvrXskMsNFO6P08DfKfjS//Sthh/KKdE1aQYuZdspTB81wmBbalJx9tbrSGw==
+"@state-designer/core@^1.6.9":
+  version "1.6.9"
+  resolved "https://registry.yarnpkg.com/@state-designer/core/-/core-1.6.9.tgz#65e8a745937af67511a32f3666d47f9fc329c922"
+  integrity sha512-3cCf8pix1BbWgSxKOnFH8ohg2YihoEG3PS8hehvB601wYtMbCWFbs7AX7PtY8wGD0Uvg7Zc0U366C3PcRh9HQA==
   dependencies:
     immer "^8.0.2"
     lodash "^4.17.21"
@@ -1468,12 +1468,12 @@
     object.fromentries "^2.0.4"
     tsdx "^0.14.1"
 
-"@state-designer/react@^1.6.7":
-  version "1.6.7"
-  resolved "https://registry.yarnpkg.com/@state-designer/react/-/react-1.6.7.tgz#e46e0d59759e2be08b7eda6f70b0f4d1e0e76f7d"
-  integrity sha512-bGlliqBIBiRWs0bJMc4FooVAAqca+pCPsMjV62Vx4YVJ9hMDHN/ttUw19V3gasAhTtXMBlBFLTCu/rfXi+YcrA==
+"@state-designer/react@^1.6.9":
+  version "1.6.9"
+  resolved "https://registry.yarnpkg.com/@state-designer/react/-/react-1.6.9.tgz#53ecb2d84c5ac2d14b81224fd65ffa5103ccb306"
+  integrity sha512-syyer7sZSR2bnPtmUyMjV6E65/QeHHBJO72UG+8Z/fDzN/feXckO9h/GUqe1k7iTQB8SZEj685WEvhVPkcVHmg==
   dependencies:
-    "@state-designer/core" "^1.6.7"
+    "@state-designer/core" "^1.6.9"
 
 "@types/babel__core@^7.1.7":
   version "7.1.13"

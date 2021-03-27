@@ -7,13 +7,13 @@ import GlobsProps from "./globs-props"
 
 export default function PropsList() {
   const selectedNodes = useSelector(
-    (s) => s.data.selectedNodes.map((id) => s.data.nodes[id]).filter(Boolean),
-    deepCompareArrays
+    (s) => s.data.selectedNodes.map((id) => s.data.nodes[id]).filter(Boolean)
+    // deepCompareArrays
   )
 
   const selectedGlobs = useSelector(
-    (s) => s.data.selectedGlobs.map((id) => s.data.globs[id]),
-    deepCompareArrays
+    (s) => s.data.selectedGlobs.map((id) => s.data.globs[id])
+    // deepCompareArrays
   )
 
   return (

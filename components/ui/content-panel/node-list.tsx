@@ -3,10 +3,13 @@ import { deepCompareArrays, deepCompare } from "lib/utils"
 import { Lock, Unlock } from "react-feather"
 
 export default function NodeList() {
-  const nodeIds = useSelector((s) => s.data.nodeIds, deepCompareArrays)
+  const nodeIds = useSelector(
+    (s) => s.data.nodeIds
+    // deepCompareArrays
+  )
   const selectedNodeIds = useSelector(
-    (s) => s.data.selectedNodes,
-    deepCompareArrays
+    (s) => s.data.selectedNodes
+    // deepCompareArrays
   )
 
   return (
