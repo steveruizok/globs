@@ -15,7 +15,7 @@ export default function Docs() {
         click on the canvas.
       </p>
       <p>
-        To <b>resize</b> a node: hold Command and drag the node.
+        To <b>resize</b> a node: hold <b>Command</b> and drag the node.
       </p>
       <p>
         To <b>move</b> a node: drag it on the canvas.

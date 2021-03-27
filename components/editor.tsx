@@ -19,6 +19,7 @@ import StatusBar from "components/ui/statusbar"
 import Brush from "components/canvas/brush"
 import Bounds from "components/canvas/bounds"
 import BoundsBg from "components/canvas/bounds-bg"
+import LearnPanel from "components/ui/learn-panel"
 
 const DOT_RADIUS = 2,
   ANCHOR_RADIUS = 4,
@@ -172,6 +173,7 @@ export default function Editor() {
             <ContentPanel />
             <InspectPanel />
             <StatusBar />
+            <LearnPanel />
           </Layout>
         </EditorContainer>
       </ContextMenuRoot>
