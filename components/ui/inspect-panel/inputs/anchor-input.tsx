@@ -1,6 +1,6 @@
 import { motion, PanInfo } from "framer-motion"
 import { clamp } from "lib/utils"
-import { useRef, useState } from "react"
+import { memo, useRef, useState } from "react"
 import { PropContainer } from "./shared"
 
 interface Props {
@@ -9,7 +9,7 @@ interface Props {
   onChange: (value: number) => void
 }
 
-export default function AnchorInput({ value, label, onChange }: Props) {
+function AnchorInput({ value, label, onChange }: Props) {
   const rInput = useRef<HTMLInputElement>(null)
   const [isHovered, setIsHovered] = useState(false)
   const [isFocused, setIsFocused] = useState(false)
@@ -81,3 +81,5 @@ export default function AnchorInput({ value, label, onChange }: Props) {
     </PropContainer>
   )
 }
+
+export default memo(AnchorInput)

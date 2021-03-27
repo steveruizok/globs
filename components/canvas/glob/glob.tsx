@@ -16,6 +16,7 @@ import state, { useSelector, mvPointer } from "lib/state"
 import Anchor from "./anchor"
 import Handles from "./handles"
 import { motion, useTransform } from "framer-motion"
+import useRegisteredElement from "hooks/useRegisteredElement"
 
 interface Props {
   id: string
@@ -24,12 +25,10 @@ interface Props {
 
 export default function Glob({ id, fill }: Props) {
   const glob = useSelector((s) => s.data.globs[id], deepCompare)
-  const nodes = useSelector(
-    (s) => glob?.nodes.map((id) => s.data.nodes[id])
-    // deepCompareArrays
-  )
+  const start = useSelector((s) => s.data.nodes[glob?.nodes[0]])
+  const end = useSelector((s) => s.data.nodes[glob?.nodes[1]])
 
-  const rOutline = useRef<SVGPathElement>(null)
+  const rOutline = useRegisteredElement<SVGPathElement>(id)
 
   const isSelected = useSelector(({ data: { selectedGlobs } }) =>
     selectedGlobs.includes(id)
@@ -71,11 +70,6 @@ export default function Glob({ id, fill }: Props) {
   //   return [svg.ellipse(P, zoom < 1 ? 3 : 3 / zoom)].join()
   // })
 
-  useEffect(() => {
-    state.send("MOUNTED_ELEMENT", { id: glob.id, elm: rOutline.current })
-    return () => void state.send("UNMOUNTED_ELEMENT", { id: glob.id })
-  }, [])
-
   if (!glob) return null
 
   let safe = !!glob.points
@@ -85,7 +79,6 @@ export default function Glob({ id, fill }: Props) {
 
   const { D, Dp } = glob.options
 
-  const [start, end] = nodes
   const { point: C0 } = start
   const { point: C1 } = end
 

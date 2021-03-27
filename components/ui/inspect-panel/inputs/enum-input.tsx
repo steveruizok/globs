@@ -1,3 +1,4 @@
+import { memo } from "react"
 import { PropContainer } from "./shared"
 
 interface Props {
@@ -7,7 +8,7 @@ interface Props {
   onChange: (value: string) => void
 }
 
-export default function EnumProp({ children, value, label, onChange }: Props) {
+function EnumInput({ children, value, label, onChange }: Props) {
   function handleKeyDown(e: React.KeyboardEvent) {
     e.stopPropagation()
   }
@@ -30,3 +31,5 @@ export default function EnumProp({ children, value, label, onChange }: Props) {
     </PropContainer>
   )
 }
+
+export default memo(EnumInput)

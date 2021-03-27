@@ -6,15 +6,8 @@ import NodesProps from "./nodes-props"
 import GlobsProps from "./globs-props"
 
 export default function PropsList() {
-  const selectedNodes = useSelector(
-    (s) => s.data.selectedNodes.map((id) => s.data.nodes[id]).filter(Boolean)
-    // deepCompareArrays
-  )
-
-  const selectedGlobs = useSelector(
-    (s) => s.data.selectedGlobs.map((id) => s.data.globs[id])
-    // deepCompareArrays
-  )
+  const selectedNodes = useSelector((s) => s.data.selectedNodes)
+  const selectedGlobs = useSelector((s) => s.data.selectedGlobs)
 
   return (
     <>
@@ -25,9 +18,9 @@ export default function PropsList() {
         {selectedNodes.length === 0 && selectedGlobs.length === 0 ? (
           <Docs />
         ) : selectedNodes.length > 0 && selectedGlobs.length === 0 ? (
-          <NodesProps selectedNodes={selectedNodes} />
+          <NodesProps />
         ) : selectedNodes.length === 0 && selectedGlobs.length > 0 ? (
-          <GlobsProps selectedGlobs={selectedGlobs} />
+          <GlobsProps />
         ) : (
           <p>Mixed...</p>
         )}

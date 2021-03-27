@@ -146,7 +146,7 @@ const state = createState({
                   to: "pointingHandle",
                 },
                 POINTED_CANVAS: [
-                  "clearSelection",
+                  { if: "hasSelection", do: "clearSelection" },
                   {
                     wait: 0.01,
                     ifAny: ["hasSpace", "isMultitouch"],
@@ -290,6 +290,10 @@ const state = createState({
     },
   },
   conditions: {
+    hasSelection(data) {
+      const { selectedNodes, selectedGlobs } = data
+      return selectedGlobs.length > 0 || selectedNodes.length > 0
+    },
     nodeIsHovered(data, payload: { id: string }) {
       return data.hoveredNodes.includes(payload.id)
     },

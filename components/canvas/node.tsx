@@ -1,3 +1,4 @@
+import useRegisteredElement from "hooks/useRegisteredElement"
 import state, { useSelector } from "lib/state"
 import { deepCompareArrays, deepCompare } from "lib/utils"
 import { useEffect, useRef } from "react"
@@ -10,25 +11,29 @@ interface Props {
 
 export default function Node({ id, fill }: Props) {
   const node = useSelector((s) => s.data.nodes[id], deepCompare)
-  const globs = useSelector(
-    (s) =>
-      Object.values(s.data.globs).filter((glob) => glob.nodes.includes(id)),
-    deepCompareArrays
+
+  const hasGlobs = useSelector((s) =>
+    Object.values(s.data.globs).find((glob) => glob.nodes.includes(id))
   )
 
   const isSelected = useSelector((s) => s.data.selectedNodes.includes(id))
 
-  const rOutline = useRef<SVGCircleElement>(null)
+  const rOutline = useRegisteredElement<SVGCircleElement>(id)
+
   useEffect(() => {
-    state.send("MOUNTED_ELEMENT", { id: node.id, elm: rOutline.current })
+    if (node) {
+      state.send("MOUNTED_ELEMENT", { id: node.id, elm: rOutline.current })
+    }
+
+    return () => {
+      state.send("UNMOUNTED_ELEMENT", { id: node?.id })
+    }
   }, [])
 
   if (!node) {
     // This component's hook updated before its parent's!
     return null
   }
-
-  const hasGlobs = globs.length > 0
 
   // if (hasGlobs) return null
 

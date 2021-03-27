@@ -1,4 +1,4 @@
-import { useRef, useEffect } from "react"
+import { useRef, useEffect, memo } from "react"
 import { PropContainer } from "./shared"
 
 interface Props {
@@ -7,7 +7,7 @@ interface Props {
   onChange: (value: boolean) => void
 }
 
-export default function BoolProp({ value, label, onChange }: Props) {
+function BoolInput({ value, label, onChange }: Props) {
   const rInput = useRef<HTMLInputElement>(null)
 
   function handleKeyDown(e: React.KeyboardEvent) {
@@ -33,3 +33,5 @@ export default function BoolProp({ value, label, onChange }: Props) {
     </PropContainer>
   )
 }
+
+export default memo(BoolInput)

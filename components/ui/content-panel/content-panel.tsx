@@ -6,17 +6,18 @@ import NodeList from "./node-list"
 const MIN = 200,
   MAX = 320
 
+function handleDragStart() {
+  document.body.style.cursor = "col-resize"
+}
+
+function handleDragEnd() {
+  document.body.style.cursor = "default"
+}
+
 export default function ContentPanel() {
   const mvOffsetX = useMotionValue(0)
+
   const mvWidth = useTransform(mvOffsetX, (v) => MIN + v)
-
-  function handleDragStart() {
-    document.body.style.cursor = "col-resize"
-  }
-
-  function handleDragEnd() {
-    document.body.style.cursor = "default"
-  }
 
   return (
     <PanelContainer style={{ width: mvWidth }} data-bp-desktop>
