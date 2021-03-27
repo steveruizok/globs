@@ -9,23 +9,7 @@ import {
   INode,
   INodeSnapshot,
 } from "./types"
-import {
-  tangent,
-  angle,
-  lrp,
-  dist,
-  sub,
-  len,
-  add,
-  mul,
-  per,
-  uni,
-  div,
-  fastDist,
-  nudge,
-  mulV,
-  dist2,
-} from "./vec"
+import * as vec from "./vec"
 
 // A helper for getting tangents.
 export function getCircleTangentToPoint(
@@ -34,10 +18,10 @@ export function getCircleTangentToPoint(
   P: number[],
   side: number
 ) {
-  const B = lrp(A, P, 0.5),
-    r1 = dist(A, B),
-    delta = sub(B, A),
-    d = len(delta)
+  const B = vec.lrp(A, P, 0.5),
+    r1 = vec.dist(A, B),
+    delta = vec.sub(B, A),
+    d = vec.len(delta)
 
   if (!(d <= r0 + r1 && d >= Math.abs(r0 - r1))) {
     return
@@ -45,11 +29,11 @@ export function getCircleTangentToPoint(
 
   const a = (r0 * r0 - r1 * r1 + d * d) / (2.0 * d),
     n = 1 / d,
-    p = add(A, mul(delta, a * n)),
+    p = vec.add(A, vec.mul(delta, a * n)),
     h = Math.sqrt(r0 * r0 - a * a),
-    k = mul(per(delta), h * n)
+    k = vec.mul(vec.per(delta), h * n)
 
-  return side === 0 ? add(p, k) : sub(p, k)
+  return side === 0 ? vec.add(p, k) : vec.sub(p, k)
 }
 
 export function circleCircleIntersections(a: number[], b: number[]) {
@@ -74,8 +58,8 @@ export function getClosestPointOnCircle(
   P: number[],
   padding = 0
 ) {
-  const v = sub(C, P)
-  return sub(C, mul(div(v, len(v)), r + padding))
+  const v = vec.sub(C, P)
+  return vec.sub(C, vec.mul(vec.div(v, vec.len(v)), r + padding))
 }
 
 export function projectPoint(p0: number[], a: number, d: number) {
@@ -427,7 +411,7 @@ export function getEllipseDashOffset(A: number[], step: number) {
 }
 
 export function getSweep(C: number[], A: number[], B: number[]) {
-  return angleDelta(angle(C, A), angle(C, B))
+  return angleDelta(vec.angle(C, A), vec.angle(C, B))
 }
 
 export function getGlobPath(glob: IGlob, start: INode, end: INode) {
@@ -476,16 +460,16 @@ export function getGlob(
     E1p = getCircleTangentToPoint(C1, r1, Dp, 0)
 
   // Get control points
-  const F0 = lrp(E0, D, a),
-    F1 = lrp(E1, D, b),
-    F0p = lrp(E0p, Dp, ap),
-    F1p = lrp(E1p, Dp, bp)
+  const F0 = vec.round(vec.lrp(E0, D, a)),
+    F1 = vec.round(vec.lrp(E1, D, b)),
+    F0p = vec.round(vec.lrp(E0p, Dp, ap)),
+    F1p = vec.round(vec.lrp(E1p, Dp, bp))
 
   // Get inner / outer normal points
-  let N0 = tangent(C0, lrp(E0, E0p, 0.5)),
-    N0p = mul(N0, -1),
-    N1 = tangent(lrp(E1, E1p, 0.5), C1),
-    N1p = mul(N1, -1)
+  let N0 = vec.tangent(C0, vec.lrp(E0, E0p, 0.5)),
+    N0p = vec.mul(N0, -1),
+    N1 = vec.tangent(vec.lrp(E1, E1p, 0.5), C1),
+    N1p = vec.mul(N1, -1)
 
   if (getSweep(C0, E0, E0p) > 0) {
     ;[N0, N0p] = [N0p, N0]
@@ -514,10 +498,10 @@ export function getGlob(
     N1p,
     D,
     Dp,
-    D1: projectPoint(D, angle(D, E0), dist(D, E0) * 2),
-    Dp1: projectPoint(Dp, angle(Dp, E0p), dist(Dp, E0p) * 2),
-    D2: projectPoint(D, angle(D, E1), dist(D, E1) * 2),
-    Dp2: projectPoint(Dp, angle(Dp, E1p), dist(Dp, E1p) * 2),
+    D1: projectPoint(D, vec.angle(D, E0), vec.dist(D, E0) * 2),
+    Dp1: projectPoint(Dp, vec.angle(Dp, E0p), vec.dist(Dp, E0p) * 2),
+    D2: projectPoint(D, vec.angle(D, E1), vec.dist(D, E1) * 2),
+    Dp2: projectPoint(Dp, vec.angle(Dp, E1p), vec.dist(Dp, E1p) * 2),
   }
 }
 
@@ -546,8 +530,8 @@ export function getOuterTangents(
   C1: number[],
   r1: number
 ) {
-  const a0 = angle(C0, C1)
-  const d = dist(C0, C1)
+  const a0 = vec.angle(C0, C1)
+  const d = vec.dist(C0, C1)
 
   // Circles are overlapping, no tangents
   if (d < Math.abs(r1 - r0)) return
@@ -742,7 +726,7 @@ function closestPointInLUT(A: number[], LUT: number[][]) {
     mpos: number,
     d: number
   LUT.forEach(function(p, idx) {
-    d = dist(A, p)
+    d = vec.dist(A, p)
 
     if (d < mdist) {
       mdist = d
@@ -775,7 +759,7 @@ export function getNearestPointOnCurve(A: number[], points: number[][]) {
 
   for (let d: number; t < t2 + step; t += step) {
     p = computePointOnCurve(t, points)
-    d = dist(A, p)
+    d = vec.dist(A, p)
 
     if (d < mdist) {
       mdist = d
@@ -1053,8 +1037,8 @@ export function getEdgeResizer(
   const snapshots = getSnapshots(initialNodes, bounds)
   const snapglobs = getSnapglobs(initialGlobs, bounds)
 
-  let { x: x0, maxX: y0, maxX: x1, maxY: y1 } = bounds
-  let { y: mx, maxX: my, width: mw, height: mh } = bounds
+  let { x: x0, y: y0, maxX: x1, maxY: y1 } = bounds
+  let { maxX: mx, maxY: my, width: mw, height: mh } = bounds
 
   return function edgeResize(point: number[], nodes: INode[], globs: IGlob[]) {
     const [x, y] = point
@@ -1064,12 +1048,12 @@ export function getEdgeResizer(
       mh = Math.abs(y1 - y0)
       for (let node of nodes) {
         const { ny, nmy } = snapshots[node.id]
-        node.point[1] = my + (y1 < y0 ? nmy : ny) * mh
+        node.point[1] = round(my + (y1 < y0 ? nmy : ny) * mh)
       }
       for (let glob of globs) {
         for (let handle of ["D", "Dp"]) {
           const { ny, nmy } = snapglobs[glob.id][handle]
-          glob.options[handle][1] = my + (y1 < y0 ? nmy : ny) * mh
+          glob.options[handle][1] = round(my + (y1 < y0 ? nmy : ny) * mh)
         }
       }
     } else {
@@ -1078,12 +1062,12 @@ export function getEdgeResizer(
       mw = Math.abs(x1 - x0)
       for (let node of nodes) {
         const { nx, nmx } = snapshots[node.id]
-        node.point[0] = mx + (x1 < x0 ? nmx : nx) * mw
+        node.point[0] = round(mx + (x1 < x0 ? nmx : nx) * mw)
       }
       for (let glob of globs) {
         for (let handle of ["D", "Dp"]) {
           const { nx, nmx } = snapglobs[glob.id][handle]
-          glob.options[handle][0] = mx + (x1 < x0 ? nmx : nx) * mw
+          glob.options[handle][0] = round(mx + (x1 < x0 ? nmx : nx) * mw)
         }
       }
     }
@@ -1115,8 +1099,8 @@ export function getCornerResizer(
   const snapshots = getSnapshots(initialNodes, bounds)
   const snapglobs = getSnapglobs(initialGlobs, bounds)
 
-  let { x: x0, maxX: y0, maxX: x1, maxY: y1 } = bounds
-  let { y: mx, maxX: my, width: mw, height: mh } = bounds
+  let { x: x0, y: y0, maxX: x1, maxY: y1 } = bounds
+  let { maxX: mx, maxY: my, width: mw, height: mh } = bounds
 
   return function cornerResizer(
     point: number[],
@@ -1134,18 +1118,18 @@ export function getCornerResizer(
 
     for (let node of nodes) {
       const { nx, nmx, ny, nmy } = snapshots[node.id]
-      node.point = [
+      node.point = vec.round([
         mx + (x1 < x0 ? nmx : nx) * mw,
         my + (y1 < y0 ? nmy : ny) * mh,
-      ]
+      ])
     }
     for (let glob of globs) {
       for (let handle of ["D", "Dp"]) {
         const { nx, nmx, ny, nmy } = snapglobs[glob.id][handle]
-        glob.options[handle] = [
+        glob.options[handle] = vec.round([
           mx + (x1 < x0 ? nmx : nx) * mw,
           my + (y1 < y0 ? nmy : ny) * mh,
-        ]
+        ])
       }
     }
   }

@@ -128,9 +128,9 @@ export default function Glob({ id, fill }: Props) {
       )}
       {!fill && safe && (
         <>
-          <g opacity="0">
-            {/* Middle Point / Path */}
-            {/* <path
+          {/* <g opacity="0"> */}
+          {/* Middle Point / Path */}
+          {/* <path
               ref={rMiddlePath}
               d={[
                 svg.moveTo(C0),
@@ -163,14 +163,14 @@ export default function Glob({ id, fill }: Props) {
                 state.send("SPLIT_GLOB", { id: glob.id, point: MP.get() })
               }
             /> */}
-          </g>
+          {/* </g> */}
           {/* <Combs id={glob.id} points={glob.points} /> */}
-          <path
+          {/* <path
             stroke={isSelected ? "red" : "black"}
             fill="transparent"
             pointerEvents="none"
             className="stroke-m"
-          />
+          /> */}
           <g opacity=".5">
             <Dot position={D1} color="dodgerblue" />
             <Dot position={D2} color="dodgerblue" />

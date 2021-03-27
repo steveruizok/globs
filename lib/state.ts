@@ -255,6 +255,9 @@ const state = createState({
                 MOVED_POINTER: {
                   do: ["edgeResize", "updateSelectedGlobsPoints"],
                 },
+                WHEELED: {
+                  do: ["edgeResize", "updateSelectedGlobsPoints"],
+                },
                 STOPPED_POINTING: { to: "notPointing" },
               },
             },
@@ -262,6 +265,9 @@ const state = createState({
               onEnter: ["setBounds", "setResizingCorner"],
               on: {
                 MOVED_POINTER: {
+                  do: ["cornerResize", "updateSelectedGlobsPoints"],
+                },
+                WHEELED: {
                   do: ["cornerResize", "updateSelectedGlobsPoints"],
                 },
                 STOPPED_POINTING: { to: "notPointing" },
