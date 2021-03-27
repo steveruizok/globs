@@ -143,7 +143,9 @@ function Corner({
       onPointerDown={onSelect}
       onPanEnd={restoreCursor}
       style={{ cursor }}
-      fill="orange"
+      fill="white"
+      stroke="blue"
+      className="stroke-s"
     />
   )
 }
