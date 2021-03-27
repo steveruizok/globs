@@ -1100,11 +1100,12 @@ export function getEdgeResizer(
  */
 export function getCornerResizer(
   initialNodes: INode[],
+  initialGlobs: IGlob[],
   bounds: IBounds,
   corner: number
 ) {
-  if (initialNodes.length === 0) {
-    throw Error("Must have at least one node!")
+  if (initialNodes.length === 0 && initialGlobs.length === 0) {
+    throw Error("Must have at least one thing!")
   }
 
   if (!bounds) {
@@ -1112,11 +1113,16 @@ export function getCornerResizer(
   }
 
   const snapshots = getSnapshots(initialNodes, bounds)
+  const snapglobs = getSnapglobs(initialGlobs, bounds)
 
   let { x: x0, maxX: y0, maxX: x1, maxY: y1 } = bounds
   let { y: mx, maxX: my, width: mw, height: mh } = bounds
 
-  return function cornerResizer(point: number[], nodes: INode[]) {
+  return function cornerResizer(
+    point: number[],
+    nodes: INode[],
+    globs: IGlob[]
+  ) {
     const [x, y] = point
     corner < 2 ? (y0 = y) : (y1 = y)
     my = y0 < y1 ? y0 : y1
@@ -1132,6 +1138,15 @@ export function getCornerResizer(
         mx + (x1 < x0 ? nmx : nx) * mw,
         my + (y1 < y0 ? nmy : ny) * mh,
       ]
+    }
+    for (let glob of globs) {
+      for (let handle of ["D", "Dp"]) {
+        const { nx, nmx, ny, nmy } = snapglobs[glob.id][handle]
+        glob.options[handle] = [
+          mx + (x1 < x0 ? nmx : nx) * mw,
+          my + (y1 < y0 ? nmy : ny) * mh,
+        ]
+      }
     }
   }
 }

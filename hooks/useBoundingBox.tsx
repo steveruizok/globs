@@ -1,5 +1,5 @@
 import state, { elms } from "lib/state"
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { IBounds } from "types"
 import { getBounds } from "utils"
 // This is a pretty brute-force way of doing things; however because
@@ -8,6 +8,7 @@ import { getBounds } from "utils"
 // need to do everything as an effect.
 
 export default function useBoundingBox() {
+  const rBounds = useRef("")
   const [bounds, setBounds] = useState<IBounds | false>()
 
   useEffect(() => {
@@ -22,16 +23,20 @@ export default function useBoundingBox() {
         selectedElms.push(elms[id])
       }
 
-      if (selectedElms.length === 0) {
-        setBounds((bounds) => (bounds === undefined ? bounds : undefined))
-        return false
+      if (selectedElms.length < 2) {
+        if (rBounds.current) {
+          rBounds.current = ""
+          setBounds(false)
+        }
+        return
       }
 
       const next = getBounds(selectedElms.filter(Boolean))
-
-      setBounds((bounds) =>
-        JSON.stringify(next) === JSON.stringify(bounds) ? bounds : next
-      )
+      const sNext = JSON.stringify(next)
+      if (sNext !== rBounds.current) {
+        rBounds.current = sNext
+        setBounds(next)
+      }
     })
   }, [])
 

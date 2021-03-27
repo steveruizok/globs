@@ -384,7 +384,7 @@ const state = createState({
       data.bounds = undefined
     },
     setResizingCorner(data, payload: { corner: number }) {
-      const { selectedNodes, selectedGlobs, nodes } = data
+      const { selectedNodes, selectedGlobs, globs, nodes } = data
       data.resizing = {
         type: "corner",
         corner: payload.corner,
@@ -392,16 +392,18 @@ const state = createState({
 
       cornerResizer = getCornerResizer(
         selectedNodes.map((id) => nodes[id]),
+        selectedGlobs.map((id) => globs[id]),
         getBounds([...selectedNodes, ...selectedGlobs].map((id) => elms[id])),
         payload.corner
       )
     },
     cornerResize(data) {
-      const { selectedNodes, nodes, camera } = data
+      const { selectedNodes, selectedGlobs, globs, nodes, camera } = data
 
       cornerResizer(
         screenToWorld(pointer.point, camera.point, camera.zoom),
-        selectedNodes.map((id) => nodes[id])
+        selectedNodes.map((id) => nodes[id]),
+        selectedGlobs.map((id) => globs[id])
       )
     },
     setResizingEdge(data, payload: { edge: number }) {

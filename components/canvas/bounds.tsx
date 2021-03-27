@@ -8,7 +8,7 @@ export default function Bounds() {
   // const showBounds = useSelector(state => state.isInAny("brushSelecting", "notPointing"))
 
   if (!bounds) {
-    restoreCursor()
+    // restoreCursor()
     return null
   }
 
