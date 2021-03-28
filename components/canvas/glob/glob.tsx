@@ -75,6 +75,8 @@ export default function Glob({ id, fill }: Props) {
   let safe = !!glob.points
   let globPts = glob.points || rPrevPts.current
 
+  if (!globPts) return null
+
   rPrevPts.current = globPts
 
   const { D, Dp } = glob.options

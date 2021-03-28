@@ -1005,17 +1005,25 @@ function getSnapglobs(globs: IGlob[], bounds: IBounds) {
         glob.id,
         {
           D: {
+            x: dx,
+            y: dy,
             nx: (dx - bounds.x) / bounds.width,
             ny: (dy - bounds.y) / bounds.height,
             nmx: 1 - (dx - bounds.x) / bounds.width,
             nmy: 1 - (dy - bounds.y) / bounds.height,
           },
           Dp: {
+            x: dpx,
+            y: dpy,
             nx: (dpx - bounds.x) / bounds.width,
             ny: (dpy - bounds.y) / bounds.height,
             nmx: 1 - (dpx - bounds.x) / bounds.width,
             nmy: 1 - (dpy - bounds.y) / bounds.height,
           },
+          a: glob.options.a,
+          ap: glob.options.ap,
+          b: glob.options.b,
+          bp: glob.options.bp,
         },
       ]
     })
@@ -1053,6 +1061,7 @@ export function getEdgeResizer(
       edge === 0 ? (y0 = y) : (y1 = y)
       my = y0 < y1 ? y0 : y1
       mh = Math.abs(y1 - y0)
+
       for (let node of nodes) {
         const { ny, nmy, nw, nh } = snapshots[node.id]
         node.point[1] = round(my + (y1 < y0 ? nmy : ny) * mh)
@@ -1062,10 +1071,28 @@ export function getEdgeResizer(
           node.radius = snapshots[node.id].radius
         }
       }
+
       for (let glob of globs) {
-        for (let handle of ["D", "Dp"]) {
-          const { ny, nmy } = snapglobs[glob.id][handle]
-          glob.options[handle][1] = round(my + (y1 < y0 ? nmy : ny) * mh)
+        const { D, Dp, a, b, ap, bp } = snapglobs[glob.id]
+
+        if (y1 < y0) {
+          Object.assign(glob.options, {
+            D: [Dp.x, my + Dp.nmy * mh],
+            Dp: [D.x, my + D.nmy * mh],
+            a: ap,
+            ap: a,
+            b: bp,
+            bp: b,
+          })
+        } else {
+          Object.assign(glob.options, {
+            D: [D.x, my + D.ny * mh],
+            Dp: [Dp.x, my + Dp.ny * mh],
+            a,
+            ap,
+            b,
+            bp,
+          })
         }
       }
     } else {
@@ -1082,10 +1109,28 @@ export function getEdgeResizer(
           node.radius = snapshots[node.id].radius
         }
       }
+
       for (let glob of globs) {
-        for (let handle of ["D", "Dp"]) {
-          const { nx, nmx } = snapglobs[glob.id][handle]
-          glob.options[handle][0] = round(mx + (x1 < x0 ? nmx : nx) * mw)
+        const { D, Dp, a, b, ap, bp } = snapglobs[glob.id]
+
+        if (x1 < x0) {
+          Object.assign(glob.options, {
+            D: [mx + Dp.nmx * mw, Dp.y],
+            Dp: [mx + D.nmx * mw, D.y],
+            a: ap,
+            ap: a,
+            b: bp,
+            bp: b,
+          })
+        } else {
+          Object.assign(glob.options, {
+            D: [mx + D.nx * mw, D.y],
+            Dp: [mx + Dp.nx * mw, Dp.y],
+            a,
+            ap,
+            b,
+            bp,
+          })
         }
       }
     }
@@ -1147,14 +1192,63 @@ export function getCornerResizer(
         node.radius = snapshots[node.id].radius
       }
     }
+
     for (let glob of globs) {
-      for (let handle of ["D", "Dp"]) {
-        const { nx, nmx, ny, nmy } = snapglobs[glob.id][handle]
-        glob.options[handle] = vec.round([
-          mx + (x1 < x0 ? nmx : nx) * mw,
-          my + (y1 < y0 ? nmy : ny) * mh,
-        ])
+      const { D, Dp, a, ap, b, bp } = snapglobs[glob.id]
+
+      Object.assign(glob.options, {
+        a: a,
+        ap: ap,
+        b: b,
+        bp: bp,
+      })
+
+      if (x1 < x0 && y1 < y0) {
+        Object.assign(glob.options, {
+          D: [mx + D.nmx * mw, my + D.nmy * mh],
+          Dp: [mx + Dp.nmx * mw, my + Dp.nmy * mh],
+          a,
+          ap,
+          b,
+          bp,
+        })
+      } else if (x1 < x0) {
+        Object.assign(glob.options, {
+          D: [mx + Dp.nmx * mw, Dp.y],
+          Dp: [mx + D.nmx * mw, D.y],
+          a: ap,
+          ap: a,
+          b: bp,
+          bp: b,
+        })
+      } else if (y1 < y0) {
+        Object.assign(glob.options, {
+          D: [Dp.x, my + Dp.nmy * mh],
+          Dp: [D.x, my + D.nmy * mh],
+          a: ap,
+          ap: a,
+          b: bp,
+          bp: b,
+        })
+      } else {
+        Object.assign(glob.options, {
+          D: [mx + D.nx * mw, my + D.ny * mh],
+          Dp: [mx + Dp.nx * mw, my + Dp.ny * mh],
+          a,
+          ap,
+          b,
+          bp,
+        })
       }
+
+      // }
+      // for (let handle of ["D", "Dp"]) {
+      //   const { nx, nmx, ny, nmy } = snapglobs[glob.id][handle]
+      //   glob.options[handle] = vec.round([
+      //     mx + (x1 < x0 ? nmx : nx) * mw,
+      //     my + (y1 < y0 ? nmy : ny) * mh,
+      //   ])
+      // }
     }
   }
 }
