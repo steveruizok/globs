@@ -6,6 +6,8 @@ import intersect from "path-intersection"
 import {
   arrsIntersect,
   clamp,
+  getCornerRotater,
+  CornerRotater,
   CornerResizer,
   EdgeResizer,
   getCornerResizer,
@@ -181,6 +183,9 @@ const state = createState({
                 POINTED_BOUNDS_CORNER: {
                   to: "cornerResizing",
                 },
+                POINTED_ROTATE_CORNER: {
+                  to: "cornerRotating",
+                },
               },
             },
             canvasPanning: {
@@ -252,30 +257,34 @@ const state = createState({
                 MOVED_POINTER: ["updateBrush", "updateBrushSelection"],
                 WHEELED: ["updateBrush", "updateBrushSelection"],
                 STOPPED_POINTING: { to: "notPointing" },
+                CANCELLED: { to: "notPointing" },
               },
             },
             edgeResizing: {
               onEnter: ["setBounds", "setResizingEdge"],
               on: {
-                MOVED_POINTER: {
-                  do: ["edgeResize", "updateSelectedGlobsPoints"],
-                },
-                WHEELED: {
-                  do: ["edgeResize", "updateSelectedGlobsPoints"],
-                },
+                MOVED_POINTER: ["edgeResize", "updateSelectedGlobsPoints"],
+                WHEELED: ["edgeResize", "updateSelectedGlobsPoints"],
                 STOPPED_POINTING: { to: "notPointing" },
+                CANCELLED: { to: "notPointing" },
               },
             },
             cornerResizing: {
               onEnter: ["setBounds", "setResizingCorner"],
               on: {
-                MOVED_POINTER: {
-                  do: ["cornerResize", "updateSelectedGlobsPoints"],
-                },
-                WHEELED: {
-                  do: ["cornerResize", "updateSelectedGlobsPoints"],
-                },
+                MOVED_POINTER: ["cornerResize", "updateSelectedGlobsPoints"],
+                WHEELED: ["cornerResize", "updateSelectedGlobsPoints"],
                 STOPPED_POINTING: { to: "notPointing" },
+                CANCELLED: { to: "notPointing" },
+              },
+            },
+            cornerRotating: {
+              onEnter: ["setBounds", "setRotatingCorner"],
+              on: {
+                MOVED_POINTER: ["cornerRotate", "updateSelectedGlobsPoints"],
+                WHEELED: ["cornerRotate", "updateSelectedGlobsPoints"],
+                STOPPED_POINTING: { to: "notPointing" },
+                CANCELLED: { to: "notPointing" },
               },
             },
           },
@@ -399,10 +408,6 @@ const state = createState({
     // RESIZING
     setResizingCorner(data, payload: { corner: number }) {
       const { selectedNodes, selectedGlobs, globs, nodes } = data
-      data.resizing = {
-        type: "corner",
-        corner: payload.corner,
-      }
 
       cornerResizer = getCornerResizer(
         selectedNodes.map((id) => nodes[id]),
@@ -424,11 +429,6 @@ const state = createState({
     setResizingEdge(data, payload: { edge: number }) {
       const { selectedNodes, selectedGlobs, globs, nodes } = data
 
-      data.resizing = {
-        type: "edge",
-        edge: payload.edge,
-      }
-
       edgeResizer = getEdgeResizer(
         selectedNodes.map((id) => nodes[id]),
         selectedGlobs.map((id) => globs[id]),
@@ -444,6 +444,25 @@ const state = createState({
         selectedNodes.map((id) => nodes[id]),
         selectedGlobs.map((id) => globs[id]),
         keys.Meta
+      )
+    },
+    setRotatingCorner(data) {
+      const { selectedNodes, selectedGlobs, globs, nodes, camera } = data
+
+      cornerRotater = getCornerRotater(
+        selectedNodes.map((id) => nodes[id]),
+        selectedGlobs.map((id) => globs[id]),
+        screenToWorld(pointer.point, camera.point, camera.zoom),
+        getSelectedBoundingBox(data)
+      )
+    },
+    cornerRotate(data) {
+      const { selectedNodes, selectedGlobs, globs, nodes, camera } = data
+
+      cornerRotater(
+        screenToWorld(pointer.point, camera.point, camera.zoom),
+        selectedNodes.map((id) => nodes[id]),
+        selectedGlobs.map((id) => globs[id])
       )
     },
 
@@ -1260,6 +1279,7 @@ const state = createState({
 
 let edgeResizer: EdgeResizer | undefined = undefined
 let cornerResizer: CornerResizer | undefined = undefined
+let cornerRotater: CornerRotater | undefined = undefined
 
 /* --------------------- INPUTS --------------------- */
 

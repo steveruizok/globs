@@ -360,23 +360,17 @@ export function angleDelta(a0: number, a1: number) {
  * @param cy The y-axis coordinate of the point to rotate round.
  * @param angle The distance (in radians) to rotate.
  */
-export function rotatePoint(
-  x: number,
-  y: number,
-  cx: number,
-  cy: number,
-  angle: number
-) {
+export function rotatePoint(A: number[], B: number[], angle: number) {
   const s = Math.sin(angle)
   const c = Math.cos(angle)
 
-  const px = x - cx
-  const py = y - cy
+  const px = A[0] - B[0]
+  const py = A[1] - B[1]
 
   const nx = px * c - py * s
   const ny = px * s + py * c
 
-  return [nx + cx, ny + cy]
+  return [nx + B[0], ny + B[1]]
 }
 
 export function degreesToRadians(d: number) {
@@ -1244,5 +1238,36 @@ export function getCornerResizer(
   }
 }
 
+export function getCornerRotater(
+  initialNodes: INode[],
+  initialGlobs: IGlob[],
+  point: number[],
+  bounds: IBounds
+) {
+  const center = [bounds.x + bounds.width / 2, bounds.y + bounds.height / 2]
+  const snapshots = getSnapshots(initialNodes, bounds)
+  const snapglobs = getSnapglobs(initialGlobs, bounds)
+  const angle = vec.angle(point, center)
+
+  return function cornerRotate(
+    point: number[],
+    nodes: INode[],
+    globs: IGlob[]
+  ) {
+    const delta = angleDelta(angle, vec.angle(point, center))
+    for (let node of nodes) {
+      const snap = snapshots[node.id]
+      node.point = rotatePoint([snap.x, snap.y], center, delta)
+    }
+
+    for (let glob of globs) {
+      const snap = snapglobs[glob.id]
+      glob.options.D = rotatePoint([snap.D.x, snap.D.y], center, delta)
+      glob.options.Dp = rotatePoint([snap.Dp.x, snap.Dp.y], center, delta)
+    }
+  }
+}
+
 export type EdgeResizer = ReturnType<typeof getEdgeResizer>
 export type CornerResizer = ReturnType<typeof getCornerResizer>
+export type CornerRotater = ReturnType<typeof getCornerRotater>

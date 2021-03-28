@@ -117,15 +117,6 @@ export interface IData {
   highlightGlobs: string[]
   selectedNodes: string[]
   cloning: string[]
-  resizing?:
-    | {
-        type: "corner"
-        corner: number
-      }
-    | {
-        type: "edge"
-        edge: number
-      }
 }
 
 export type IBounds = {

@@ -8,6 +8,7 @@ export default function BoundsBg() {
 
   if (bounds === null) return null
   if (selectedGlobs.length === 0 && selectedNodes.length === 1) return null
+  if (selectedGlobs.length === 1 && selectedNodes.length === 0) return null
 
   const { x, maxX, y, maxY } = bounds,
     width = Math.abs(maxX - x),
@@ -21,7 +22,7 @@ export default function BoundsBg() {
       height={height}
       onPointerDown={() => state.send("POINTED_BOUNDS")}
       fill="transparent"
-      stroke="blue"
+      stroke="#005aff"
       className="stroke-s"
     />
   )

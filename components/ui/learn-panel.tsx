@@ -114,10 +114,9 @@ export default function LearnPanel({
   }, [isCollapsed])
 
   function handleDragEnd(_: PointerEvent, info: PanInfo) {
+    const { velocity } = info
     const wrapper = bounds.current!
     const container = rContainer.current!
-    const { velocity } = info
-
     const maxY = wrapper.offsetHeight - container.offsetHeight
     const maxX = wrapper.offsetWidth - container.offsetWidth
 

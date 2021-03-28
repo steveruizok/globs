@@ -10,6 +10,7 @@ export default function Bounds() {
 
   if (bounds === null) return null
   if (selectedGlobs.length === 0 && selectedNodes.length === 1) return null
+  if (selectedGlobs.length === 1 && selectedNodes.length === 0) return null
 
   const { x, maxX, y, maxY } = bounds,
     width = Math.abs(maxX - x),
@@ -23,50 +24,34 @@ export default function Bounds() {
       <Corner
         x={x}
         y={y}
+        corner={0}
         width={cp}
         height={cp}
         cursor="nwse-resize"
-        onSelect={(e) => {
-          e.stopPropagation()
-          state.send("POINTED_BOUNDS_CORNER", { corner: 0 })
-          document.body.style.cursor = "nwse-resize"
-        }}
       />
       <Corner
         x={maxX}
         y={y}
+        corner={1}
         width={cp}
         height={cp}
         cursor="nesw-resize"
-        onSelect={(e) => {
-          e.stopPropagation()
-          state.send("POINTED_BOUNDS_CORNER", { corner: 1 })
-          document.body.style.cursor = "nesw-resize"
-        }}
       />
       <Corner
         x={maxX}
         y={maxY}
+        corner={2}
         width={cp}
         height={cp}
         cursor="nwse-resize"
-        onSelect={(e) => {
-          e.stopPropagation()
-          state.send("POINTED_BOUNDS_CORNER", { corner: 2 })
-          document.body.style.cursor = "nwse-resize"
-        }}
       />
       <Corner
         x={x}
         y={maxY}
+        corner={3}
         width={cp}
         height={cp}
         cursor="nesw-resize"
-        onSelect={(e) => {
-          e.stopPropagation()
-          state.send("POINTED_BOUNDS_CORNER", { corner: 3 })
-          document.body.style.cursor = "nesw-resize"
-        }}
       />
       <EdgeHorizontal
         x={x + p}
@@ -123,30 +108,55 @@ function Corner({
   height,
   cursor,
   onHover,
-  onSelect,
+  corner,
 }: {
   x: number
   y: number
   width: number
   height: number
   cursor: string
+  corner: number
   onHover?: () => void
-  onSelect?: (e: React.PointerEvent) => void
 }) {
+  const isTop = corner === 0 || corner === 1
+  const isLeft = corner === 0 || corner === 3
   return (
-    <motion.rect
-      x={x - width / 2}
-      y={y - height / 2}
-      width={width}
-      height={height}
-      onPointerEnter={onHover}
-      onPointerDown={onSelect}
-      onPanEnd={restoreCursor}
-      style={{ cursor }}
-      fill="white"
-      stroke="blue"
-      className="stroke-s"
-    />
+    <g>
+      <motion.rect
+        x={x + width * (isLeft ? -1.25 : -0.5)} // + width * 2 * transformOffset[0]}
+        y={y + width * (isTop ? -1.25 : -0.5)} // + height * 2 * transformOffset[1]}
+        width={width * 1.75}
+        height={height * 1.75}
+        onPanEnd={restoreCursor}
+        onTap={restoreCursor}
+        onPointerDown={(e) => {
+          e.stopPropagation()
+          state.send("POINTED_ROTATE_CORNER", { corner })
+          document.body.style.cursor = "grabbing"
+        }}
+        style={{ cursor: "grab" }}
+        fill="transparent"
+        className="stroke-s"
+      />
+      <motion.rect
+        x={x + width * -0.5}
+        y={y + height * -0.5}
+        width={width}
+        height={height}
+        onPointerEnter={onHover}
+        onPointerDown={(e) => {
+          e.stopPropagation()
+          state.send("POINTED_BOUNDS_CORNER", { corner })
+          document.body.style.cursor = "nesw-resize"
+        }}
+        onPanEnd={restoreCursor}
+        onTap={restoreCursor}
+        style={{ cursor }}
+        fill="white"
+        stroke="#005aff"
+        className="stroke-s"
+      />
+    </g>
   )
 }
 
@@ -174,6 +184,7 @@ function EdgeHorizontal({
       onPointerEnter={onHover}
       onPointerDown={onSelect}
       onPanEnd={restoreCursor}
+      onTap={restoreCursor}
       style={{ cursor: "ns-resize" }}
       fill="none"
     />
@@ -204,6 +215,7 @@ function EdgeVertical({
       onPointerEnter={onHover}
       onPointerDown={onSelect}
       onPanEnd={restoreCursor}
+      onTap={restoreCursor}
       style={{ cursor: "ew-resize" }}
       fill="none"
     />

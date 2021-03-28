@@ -17,8 +17,8 @@ import ContentPanel from "components/ui/content-panel/content-panel"
 import Toolbar from "components/ui/toolbar"
 import StatusBar from "components/ui/statusbar"
 import Brush from "components/canvas/brush"
-import Bounds from "components/canvas/bounds"
-import BoundsBg from "components/canvas/bounds-bg"
+import Bounds from "components/canvas/bounds/bounds"
+import BoundsBg from "components/canvas/bounds/bounds-bg"
 import LearnPanel from "components/ui/learn-panel"
 
 const DOT_RADIUS = 2,
