@@ -77,7 +77,8 @@ export default function Editor() {
       if (prevZoom !== zoom) {
         prevZoom = zoom
         const z = zoom < 1 ? 1 : 1 / zoom
-        root.style.setProperty("--zoom", z.toString())
+        root.style.setProperty("--zoom", (0.5 / zoom).toString())
+        root.style.setProperty("--zoomed", z.toString())
         rDot.current!.setAttribute("r", (DOT_RADIUS * z).toString())
         rAnchor.current!.setAttribute("r", (ANCHOR_RADIUS * z).toString())
         rHandle.current!.setAttribute("r", (HANDLE_RADIUS * z).toString())

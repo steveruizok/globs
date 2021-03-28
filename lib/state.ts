@@ -1004,11 +1004,7 @@ const state = createState({
       const glob = globs[selectedHandle.id]
       const [start, end] = glob.nodes
 
-      let next = getSafeHandlePoint(
-        nodes[start],
-        nodes[end],
-        screenToWorld(pointer.point, camera.point, camera.zoom)
-      )
+      let next = screenToWorld(pointer.point, camera.point, camera.zoom)
 
       if (!keys.Alt) {
         const originDelta = vec.div(
@@ -1020,6 +1016,8 @@ const state = createState({
           if (id === selectedHandle.id) continue
 
           const pts = snaps.globs[id]
+
+          if (globs[id].points === null) continue
 
           const { E0: a, D: b, E1: c, E0p: ap, Dp: bp, E1p: cp } = globs[
             id
@@ -1034,6 +1032,7 @@ const state = createState({
           } else if (Math.abs(vec.distanceToLine(bp, cp, next)) < 3) {
             next = vec.nearestPointOnLine(bp, cp, next, false)
           }
+
           for (let snap of pts) {
             const d = vec.dist(next, snap) * camera.zoom
 
@@ -1047,6 +1046,8 @@ const state = createState({
           }
         }
       }
+
+      next = getSafeHandlePoint(nodes[start], nodes[end], next)
 
       // Move the other handle, too.
       if (keys.Meta) {
@@ -1064,19 +1065,23 @@ const state = createState({
       // Apply the change to the handle
       glob.options[selectedHandle.handle] = vec.round(next)
 
-      // Rebuild the glob points
-      glob.points = getGlob(
-        nodes[start].point,
-        nodes[start].radius,
-        nodes[end].point,
-        nodes[end].radius,
-        glob.options.D,
-        glob.options.Dp,
-        glob.options.a,
-        glob.options.b,
-        glob.options.ap,
-        glob.options.bp
-      )
+      try {
+        // Rebuild the glob points
+        glob.points = getGlob(
+          nodes[start].point,
+          nodes[start].radius,
+          nodes[end].point,
+          nodes[end].radius,
+          glob.options.D,
+          glob.options.Dp,
+          glob.options.a,
+          glob.options.b,
+          glob.options.ap,
+          glob.options.bp
+        )
+      } catch (e) {
+        glob.points = null
+      }
     },
     clearSelectedHandle(data) {
       data.selectedHandle = undefined

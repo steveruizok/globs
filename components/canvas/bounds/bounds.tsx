@@ -154,7 +154,7 @@ function Corner({
         style={{ cursor }}
         fill="white"
         stroke="#005aff"
-        className="stroke-s"
+        className="stroke-ui"
       />
     </g>
   )

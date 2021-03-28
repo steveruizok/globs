@@ -23,7 +23,7 @@ export default function BoundsBg() {
       onPointerDown={() => state.send("POINTED_BOUNDS")}
       fill="transparent"
       stroke="#005aff"
-      className="stroke-s"
+      className="stroke-ui"
     />
   )
 }
