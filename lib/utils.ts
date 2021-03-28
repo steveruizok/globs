@@ -1240,15 +1240,6 @@ export function getCornerResizer(
           bp,
         })
       }
-
-      // }
-      // for (let handle of ["D", "Dp"]) {
-      //   const { nx, nmx, ny, nmy } = snapglobs[glob.id][handle]
-      //   glob.options[handle] = vec.round([
-      //     mx + (x1 < x0 ? nmx : nx) * mw,
-      //     my + (y1 < y0 ? nmy : ny) * mh,
-      //   ])
-      // }
     }
   }
 }

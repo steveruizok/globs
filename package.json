@@ -10,7 +10,7 @@
   "dependencies": {
     "@radix-ui/react-context-menu": "^0.0.10",
     "@state-designer/react": "^1.6.9",
-    "framer-motion": "^4.0.0",
+    "framer-motion": "^4.0.3",
     "next": "10.0.8",
     "path-intersection": "^2.2.1",
     "react": "17.0.1",

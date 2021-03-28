@@ -1,7 +1,8 @@
 import { createState } from "@state-designer/core"
 import { useStateDesigner } from "@state-designer/react"
-import { motion, animate, useMotionValue } from "framer-motion"
+import { motion, animate, useMotionValue, PanInfo } from "framer-motion"
 import { RefObject, useEffect, useRef } from "react"
+import * as vec from "lib/vec"
 import {
   BookOpen,
   ChevronLeft,
@@ -108,24 +109,44 @@ export default function LearnPanel({
   const page = local.data.pages[local.data.page]
 
   useEffect(() => {
-    setTimeout(() => {
-      if (isCollapsed) return
-      const wrapper = bounds.current!
-      const container = rContainer.current!
-      const maxY = wrapper.offsetHeight - container.offsetHeight
-      const maxX = wrapper.offsetWidth - container.offsetWidth
-      if (mvX.get() > maxX) animate(mvX, maxX)
-      if (mvY.get() > maxY) animate(mvY, maxY)
-    }, 0)
+    animate(mvX, 0)
+    animate(mvY, 0)
   }, [isCollapsed])
+
+  function handleDragEnd(_: PointerEvent, info: PanInfo) {
+    const wrapper = bounds.current!
+    const container = rContainer.current!
+    const { velocity } = info
+
+    const maxY = wrapper.offsetHeight - container.offsetHeight
+    const maxX = wrapper.offsetWidth - container.offsetWidth
+
+    if (velocity.x < -200) {
+      animate(mvX, 0)
+    } else if (velocity.x > 200) {
+      animate(mvX, maxX)
+    } else {
+      animate(mvX, mvX.get() > maxX / 2 ? maxX : 0)
+    }
+
+    if (velocity.y < -200) {
+      animate(mvY, 0)
+    } else if (velocity.y > 200) {
+      animate(mvY, maxY)
+    } else {
+      animate(mvY, mvY.get() > maxY / 2 ? maxY : 0)
+    }
+  }
 
   return (
     <PanelContainer
       ref={rContainer}
-      drag
+      drag={!isCollapsed}
       dragConstraints={bounds}
       dragElastic={0.025}
       style={{ x: mvX, y: mvY }}
+      dragMomentum={false}
+      onDragEnd={handleDragEnd}
     >
       {local.isIn("collapsed") ? (
         <IconButton onClick={() => local.send("TOGGLED_COLLAPSED")}>
@@ -153,7 +174,9 @@ export default function LearnPanel({
               </IconButton>
             </ButtonsGroup>
           </Header>
-          <img src={page.image} height="auto" width="100%" />
+          <div>
+            <img src={page.image} height="auto" width="100%" />
+          </div>
           {page.description}
         </Content>
       )}
@@ -169,7 +192,7 @@ const PanelContainer = styled(motion.div)`
   border-radius: 4px;
   overflow: hidden;
   border: 1px solid var(--border);
-  pointer-events: none;
+  pointer-events: all;
   user-select: none;
 
   button {
@@ -192,7 +215,7 @@ const IconButton = styled.button`
   pointer-events: all;
   cursor: pointer;
 
-  &:hover:not(::disabled) {
+  &:hover:not(:disabled) {
     background-color: var(--muted);
   }
 
@@ -210,17 +233,24 @@ const IconButton = styled.button`
 const Content = styled.div`
   display: grid;
   grid-template-columns: 1fr;
+  grid-template-rows: auto auto 1fr;
   width: 100%;
   max-width: 400px;
-  height: 100%;
-  max-height: 320px;
+  height: 340px;
+  padding-bottom: 4px;
+  user-select: none;
+  pointer-events: all;
+
+  & > div {
+    pointer-events: none;
+  }
 
   img {
   }
 
   p {
     margin: 0;
-    padding: 8px;
+    padding: 16px;
     font-size: 13px;
   }
 `
