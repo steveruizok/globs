@@ -1214,8 +1214,8 @@ export function getCornerResizer(
         })
       } else if (x1 < x0) {
         Object.assign(glob.options, {
-          D: [mx + Dp.nmx * mw, my + D.ny * mh],
-          Dp: [mx + D.nmx * mw, my + Dp.ny * mh],
+          D: [mx + Dp.nmx * mw, my + Dp.ny * mh],
+          Dp: [mx + D.nmx * mw, my + D.ny * mh],
           a: ap,
           ap: a,
           b: bp,
@@ -1223,8 +1223,8 @@ export function getCornerResizer(
         })
       } else if (y1 < y0) {
         Object.assign(glob.options, {
-          D: [mx + D.nx * mw, my + Dp.nmy * mh],
-          Dp: [mx + Dp.nx * mw, my + D.nmy * mh],
+          D: [mx + Dp.nx * mw, my + Dp.nmy * mh],
+          Dp: [mx + D.nx * mw, my + D.nmy * mh],
           a: ap,
           ap: a,
           b: bp,
