@@ -1,4 +1,4 @@
-import { INode, IGlob, IBounds } from "types"
+import { INode, IGlob, IBounds, ICanvasItem } from "types"
 
 // Evaluate a 2D bezier curve
 export function bez2d(

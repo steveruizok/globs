@@ -24,7 +24,12 @@ import {
 } from "utils"
 import { initialData } from "./data"
 import { motionValue } from "framer-motion"
-import { getCommonBounds, getGlobBounds, getNodeBounds } from "./bounds-utils"
+import {
+  getCommonBounds,
+  getGlobBounds,
+  getGlobInnerBounds,
+  getNodeBounds,
+} from "./bounds-utils"
 
 /*
 - [ ] Keep camera centered when resizing
@@ -498,7 +503,7 @@ const state = createState({
       brush.end = screenToWorld(pointer.point, camera.point, camera.zoom)
     },
     updateBrushSelection(data) {
-      const { brush } = data
+      const { brush, nodes, globs } = data
       const { start, end } = brush
       const x0 = Math.min(start[0], end[0])
       const y0 = Math.min(start[1], end[1])
@@ -517,10 +522,16 @@ const state = createState({
       data.selectedNodes = []
 
       for (let target of brush.targets) {
-        const elm = elms[target.id]
+        let bounds: IBounds
+
+        if (target.type === "node") {
+          bounds = getNodeBounds(nodes[target.id])
+        } else {
+          bounds = getGlobInnerBounds(globs[target.id])
+        }
 
         if (
-          rectContainsRect(x0, y0, x1, y1, elm.getBBox()) ||
+          (bounds && rectContainsRect(x0, y0, x1, y1, bounds)) ||
           intersect(rect, target.path, true)
         ) {
           if (target.type === "glob") {
