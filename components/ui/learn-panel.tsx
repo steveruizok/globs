@@ -1,7 +1,7 @@
 import { createState } from "@state-designer/core"
 import { useStateDesigner } from "@state-designer/react"
 import { motion, animate, useMotionValue } from "framer-motion"
-import { useEffect, useRef } from "react"
+import { RefObject, useEffect, useRef } from "react"
 import {
   BookOpen,
   ChevronLeft,
@@ -94,8 +94,11 @@ const state = createState({
   },
 })
 
-export default function LearnPanel() {
-  const rDragWrapper = useRef<HTMLDivElement>(null)
+export default function LearnPanel({
+  bounds,
+}: {
+  bounds: RefObject<HTMLDivElement>
+}) {
   const rContainer = useRef<HTMLDivElement>(null)
   const local = useStateDesigner(state)
   const mvX = useMotionValue(0)
@@ -107,7 +110,7 @@ export default function LearnPanel() {
   useEffect(() => {
     setTimeout(() => {
       if (isCollapsed) return
-      const wrapper = rDragWrapper.current!
+      const wrapper = bounds.current!
       const container = rContainer.current!
       const maxY = wrapper.offsetHeight - container.offsetHeight
       const maxX = wrapper.offsetWidth - container.offsetWidth
@@ -117,58 +120,46 @@ export default function LearnPanel() {
   }, [isCollapsed])
 
   return (
-    <DragWrapper ref={rDragWrapper}>
-      <PanelContainer
-        ref={rContainer}
-        drag
-        dragConstraints={rDragWrapper}
-        dragElastic={0.025}
-        style={{ x: mvX, y: mvY }}
-      >
-        {local.isIn("collapsed") ? (
-          <IconButton onClick={() => local.send("TOGGLED_COLLAPSED")}>
-            <BookOpen />
-          </IconButton>
-        ) : (
-          <Content>
-            <Header>
-              <IconButton onClick={() => local.send("TOGGLED_COLLAPSED")}>
-                <X />
+    <PanelContainer
+      ref={rContainer}
+      drag
+      dragConstraints={bounds}
+      dragElastic={0.025}
+      style={{ x: mvX, y: mvY }}
+    >
+      {local.isIn("collapsed") ? (
+        <IconButton onClick={() => local.send("TOGGLED_COLLAPSED")}>
+          <BookOpen />
+        </IconButton>
+      ) : (
+        <Content>
+          <Header>
+            <IconButton onClick={() => local.send("TOGGLED_COLLAPSED")}>
+              <X />
+            </IconButton>
+            <h3>{page.title}</h3>
+            <ButtonsGroup>
+              <IconButton
+                disabled={!local.can("MOVED_BACKWARD")}
+                onClick={() => local.send("MOVED_BACKWARD")}
+              >
+                <ChevronLeft />
               </IconButton>
-              <h3>{page.title}</h3>
-              <ButtonsGroup>
-                <IconButton
-                  disabled={!local.can("MOVED_BACKWARD")}
-                  onClick={() => local.send("MOVED_BACKWARD")}
-                >
-                  <ChevronLeft />
-                </IconButton>
-                <IconButton
-                  disabled={!local.can("MOVED_FORWARD")}
-                  onClick={() => local.send("MOVED_FORWARD")}
-                >
-                  <ChevronRight />
-                </IconButton>
-              </ButtonsGroup>
-            </Header>
-            <img src={page.image} height="auto" width="100%" />
-            {page.description}
-          </Content>
-        )}
-      </PanelContainer>
-    </DragWrapper>
+              <IconButton
+                disabled={!local.can("MOVED_FORWARD")}
+                onClick={() => local.send("MOVED_FORWARD")}
+              >
+                <ChevronRight />
+              </IconButton>
+            </ButtonsGroup>
+          </Header>
+          <img src={page.image} height="auto" width="100%" />
+          {page.description}
+        </Content>
+      )}
+    </PanelContainer>
   )
 }
-
-const DragWrapper = styled.div`
-  position: relative;
-  grid-area: main;
-  margin: 16px;
-  height: calc(100% - 32px);
-  width: calc(100% - 32px);
-  pointer-events: none;
-  user-select: none;
-`
 
 const PanelContainer = styled(motion.div)`
   position: absolute;
@@ -179,6 +170,7 @@ const PanelContainer = styled(motion.div)`
   overflow: hidden;
   border: 1px solid var(--border);
   pointer-events: none;
+  user-select: none;
 
   button {
     border: none;

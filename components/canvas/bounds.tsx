@@ -1,30 +1,30 @@
 import state, { useSelector } from "lib/state"
 import { motion } from "framer-motion"
-import useBoundingBox from "hooks/useBoundingBox"
+import { deepCompare } from "lib/utils"
 
 export default function Bounds() {
-  const bounds = useBoundingBox()
+  const selectedNodes = useSelector((s) => s.data.selectedNodes)
+  const selectedGlobs = useSelector((s) => s.data.selectedGlobs)
+  const bounds = useSelector((s) => s.values.selectionBounds, deepCompare)
   const zoom = useSelector((s) => s.data.camera.zoom)
-  // const showBounds = useSelector(state => state.isInAny("brushSelecting", "notPointing"))
 
-  if (!bounds) {
-    // restoreCursor()
-    return null
-  }
+  if (bounds === null) return null
+  if (selectedGlobs.length === 0 && selectedNodes.length === 1) return null
 
   const { x, maxX, y, maxY } = bounds,
     width = Math.abs(maxX - x),
     height = Math.abs(maxY - y)
 
-  const p = 5 / zoom
+  const p = 4 / zoom
+  const cp = p * 2
 
   return (
     <g>
       <Corner
         x={x}
         y={y}
-        width={p}
-        height={p}
+        width={cp}
+        height={cp}
         cursor="nwse-resize"
         onSelect={(e) => {
           e.stopPropagation()
@@ -35,8 +35,8 @@ export default function Bounds() {
       <Corner
         x={maxX}
         y={y}
-        width={p}
-        height={p}
+        width={cp}
+        height={cp}
         cursor="nesw-resize"
         onSelect={(e) => {
           e.stopPropagation()
@@ -47,8 +47,8 @@ export default function Bounds() {
       <Corner
         x={maxX}
         y={maxY}
-        width={p}
-        height={p}
+        width={cp}
+        height={cp}
         cursor="nwse-resize"
         onSelect={(e) => {
           e.stopPropagation()
@@ -59,8 +59,8 @@ export default function Bounds() {
       <Corner
         x={x}
         y={maxY}
-        width={p}
-        height={p}
+        width={cp}
+        height={cp}
         cursor="nesw-resize"
         onSelect={(e) => {
           e.stopPropagation()

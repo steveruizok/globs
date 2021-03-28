@@ -147,6 +147,7 @@ export interface INodeSnapshot {
   nmy: number
   nw: number
   nh: number
+  radius: number
 }
 
 // export interface IGlobSnapshot {

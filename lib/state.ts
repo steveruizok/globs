@@ -9,7 +9,6 @@ import {
   CornerResizer,
   EdgeResizer,
   getCornerResizer,
-  getBounds,
   getCircleTangentToPoint,
   getClosestPointOnCircle,
   getEdgeResizer,
@@ -25,6 +24,7 @@ import {
 } from "utils"
 import { initialData } from "./data"
 import { motionValue } from "framer-motion"
+import { getCommonBounds, getGlobBounds, getNodeBounds } from "./bounds-utils"
 
 /*
 - [ ] Keep camera centered when resizing
@@ -383,12 +383,15 @@ const state = createState({
     },
   },
   actions: {
+    // BOUNDS
     setBounds(data, payload: { bounds: IBounds }) {
       data.bounds = payload.bounds
     },
     clearBounds(data) {
       data.bounds = undefined
     },
+
+    // RESIZING
     setResizingCorner(data, payload: { corner: number }) {
       const { selectedNodes, selectedGlobs, globs, nodes } = data
       data.resizing = {
@@ -399,7 +402,7 @@ const state = createState({
       cornerResizer = getCornerResizer(
         selectedNodes.map((id) => nodes[id]),
         selectedGlobs.map((id) => globs[id]),
-        getBounds([...selectedNodes, ...selectedGlobs].map((id) => elms[id])),
+        getSelectedBoundingBox(data),
         payload.corner
       )
     },
@@ -409,7 +412,8 @@ const state = createState({
       cornerResizer(
         screenToWorld(pointer.point, camera.point, camera.zoom),
         selectedNodes.map((id) => nodes[id]),
-        selectedGlobs.map((id) => globs[id])
+        selectedGlobs.map((id) => globs[id]),
+        keys.Meta
       )
     },
     setResizingEdge(data, payload: { edge: number }) {
@@ -423,7 +427,7 @@ const state = createState({
       edgeResizer = getEdgeResizer(
         selectedNodes.map((id) => nodes[id]),
         selectedGlobs.map((id) => globs[id]),
-        getBounds([...selectedNodes, ...selectedGlobs].map((id) => elms[id])),
+        getSelectedBoundingBox(data),
         payload.edge
       )
     },
@@ -433,7 +437,8 @@ const state = createState({
       edgeResizer(
         screenToWorld(pointer.point, camera.point, camera.zoom),
         selectedNodes.map((id) => nodes[id]),
-        selectedGlobs.map((id) => globs[id])
+        selectedGlobs.map((id) => globs[id]),
+        keys.Meta
       )
     },
 
@@ -796,8 +801,8 @@ const state = createState({
           nodesToMove.push(nodeId)
         }
 
-        glob.options.D = vec.add(glob.options.D, delta)
-        glob.options.Dp = vec.add(glob.options.Dp, delta)
+        glob.options.D = vec.round(vec.add(glob.options.D, delta))
+        glob.options.Dp = vec.round(vec.add(glob.options.Dp, delta))
       }
 
       for (let id of nodesToMove) {
@@ -813,7 +818,9 @@ const state = createState({
 
             if (vec.isEqual(node.point, snap) && d > 3) {
               // unsnap from point, move to pointer
-              next = vec.add(data.initialPoints.nodes[node.id], originDelta)
+              next = vec.round(
+                vec.add(data.initialPoints.nodes[node.id], originDelta)
+              )
             } else if (d < 3) {
               // Snap to point
               next = snap
@@ -1184,13 +1191,13 @@ const state = createState({
     saveData(data) {
       if (typeof window === "undefined") return
       if (typeof localStorage === "undefined") return
-      localStorage.setItem("glob_aldata_v3", JSON.stringify(data))
+      localStorage.setItem("glob_aldata_v4", JSON.stringify(data))
     },
     // Setup and Mounting
     setup(data) {
       if (typeof window === "undefined") return
       if (typeof localStorage === "undefined") return
-      const saved = localStorage.getItem("glob_aldata_v3")
+      const saved = localStorage.getItem("glob_aldata_v4")
       if (saved) {
         Object.assign(data, JSON.parse(saved))
       }
@@ -1229,6 +1236,11 @@ const state = createState({
       viewport.size = payload.size
       document.point = [...camera.point]
       document.size = vec.round(vec.div(viewport.size, camera.zoom))
+    },
+  },
+  values: {
+    selectionBounds(data) {
+      return getSelectedBoundingBox(data)
     },
   },
 })
@@ -1413,4 +1425,20 @@ function getSafeHandlePoint(start: INode, end: INode, handle: number[]) {
   }
 
   return handle
+}
+
+function getSelectedBoundingBox(data: IData) {
+  const { selectedGlobs, selectedNodes, nodes, globs } = data
+
+  if (selectedGlobs.length + selectedNodes.length === 0) return null
+
+  return getCommonBounds(
+    ...selectedGlobs
+      .map((id) => globs[id])
+      .filter((glob) => glob.points !== null)
+      .map((glob) =>
+        getGlobBounds(glob, nodes[glob.nodes[0]], nodes[glob.nodes[1]])
+      ),
+    ...selectedNodes.map((id) => getNodeBounds(nodes[id]))
+  )
 }

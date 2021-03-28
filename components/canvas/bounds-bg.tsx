@@ -1,15 +1,13 @@
-import useBoundingBox from "hooks/useBoundingBox"
 import state, { useSelector } from "lib/state"
+import { deepCompare } from "lib/utils"
 
 export default function BoundsBg() {
-  const bounds = useBoundingBox()
-  // const showBounds = useSelector((state) =>
-  //   state.isInAny("brushSelecting", "notPointing")
-  // )
+  const selectedNodes = useSelector((s) => s.data.selectedNodes)
+  const selectedGlobs = useSelector((s) => s.data.selectedGlobs)
+  const bounds = useSelector((s) => s.values.selectionBounds, deepCompare)
 
-  if (!bounds) {
-    return null
-  }
+  if (bounds === null) return null
+  if (selectedGlobs.length === 0 && selectedNodes.length === 1) return null
 
   const { x, maxX, y, maxY } = bounds,
     width = Math.abs(maxX - x),

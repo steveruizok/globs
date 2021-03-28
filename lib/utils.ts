@@ -924,44 +924,45 @@ export function throttle<T extends (...args: any[]) => any>(
   }
 }
 
-export const getBounds = (elements: SVGPathElement[]) => {
-  let bounds: IBounds = {
-    x: 0,
-    y: 0,
-    maxX: 0,
-    maxY: 0,
-    width: 0,
-    height: 0,
-  }
+// Get element bounding boxes
+// export const getBounds = (elements: SVGPathElement[]) => {
+//   let bounds: IBounds = {
+//     x: 0,
+//     y: 0,
+//     maxX: 0,
+//     maxY: 0,
+//     width: 0,
+//     height: 0,
+//   }
 
-  for (let i = 0; i < elements.length; i++) {
-    const elm = elements[i]
+//   for (let i = 0; i < elements.length; i++) {
+//     const elm = elements[i]
 
-    const bbox = elm.getBBox()
+//     const bbox = elm.getBBox()
 
-    if (i === 0) {
-      bounds = {
-        x: bbox.x,
-        y: bbox.y,
-        maxX: bbox.x + bbox.width,
-        maxY: bbox.y + bbox.height,
-        width: 0,
-        height: 0,
-      }
-      continue
-    }
+//     if (i === 0) {
+//       bounds = {
+//         x: bbox.x,
+//         y: bbox.y,
+//         maxX: bbox.x + bbox.width,
+//         maxY: bbox.y + bbox.height,
+//         width: 0,
+//         height: 0,
+//       }
+//       continue
+//     }
 
-    bounds.x = Math.min(bounds.x, bbox.x)
-    bounds.y = Math.min(bounds.y, bbox.y)
-    bounds.maxX = Math.max(bounds.maxX, bbox.x + bbox.width)
-    bounds.maxY = Math.max(bounds.maxY, bbox.y + bbox.height)
-  }
+//     bounds.x = Math.min(bounds.x, bbox.x)
+//     bounds.y = Math.min(bounds.y, bbox.y)
+//     bounds.maxX = Math.max(bounds.maxX, bbox.x + bbox.width)
+//     bounds.maxY = Math.max(bounds.maxY, bbox.y + bbox.height)
+//   }
 
-  bounds.width = Math.abs(bounds.maxX - bounds.x)
-  bounds.height = Math.abs(bounds.maxY - bounds.y)
+//   bounds.width = Math.abs(bounds.maxX - bounds.x)
+//   bounds.height = Math.abs(bounds.maxY - bounds.y)
 
-  return bounds
-}
+//   return bounds
+// }
 
 function getSnapshots(
   nodes: INode[],
@@ -983,8 +984,9 @@ function getSnapshots(
       ny: (y - bounds.y) / bounds.height,
       nmx: 1 - (x - bounds.x) / bounds.width,
       nmy: 1 - (y - bounds.y) / bounds.height,
-      nw: radius,
-      nh: radius,
+      nw: radius / bounds.width,
+      nh: radius / bounds.height,
+      radius,
     }
   }
 
@@ -1040,15 +1042,25 @@ export function getEdgeResizer(
   let { x: x0, y: y0, maxX: x1, maxY: y1 } = bounds
   let { maxX: mx, maxY: my, width: mw, height: mh } = bounds
 
-  return function edgeResize(point: number[], nodes: INode[], globs: IGlob[]) {
+  return function edgeResize(
+    point: number[],
+    nodes: INode[],
+    globs: IGlob[],
+    preserveRadii = false
+  ) {
     const [x, y] = point
     if (edge === 0 || edge === 2) {
       edge === 0 ? (y0 = y) : (y1 = y)
       my = y0 < y1 ? y0 : y1
       mh = Math.abs(y1 - y0)
       for (let node of nodes) {
-        const { ny, nmy } = snapshots[node.id]
+        const { ny, nmy, nw, nh } = snapshots[node.id]
         node.point[1] = round(my + (y1 < y0 ? nmy : ny) * mh)
+        if (!preserveRadii) {
+          node.radius = (nw * mw + nh * mh) / 2
+        } else {
+          node.radius = snapshots[node.id].radius
+        }
       }
       for (let glob of globs) {
         for (let handle of ["D", "Dp"]) {
@@ -1061,8 +1073,14 @@ export function getEdgeResizer(
       mx = x0 < x1 ? x0 : x1
       mw = Math.abs(x1 - x0)
       for (let node of nodes) {
-        const { nx, nmx } = snapshots[node.id]
+        const { nx, nmx, nw, nh } = snapshots[node.id]
         node.point[0] = round(mx + (x1 < x0 ? nmx : nx) * mw)
+
+        if (!preserveRadii) {
+          node.radius = (nw * mw + nh * mh) / 2
+        } else {
+          node.radius = snapshots[node.id].radius
+        }
       }
       for (let glob of globs) {
         for (let handle of ["D", "Dp"]) {
@@ -1105,7 +1123,8 @@ export function getCornerResizer(
   return function cornerResizer(
     point: number[],
     nodes: INode[],
-    globs: IGlob[]
+    globs: IGlob[],
+    preserveRadii = false
   ) {
     const [x, y] = point
     corner < 2 ? (y0 = y) : (y1 = y)
@@ -1117,11 +1136,16 @@ export function getCornerResizer(
     mw = Math.abs(x1 - x0)
 
     for (let node of nodes) {
-      const { nx, nmx, ny, nmy } = snapshots[node.id]
+      const { nx, nmx, ny, nmy, nw, nh } = snapshots[node.id]
       node.point = vec.round([
         mx + (x1 < x0 ? nmx : nx) * mw,
         my + (y1 < y0 ? nmy : ny) * mh,
       ])
+      if (!preserveRadii) {
+        node.radius = (nw * mw + nh * mh) / 2
+      } else {
+        node.radius = snapshots[node.id].radius
+      }
     }
     for (let glob of globs) {
       for (let handle of ["D", "Dp"]) {

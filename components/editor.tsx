@@ -25,7 +25,8 @@ const DOT_RADIUS = 2,
   ANCHOR_RADIUS = 4,
   HANDLE_RADIUS = 6,
   TOUCH_SM_RADIUS = 8,
-  TOUCH_RADIUS = 12
+  TOUCH_RADIUS = 12,
+  CORNER_SIZE = 5
 
 const letters = {
   A: [-1864, 2707, 1.5],
@@ -45,6 +46,8 @@ export default function Editor() {
   const rHandle = useRef<SVGCircleElement>(null)
   const rTouchSmall = useRef<SVGCircleElement>(null)
   const rTouch = useRef<SVGCircleElement>(null)
+  const rCorner = useRef<SVGRectElement>(null)
+  const rMain = useRef<HTMLDivElement>(null)
 
   // When we zoom or pan, manually update the svg's viewbox
   // This is expensive, so we want to set this property
@@ -80,6 +83,8 @@ export default function Editor() {
         rHandle.current!.setAttribute("r", (HANDLE_RADIUS * z).toString())
         rTouch.current!.setAttribute("r", (TOUCH_RADIUS * z).toString())
         rTouchSmall.current!.setAttribute("r", (TOUCH_SM_RADIUS * z).toString())
+        rCorner.current!.setAttribute("width", (CORNER_SIZE * z).toString())
+        rCorner.current!.setAttribute("height", (CORNER_SIZE * z).toString())
       }
     })
   }, [])
@@ -145,20 +150,15 @@ export default function Editor() {
                     cy={0}
                     r={TOUCH_RADIUS}
                   />
+                  <rect
+                    id="corner"
+                    ref={rCorner}
+                    x={0}
+                    y={0}
+                    width={5}
+                    height={5}
+                  />
                 </defs>
-                {Object.entries(letters).map(([key, point], i) => (
-                  <text
-                    fontSize={1200 * point[2]}
-                    fontFamily="Crimson Pro"
-                    key={key}
-                    x={point[0]}
-                    y={point[1]}
-                    opacity={0.1}
-                    pointerEvents="none"
-                  >
-                    {key}
-                  </text>
-                ))}
                 <BoundsBg />
                 <Globs />
                 <Nodes />
@@ -173,7 +173,9 @@ export default function Editor() {
             <ContentPanel />
             <InspectPanel />
             <StatusBar />
-            <LearnPanel />
+            <Main ref={rMain}>
+              <LearnPanel bounds={rMain} />
+            </Main>
           </Layout>
         </EditorContainer>
       </ContextMenuRoot>
@@ -236,6 +238,11 @@ const Layout = styled.div`
 
 const Main = styled.main`
   grid-area: main;
+  position: relative;
+  pointer-events: none;
+  margin: 16px;
+  width: calc(100% - 32px);
+  height: calc(100% - 32px);
 `
 
 const OuterWrapper = styled.div`
@@ -249,3 +256,23 @@ const SVGWrapper = styled(ContextMenuTrigger)`
   grid-row: 1 / span 3;
   background-color: var(--muted);
 `
+
+function Letters() {
+  return (
+    <>
+      {Object.entries(letters).map(([key, point], i) => (
+        <text
+          fontSize={1200 * point[2]}
+          fontFamily="Crimson Pro"
+          key={key}
+          x={point[0]}
+          y={point[1]}
+          opacity={0.1}
+          pointerEvents="none"
+        >
+          {key}
+        </text>
+      ))}
+    </>
+  )
+}
