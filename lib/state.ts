@@ -1228,7 +1228,8 @@ const state = createState({
       if (typeof localStorage === "undefined") return
       localStorage.setItem("glob_aldata_v4", JSON.stringify(data))
     },
-    // Setup and Mounting
+
+    // EVENTS
     setup(data) {
       if (typeof window === "undefined") return
       if (typeof localStorage === "undefined") return
@@ -1248,6 +1249,7 @@ const state = createState({
       data.fill = false
 
       if (typeof window !== "undefined") {
+        document.body.addEventListener("pointerleave", handlePointerLeave)
         window.addEventListener("pointermove", handlePointerMove)
         window.addEventListener("pointerdown", handlePointerDown)
         window.addEventListener("pointerup", handlePointerUp)
@@ -1258,6 +1260,7 @@ const state = createState({
     },
     teardown(data) {
       if (typeof window !== "undefined") {
+        document.body.removeEventListener("pointerleave", handlePointerLeave)
         window.removeEventListener("pointermove", handlePointerMove)
         window.removeEventListener("pointerdown", handlePointerDown)
         window.removeEventListener("pointerup", handlePointerUp)
@@ -1266,11 +1269,24 @@ const state = createState({
         window.removeEventListener("resize", handleResize)
       }
     },
+
+    // VIEWPORT
     setViewport(data, payload: { size: number[] }) {
       const { viewport, camera, document } = data
+      const c0 = screenToWorld(
+        vec.add(document.point, vec.div(viewport.size, 2)),
+        camera.point,
+        camera.zoom
+      )
       viewport.size = payload.size
-      document.point = [...camera.point]
       document.size = vec.round(vec.div(viewport.size, camera.zoom))
+      const c1 = screenToWorld(
+        vec.add(document.point, vec.div(viewport.size, 2)),
+        camera.point,
+        camera.zoom
+      )
+      document.point = vec.sub(document.point, vec.sub(c1, c0))
+      camera.point = document.point
     },
   },
   values: {
@@ -1312,11 +1328,17 @@ const keys: Record<string, boolean> = {}
 
 /* ------------------ INPUT EVENTS ------------------ */
 
-function handleResize() {
+function handlePointerLeave() {
+  for (let id in keys) {
+    keys[id] = false
+  }
+}
+
+const handleResize = throttle(() => {
   if (typeof window !== "undefined") {
     state.send("RESIZED", { size: [window.innerWidth, window.innerHeight] })
   }
-}
+}, 16)
 
 function handlePointerDown(e: PointerEvent) {
   pointer.points.add(e.pointerId)

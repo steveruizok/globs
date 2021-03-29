@@ -18,7 +18,7 @@ export default function InspectPanel() {
   const mvWidth = useTransform(mvOffsetX, (v) => MIN + -v)
 
   return (
-    <PanelContainer style={{ width: mvWidth }} data-bp-any>
+    <PanelContainer data-bp-desktop style={{ width: mvWidth }} data-bp-any>
       <PanelInnerContainer>
         <PropsList />
       </PanelInnerContainer>

@@ -227,7 +227,7 @@ const Layout = styled.div`
     grid-template-columns: 0px 1fr auto;
 
     & > *[data-bp-desktop="true"] {
-      visibility: hidden;
+      display: none;
     }
   }
 
