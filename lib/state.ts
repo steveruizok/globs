@@ -5,20 +5,16 @@ import { ICanvasItems, INode, IGlob, IData, IBounds } from "lib/types"
 import intersect from "path-intersection"
 import {
   arrsIntersect,
-  clamp,
   getCornerRotater,
   CornerRotater,
   CornerResizer,
   EdgeResizer,
   getCornerResizer,
-  getCircleTangentToPoint,
   getClosestPointOnCircle,
   getEdgeResizer,
   getGlob,
   getGlobPath,
-  getNearestPointOnCurve,
   getOuterTangents,
-  getTouchDisplay,
   projectPoint,
   rectContainsRect,
   round,
@@ -33,34 +29,18 @@ import {
   getNodeBounds,
 } from "./bounds-utils"
 
-/*
-- [ ] Keep camera centered when resizing
-- [ ] Zoom to content
-- [ ] Lock mirrored adjacent handles
-- [ ] Lock handle position relative to some other position?
-- [ ] Lock node position relative to some other position?
-- [ ] Display midline
-- [ ] Copy to clipboard
-- [ ] Select two nodes and glob them
-- [ ] Keyboard shortcuts for toolbar
-- [ ] Copy and paste
-- [ ] Bounding box
-*/
-
 export const elms: Record<string, SVGPathElement> = {}
 
 const state = createState({
   data: initialData,
-  onEnter: ["setup"],
+  onEnter: "setup",
   on: {
     MOUNTED_ELEMENT: { secretlyDo: "mountElement" },
     UNMOUNTED_ELEMENT: { secretlyDo: "deleteElement" },
     MOUNTED: { do: ["setup", "setViewport"], to: "selecting" },
-    UNMOUNTED: ["teardown"],
+    UNMOUNTED: "teardown",
     RESIZED: "setViewport",
-    STARTED_CREATING_NODES: {
-      to: "creatingNodes",
-    },
+    STARTED_CREATING_NODES: { to: "creatingNodes" },
     STARTED_BRANCHING_NODES: {
       if: "hasSelectedNodes",
       to: "branchingNodes",
@@ -80,11 +60,8 @@ const state = createState({
     TOGGLED_NODE_LOCKED: "toggleNodeLocked",
     WHEELED: {
       ifAny: ["hasShift", "isTrackpadZoom"],
-      get: "wheelZoomDelta",
       do: ["zoomCamera", "updateMvPointer"],
-      else: {
-        do: ["wheelPanCamera", "updateMvPointer"],
-      },
+      else: ["wheelPanCamera", "updateMvPointer"],
     },
     MOVED_POINTER: { secretlyDo: "updateMvPointer" },
   },
@@ -119,6 +96,8 @@ const state = createState({
                 UNHOVERED_GLOB: "pullHoveredGlob",
                 HOVERED_NODE: "pushHoveredNode",
                 UNHOVERED_NODE: "pullHoveredNode",
+                MOVED_NODE_ORDER: "moveNodeOrder",
+                MOVED_GLOB_ORDER: "moveGlobOrder",
                 SELECTED_NODE: [
                   {
                     if: "hasShift",
@@ -329,25 +308,6 @@ const state = createState({
       },
     },
   },
-  results: {
-    wheelZoomDelta(data, payload: { ctrlKey: boolean; delta: number[] }) {
-      const { camera } = data
-      if (payload.ctrlKey) payload.delta = vec.mul(vec.neg(payload.delta), 5)
-
-      return { delta: (payload.delta[1] / 500) * camera.zoom }
-    },
-    hovering(data) {
-      return {
-        ids: data.nodeIds.reduce<string[]>((acc, id) => {
-          const node = data.nodes[id]
-          if (vec.dist(pointer.point, node.point) <= node.radius) {
-            acc.push(node.id)
-          }
-          return acc
-        }, []),
-      }
-    },
-  },
   conditions: {
     hasSelection(data) {
       const { selectedNodes, selectedGlobs } = data
@@ -368,9 +328,6 @@ const state = createState({
     globIsSelected(data, payload: { id: string }) {
       return data.selectedGlobs.includes(payload.id)
     },
-    isPinch() {
-      return pointer.points.size > 1
-    },
     isTrackpadZoom(data, payload: { ctrlKey: boolean }) {
       return keys.Alt || payload.ctrlKey
     },
@@ -389,20 +346,11 @@ const state = createState({
     isMultitouch(data) {
       return pointer.points.size > 1
     },
-    hoveringHasChanged(data, payload, result: { ids: string[] }) {
-      return (
-        data.hoveredNodes.length !== result.ids.length ||
-        data.hoveredNodes.some((id) => !result.ids.includes(id))
-      )
-    },
   },
   actions: {
     // BOUNDS
     setBounds(data, payload: { bounds: IBounds }) {
       data.bounds = payload.bounds
-    },
-    clearBounds(data) {
-      data.bounds = undefined
     },
 
     // RESIZING
@@ -473,10 +421,12 @@ const state = createState({
     deleteElement(data, payload: { id: string }) {
       delete elms[payload.id]
     },
+
     // POINTER
     updateMvPointer(data) {
       updateMvPointer(pointer, data.camera)
     },
+
     // DISPLAY
     enableFill(data) {
       data.fill = true
@@ -484,6 +434,7 @@ const state = createState({
     disableFill(data) {
       data.fill = false
     },
+
     // BRUSH
     startBrush(data) {
       const { nodes, globs, camera } = data
@@ -580,13 +531,15 @@ const state = createState({
       pointer.delta = vec.mul(vec.neg(delta), camera.zoom)
       document.point = camera.point
     },
-    zoomCamera(data, payload, result: { delta: number }) {
+    zoomCamera(data, payload: { delta: number[] }) {
       const { camera, viewport, document } = data
       const { point } = pointer
 
+      const delta = (vec.mul(vec.neg(payload.delta), 5)[1] / 500) * camera.zoom
+
       const pt0 = vec.add(vec.div(point, camera.zoom), camera.point)
 
-      camera.zoom = Math.max(Math.min(camera.zoom + result.delta, 10), 0.25)
+      camera.zoom = Math.max(Math.min(camera.zoom + delta, 10), 0.25)
       camera.zoom = Math.round(camera.zoom * 100) / 100
 
       const pt1 = vec.add(vec.div(point, camera.zoom), camera.point)
@@ -598,12 +551,22 @@ const state = createState({
     },
 
     // VIEWPORT
-    updateViewport(data, payload: { point: number[]; size: number[] }) {
-      const { camera, viewport, document } = data
-      viewport.point = payload.point
+    setViewport(data, payload: { size: number[] }) {
+      const { viewport, camera, document } = data
+      const c0 = screenToWorld(
+        vec.add(document.point, vec.div(viewport.size, 2)),
+        camera.point,
+        camera.zoom
+      )
       viewport.size = payload.size
-      document.point = [...camera.point]
-      document.size = vec.div(payload.size, camera.zoom)
+      document.size = vec.round(vec.div(viewport.size, camera.zoom))
+      const c1 = screenToWorld(
+        vec.add(document.point, vec.div(viewport.size, 2)),
+        camera.point,
+        camera.zoom
+      )
+      document.point = vec.sub(document.point, vec.sub(c1, c0))
+      camera.point = document.point
     },
 
     // SELECTION
@@ -658,12 +621,6 @@ const state = createState({
       const index = data.hoveredNodes.indexOf(payload.id)
       data.hoveredNodes.splice(index, 1)
     },
-    setHoveredNode(data, payload: { id: string }) {
-      data.hoveredNodes = [payload.id]
-    },
-    setHoveredNodes(data, payload, result: { ids: string[] }) {
-      data.hoveredNodes = result.ids
-    },
 
     // NODES
     createNode(data) {
@@ -679,16 +636,6 @@ const state = createState({
       const node = nodes[selectedNodes[0]]
       const point = screenToWorld(pointer.point, camera.point, camera.zoom)
       node.radius = round(vec.dist(point, node.point))
-
-      // const delta = screenToWorld(pointer.delta, camera.point, camera.zoom)
-      // node.radius = Math.round(
-      //   node.radius +
-      //     (vec.dist(point, node.point) > node.radius
-      //       ? vec.len(delta)
-      //       : -vec.len(delta))
-      // )
-
-      // node.radius = vec.dist(node.point, point)
     },
     setSelectedNode(data, payload: { id: string }) {
       data.bounds = undefined
@@ -732,9 +679,6 @@ const state = createState({
         data.nodes[id].locked = payload.value
       }
     },
-    clearSelectedNodes(data) {
-      data.selectedNodes = []
-    },
     deleteSelectedNodes(data) {
       const { globIds, globs, nodeIds, nodes, selectedNodes } = data
       data.nodeIds = nodeIds.filter((id) => !selectedNodes.includes(id))
@@ -753,6 +697,21 @@ const state = createState({
       }
 
       data.selectedNodes = []
+    },
+    moveNodeOrder(
+      data,
+      payload: {
+        id: string
+        from: number
+        to: number
+        reason: string
+      }
+    ) {
+      if (payload.reason === "CANCEL") return
+
+      const { nodeIds } = data
+      nodeIds.splice(nodeIds.indexOf(payload.id), 1)
+      nodeIds.splice(payload.to, 0, payload.id)
     },
 
     // BRANCHING NODES
@@ -990,6 +949,21 @@ const state = createState({
           nodes[id].locked = true
         }
       }
+    },
+    moveGlobOrder(
+      data,
+      payload: {
+        id: string
+        from: number
+        to: number
+        reason: string
+      }
+    ) {
+      if (payload.reason === "CANCEL") return
+
+      const { globIds } = data
+      globIds.splice(globIds.indexOf(payload.id), 1)
+      globIds.splice(payload.to, 0, payload.id)
     },
 
     // HANDLES
@@ -1258,7 +1232,7 @@ const state = createState({
         window.addEventListener("resize", handleResize)
       }
     },
-    teardown(data) {
+    teardown() {
       if (typeof window !== "undefined") {
         document.body.removeEventListener("pointerleave", handlePointerLeave)
         window.removeEventListener("pointermove", handlePointerMove)
@@ -1268,25 +1242,6 @@ const state = createState({
         window.removeEventListener("keyup", handleKeyUp)
         window.removeEventListener("resize", handleResize)
       }
-    },
-
-    // VIEWPORT
-    setViewport(data, payload: { size: number[] }) {
-      const { viewport, camera, document } = data
-      const c0 = screenToWorld(
-        vec.add(document.point, vec.div(viewport.size, 2)),
-        camera.point,
-        camera.zoom
-      )
-      viewport.size = payload.size
-      document.size = vec.round(vec.div(viewport.size, camera.zoom))
-      const c1 = screenToWorld(
-        vec.add(document.point, vec.div(viewport.size, 2)),
-        camera.point,
-        camera.zoom
-      )
-      document.point = vec.sub(document.point, vec.sub(c1, c0))
-      camera.point = document.point
     },
   },
   values: {

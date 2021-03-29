@@ -10,10 +10,12 @@
   "dependencies": {
     "@radix-ui/react-context-menu": "^0.0.10",
     "@state-designer/react": "^1.6.9",
+    "@types/react-beautiful-dnd": "^13.0.0",
     "framer-motion": "^4.0.3",
     "next": "10.0.8",
     "path-intersection": "^2.2.1",
     "react": "17.0.1",
+    "react-beautiful-dnd": "^13.1.0",
     "react-dom": "17.0.1",
     "react-feather": "^2.0.9",
     "react-use-gesture": "^9.1.3",

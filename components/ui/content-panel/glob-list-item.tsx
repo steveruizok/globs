@@ -27,14 +27,13 @@ export default function GlobListItem({
   if (!glob) return null
 
   return (
-    <li
-      key={id}
+    <button
+      data-selected={selected}
+      onClick={handleSelect}
       onPointerLeave={handlePointerLeave}
       onPointerEnter={handlePointerEnter}
     >
-      <button data-selected={selected} onClick={handleSelect}>
-        {glob.name}
-      </button>
-    </li>
+      {glob.name}
+    </button>
   )
 }

@@ -1,0 +1,22 @@
+# Todo
+
+- [x] Keep camera centered when resizing
+- [ ] Reorder nodes
+- [ ] Move to Front
+- [ ] Move to Back
+- [ ] Move forward
+- [ ] Move backward
+- [ ] Zoom menu
+- [ ] Zoom to content
+- [ ] Lock mirrored adjacent handles
+- [ ] Lock handle position relative to some other position?
+- [ ] Lock node position relative to some other position?
+- [ ] Display midline
+- [ ] Copy to clipboard
+- [ ] Select two nodes and glob them
+- [ ] Keyboard shortcuts for toolbar
+- [ ] Copy and paste
+- [ ] Bounding box
+- [ ] Locked globs
+- [ ] Drag-clone selection
+- [ ] Drag-glob nodes

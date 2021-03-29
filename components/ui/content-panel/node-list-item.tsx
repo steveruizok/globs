@@ -33,12 +33,13 @@ export default function NodeListItem({
   if (!node) return null
 
   return (
-    <li
-      key={id}
-      onPointerLeave={handlePointerLeave}
-      onPointerEnter={handlePointerEnter}
-    >
-      <button data-selected={selected} onClick={handleSelect}>
+    <>
+      <button
+        data-selected={selected}
+        onClick={handleSelect}
+        onPointerLeave={handlePointerLeave}
+        onPointerEnter={handlePointerEnter}
+      >
         {node.name}
       </button>
       <button data-hidey={!node.locked} onClick={handleLock}>
@@ -48,6 +49,6 @@ export default function NodeListItem({
           <Unlock size={12} strokeWidth={3} opacity={0.4} />
         )}
       </button>
-    </li>
+    </>
   )
 }
