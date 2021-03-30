@@ -38,10 +38,8 @@ export default function NodeList() {
       },
       dragging: {
         onEnter: "addCancelEvent",
-        onExit: "removeCancelEvent",
+        onExit: ["removeCancelEvent", "cleanup"],
         on: {
-          DRAG_SCROLLED_UP: {}, // TODO
-          DRAG_SCROLLED_DOWN: {}, // TODO
           CHANGED_POSITION: [
             {
               get: "scrollDirection",
@@ -54,7 +52,7 @@ export default function NodeList() {
               do: "setNextIndex",
             },
           ],
-          CANCELLED: { do: () => console.log("cancelling!"), to: "idle" },
+          CANCELLED: { to: "idle" },
           STOPPED_DRAGGING: { do: "moveDraggingToNextPosition", to: "idle" },
         },
       },
@@ -159,9 +157,10 @@ export default function NodeList() {
           to: nextIndex,
           reason: "DROP",
         })
-
-        // ids.splice(draggingIndex, 1)
-        // ids.splice(nextIndex, 0, id)
+      },
+      cleanup(data) {
+        data.draggingIndex = -1
+        data.nextIndex = -1
       },
     },
   })
@@ -233,6 +232,13 @@ function Draggable({
       onPanEnd={onDragEnd}
       onPan={(_, info) => isDragging && onDrag([info.point.x, info.point.y])}
       whileTap={{ backgroundColor: "var(--muted)" }}
+      style={{ backgroundColor: "transparent" }}
+      transition={{
+        type: "spring",
+        stiffness: 900,
+        mass: 0.2,
+        damping: 30,
+      }}
     >
       {children}
     </motion.li>
