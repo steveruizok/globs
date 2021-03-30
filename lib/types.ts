@@ -141,6 +141,11 @@ export interface INodeSnapshot {
   radius: number
 }
 
+export interface KeyCommand {
+  eventName: string
+  modifiers: string[]
+}
+
 // export interface IGlobSnapshot {
 //   id: string
 // 	x: number

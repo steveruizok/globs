@@ -1,7 +1,8 @@
 # Todo
 
 - [x] Keep camera centered when resizing
-- [ ] Reorder nodes
+- [x] Reorder nodes
+- [x] Reorder globs
 - [ ] Move to Front
 - [ ] Move to Back
 - [ ] Move forward

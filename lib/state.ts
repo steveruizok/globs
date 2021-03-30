@@ -1,7 +1,14 @@
 import * as vec from "lib/vec"
 import * as svg from "lib/svg"
 import { createState, createSelectorHook } from "@state-designer/react"
-import { ICanvasItems, INode, IGlob, IData, IBounds } from "lib/types"
+import {
+  ICanvasItems,
+  INode,
+  IGlob,
+  IData,
+  IBounds,
+  KeyCommand,
+} from "lib/types"
 import intersect from "path-intersection"
 import {
   arrsIntersect,
@@ -574,8 +581,6 @@ const state = createState({
       data.selectedHandle = undefined
       data.selectedNodes = []
       data.selectedGlobs = []
-      data.hoveredNodes = []
-      data.hoveredGlobs = []
       data.highlightNodes = []
       data.highlightGlobs = []
     },
@@ -1342,13 +1347,19 @@ const handlePointerMove = throttle((e: PointerEvent) => {
   state.send("MOVED_POINTER")
 }, 16)
 
-const downCommands = {
-  Escape: "CANCELLED",
-  Enter: "CONFIRMED",
-  Delete: "DELETED",
-  Backspace: "DELETED",
-  " ": "ENABLED_FILL",
-  l: "LOCKED_NODES",
+// Keyboard commands
+
+const downCommands: Record<string, KeyCommand[]> = {
+  Escape: [{ eventName: "CANCELLED", modifiers: [] }],
+  Enter: [{ eventName: "CONFIRMED", modifiers: [] }],
+  Delete: [{ eventName: "DELETED", modifiers: [] }],
+  Backspace: [{ eventName: "DELETED", modifiers: [] }],
+  " ": [{ eventName: "ENABLED_FILL", modifiers: [] }],
+  l: [{ eventName: "LOCKED_NODES", modifiers: ["Meta"] }],
+  "]": [{ eventName: "MOVED_FORWARD", modifiers: ["Meta"] }],
+  "[": [{ eventName: "MOVED_BACKWARD", modifiers: ["Meta"] }],
+  "‘": [{ eventName: "MOVED_TO_FRONT", modifiers: ["Meta", "Shift"] }],
+  "“": [{ eventName: "MOVED_TO_BACK", modifiers: ["Meta", "Shift"] }],
 }
 
 const upCommands = {
@@ -1356,17 +1367,23 @@ const upCommands = {
 }
 
 function handleKeyDown(e: KeyboardEvent) {
-  if (keys[e.key]) return
   keys[e.key] = true
-  state.send("PRESSED_KEY")
   if (e.key in downCommands) {
-    state.send(downCommands[e.key])
+    for (let { modifiers, eventName } of downCommands[e.key]) {
+      if (modifiers.every((command) => keys[command])) {
+        e.preventDefault()
+        state.send(eventName)
+        return
+      }
+    }
   }
+
+  state.send("PRESSED_KEY", { key: e.key })
 }
 
 function handleKeyUp(e: KeyboardEvent) {
   keys[e.key] = false
-  state.send("RELEASED_KEY")
+  state.send("RELEASED_KEY", { key: e.key })
   if (e.key in upCommands) {
     state.send(upCommands[e.key])
   }

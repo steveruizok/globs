@@ -70,6 +70,8 @@ export default function Node({ id, fill }: Props) {
             y={node.point[1]}
             className="stroke-m dash-array-normal"
             pointerEvents="none"
+            fill="none"
+            stroke="black"
           />
         ) : (
           <Dot position={node.point} />
