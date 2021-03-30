@@ -1,19 +1,14 @@
 import state, { useSelector } from "lib/state"
 import NodeListItem from "./node-list-item"
-import { Menu } from "react-feather"
 import { motion } from "framer-motion"
-import { Handle } from "./shared"
-import { ReactNode, useRef } from "react"
+import React, { ReactNode, useRef } from "react"
 import { useStateDesigner } from "@state-designer/react"
 import { clamp } from "lib/utils"
 
 const HEADER_HEIGHT = 40
 const ITEM_HEIGHT = 28
 
-export default function NodeList() {
-  const nodeIds = useSelector((s) => s.data.nodeIds)
-  const selectedNodeIds = useSelector((s) => s.data.selectedNodes)
-
+export default function DragAndDropList({ children }: { children: ReactNode }) {
   const rContainer = useRef<HTMLDivElement>(null)
   const rList = useRef<HTMLOListElement>(null)
 

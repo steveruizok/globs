@@ -89,11 +89,14 @@ const PanelInnerContainer = styled.div`
       margin: 0;
 
       & li {
-        display: grid;
-        /* grid-template-columns: 16px 1fr 28px;  */
-        align-items: center;
+        margin: 0;
+        padding: 0;
+        padding-left: 16px;
         width: 100%;
         height: 28px;
+        display: grid;
+        grid-template-columns: 1fr 28px;
+        align-items: center;
         gap: 0;
         border-bottom: 1px solid rgba(0, 0, 0, 0.1);
 
