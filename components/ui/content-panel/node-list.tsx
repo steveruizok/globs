@@ -1,7 +1,7 @@
 import state, { useSelector } from "lib/state"
 import NodeListItem from "./node-list-item"
-import { motion } from "framer-motion"
-import { ReactNode, useRef } from "react"
+import { Draggable, PositionIndicator } from "./shared"
+import { useRef } from "react"
 import { useStateDesigner } from "@state-designer/react"
 import { clamp } from "lib/utils"
 
@@ -17,7 +17,6 @@ export default function NodeList() {
 
   const local = useStateDesigner({
     data: {
-      start: [] as number[],
       draggingId: null as string | null,
       draggingIndex: -1,
       draggingDirection: "up" as "up" | "down",
@@ -128,7 +127,6 @@ export default function NodeList() {
         data,
         payload: { id: string; point: number[]; index: number }
       ) {
-        data.start = payload.point
         data.draggingId = payload.id
         data.draggingIndex = payload.index
         data.nextIndex = payload.index
@@ -207,71 +205,5 @@ export default function NodeList() {
         />
       )}
     </section>
-  )
-}
-
-function Draggable({
-  isDragging,
-  onDragStart,
-  onDragEnd,
-  onDrag,
-  children,
-}: {
-  isDragging: boolean
-  onDragStart: (point: number[]) => void
-  onDragEnd: () => void
-  onDrag: (point: number[]) => void
-  children: ReactNode
-}) {
-  return (
-    <motion.li
-      layout
-      onPanStart={(_, info) => onDragStart([info.point.x, info.point.y])}
-      onPanEnd={onDragEnd}
-      onPan={(_, info) => isDragging && onDrag([info.point.x, info.point.y])}
-      whileTap={{ backgroundColor: "var(--muted)" }}
-      style={{ backgroundColor: "transparent" }}
-      transition={{
-        type: "spring",
-        stiffness: 900,
-        mass: 0.2,
-        damping: 30,
-      }}
-    >
-      {children}
-    </motion.li>
-  )
-}
-
-function PositionIndicator({
-  nextIndex,
-  direction,
-  depth,
-}: {
-  nextIndex: number
-  direction: "up" | "down"
-  depth: number
-}) {
-  return (
-    <motion.div
-      style={{
-        position: "absolute",
-        top: (nextIndex + 1) * ITEM_HEIGHT,
-        left: depth * 12,
-        width: `calc(100% - ${depth * 12}px)`,
-        height: ITEM_HEIGHT,
-        pointerEvents: "none",
-      }}
-      animate={direction}
-      transition={{ duration: 0 }}
-      variants={{
-        up: {
-          borderTop: "2px solid #000",
-        },
-        down: {
-          borderBottom: "2px solid #000",
-        },
-      }}
-    />
   )
 }
