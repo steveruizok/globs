@@ -1,8 +1,6 @@
 import state, { useSelector } from "lib/state"
 import NodeListItem from "./node-list-item"
-import { Menu } from "react-feather"
 import { motion } from "framer-motion"
-import { Handle } from "./shared"
 import { ReactNode, useRef } from "react"
 import { useStateDesigner } from "@state-designer/react"
 import { clamp } from "lib/utils"

@@ -60,9 +60,9 @@ export default function GlobList() {
       scrollDirection(data, payload: { point: number[] }) {
         const { point } = payload
         const { offsetTop } = rList.current!
-        const { offsetHeight } = rContainer.current!
+        const { offsetTop: listTop, offsetHeight } = rContainer.current!
 
-        const y = point[1] - HEADER_HEIGHT - offsetTop + ITEM_HEIGHT
+        const y = point[1] - HEADER_HEIGHT - listTop - offsetTop + ITEM_HEIGHT
 
         const direction =
           y < 24 ? "up" : y > offsetHeight - 24 ? "down" : "none"
@@ -171,7 +171,7 @@ export default function GlobList() {
 
   return (
     <section ref={rContainer}>
-      <h2>Nodes</h2>
+      <h2>Globs</h2>
       <ol ref={rList}>
         {globIds.map((id, index) => {
           return (
