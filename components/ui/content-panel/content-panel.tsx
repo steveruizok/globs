@@ -63,6 +63,7 @@ const PanelInnerContainer = styled.div`
     padding: 0;
     overflow-x: hidden;
     overflow-y: scroll;
+    position: relative;
 
     &:nth-of-type(2) {
       border-top: 1px solid rgba(0, 0, 0, 0.1);
@@ -82,13 +83,14 @@ const PanelInnerContainer = styled.div`
     }
 
     & ol {
+      position: relative;
       list-style-type: none;
       padding: 0;
       margin: 0;
 
       & li {
         display: grid;
-        grid-template-columns: 16px 1fr 28px;
+        /* grid-template-columns: 16px 1fr 28px;  */
         align-items: center;
         width: 100%;
         height: 28px;
