@@ -136,7 +136,7 @@ function Corner({
         }}
         style={{ cursor: "grab" }}
         fill="transparent"
-        className="stroke-s"
+        className="strokewidth-s"
       />
       <motion.rect
         x={x + width * -0.5}
@@ -154,7 +154,7 @@ function Corner({
         style={{ cursor }}
         fill="white"
         stroke="#005aff"
-        className="stroke-ui"
+        className="strokewidth-ui"
       />
     </g>
   )

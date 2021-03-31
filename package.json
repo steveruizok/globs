@@ -10,8 +10,12 @@
   "dependencies": {
     "@radix-ui/react-context-menu": "^0.0.10",
     "@state-designer/react": "^1.6.9",
+    "@types/classnames": "^2.2.11",
     "@types/react-beautiful-dnd": "^13.0.0",
+    "classnames": "^2.2.6",
     "framer-motion": "^4.0.3",
+    "kld-intersections": "^0.7.0",
+    "kld-polynomial": "^0.3.0",
     "next": "10.0.8",
     "path-intersection": "^2.2.1",
     "react": "17.0.1",

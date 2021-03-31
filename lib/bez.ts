@@ -7,6 +7,16 @@ export function bez1d(a: number, b: number, c: number, d: number, t: number) {
     d * t * t * t
   )
 }
+// Evaluate a point along a 2d bezier curve.
+export function bez2d(
+  A: number[],
+  B: number[],
+  C: number[],
+  D: number[],
+  t: number
+) {
+  return [bez1d(A[0], B[0], C[0], D[0], t), bez1d(A[1], B[1], C[1], D[1], t)]
+}
 
 /**
  * Get the bounding box of a cubic bezier curve.
@@ -81,3 +91,30 @@ export function getCubicBezierBounds(
     height: Math.abs(yl - yh),
   }
 }
+
+// getPointAt(t, p1, pc, p2) {
+// 	const x = (1 - t) * (1 - t) * p1.x + 2 * (1 - t) * t * pc.x + t * t * p2.x
+// 	const y = (1 - t) * (1 - t) * p1.y + 2 * (1 - t) * t * pc.y + t * t * p2.y
+
+// 	return { x, y };
+// }
+
+// getDerivativeAt(t, p1, pc, p2) {
+// 	const d1 = { x: 2 * (pc.x - p1.x), y: 2 * (pc.y - p1.y) };
+// 	const d2 = { x: 2 * (p2.x - pc.x), y: 2 * (p2.y - pc.y) };
+
+// 	const x = (1 - t) * d1.x + t * d2.x;
+// 	const y = (1 - t) * d1.y + t * d2.y;
+
+// 	return { x, y };
+// }
+
+// getNormalAt(t, p1, pc, p2) {
+// 	const d = getDerivativeAt(t, p1, pc, p2);
+// 	const q = sqrt(d.x * d.x + d.y * d.y);
+
+// 	const x = -d.y / q;
+// 	const y = d.x / q;
+
+// 	return { x, y };
+// }

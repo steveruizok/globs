@@ -1,7 +1,10 @@
+import classNames from "classnames"
+
 interface Props {
   position?: number[]
   color?: string
   isSelected: boolean
+  isPrime: boolean
   onSelect?: () => void
 }
 
@@ -9,6 +12,7 @@ export default function Anchor({
   position = [0, 0],
   color = "#000",
   isSelected = false,
+  isPrime = false,
   onSelect,
 }: Props) {
   return (
@@ -26,7 +30,12 @@ export default function Anchor({
         x={position[0]}
         y={position[1]}
         fill={color}
-        opacity={isSelected ? 1 : 0.5}
+        className={classNames([
+          {
+            "fill-left": !isPrime,
+            "fill-right": isPrime,
+          },
+        ])}
         pointerEvents="none"
       />
     </>

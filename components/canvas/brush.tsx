@@ -13,8 +13,9 @@ export default function Brush() {
       width={Math.abs(brush.start[0] - brush.end[0])}
       height={Math.abs(brush.start[1] - brush.end[1])}
       stroke="#1f58ff"
-      className="stroke-s"
+      className="strokewidth-s"
       fill="rgba(30, 88, 255, .1"
+      pointerEvents="none"
     />
   )
 }
