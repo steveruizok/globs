@@ -8,8 +8,8 @@ import {
 } from "lib/utils"
 import { bez2d } from "lib/bez"
 import state, { mvPointer } from "lib/state"
-import { useEffect, useMemo, useRef, useState } from "react"
-import { motion, useMotionValue, useTransform } from "framer-motion"
+import { useMemo, useRef } from "react"
+import { motion, useTransform } from "framer-motion"
 import classNames from "classnames"
 
 interface Props {
@@ -21,27 +21,9 @@ export default function CenterLine({ glob }: Props) {
   const rRightPath = useRef<SVGPathElement>(null)
   const rMiddlePath = useRef<SVGPathElement>(null)
 
-  const {
-    C0,
-    C1,
-    E0,
-    E0p,
-    E1,
-    E1p,
-    F0,
-    F1,
-    F0p,
-    F1p,
-    D1,
-    Dp1,
-    D2,
-    Dp2,
-    N0,
-    N0p,
-    N1,
-    N1p,
-  } = glob.points
+  const { E0, E0p, E1, E1p, F0, F1, F0p, F1p } = glob.points
 
+  // Calculate SVG path data for the glob's middle line
   const middlePath = useMemo(() => {
     const pts: number[][] = []
 
@@ -64,6 +46,7 @@ export default function CenterLine({ glob }: Props) {
     return path.join(" ")
   }, [glob])
 
+  // Find the neartest point on the middle path
   const mvNearestPointOnMiddlePath = useTransform(mvPointer.world, (point) => {
     const path = rMiddlePath.current
     if (!path) return null
@@ -73,104 +56,24 @@ export default function CenterLine({ glob }: Props) {
     return result
   })
 
-  // const tempPath = useTransform(mvNearestPointOnMiddlePath, (point) => {
-  //   // @ts-ignore
-  //   const { zoom } = state.data.camera
-  //   // if (point === null || point.distance > 16) return ""
-  //   if (point === null) return ""
-  //   const middlePath = rMiddlePath.current
-  //   if (!middlePath) return ""
-
-  //   const { x, y } = middlePath.getPointAtLength(
-  //     middlePath.getTotalLength() * point.t + 0.01
-  //   )
-  //   const n = vec.uni(vec.vec([x, y], point.point))
-  //   const lp = vec.add(point.point, vec.mul(vec.per(n), 10000))
-  //   const rp = vec.sub(point.point, vec.mul(vec.per(n), 10000))
-
-  //   const lIntersection = getBezierLineSegmentIntersections(
-  //     E0,
-  //     F0,
-  //     F1,
-  //     E1,
-  //     point.point,
-  //     rp
-  //   )
-
-  //   const rIntersection = getBezierLineSegmentIntersections(
-  //     E0p,
-  //     F0p,
-  //     F1p,
-  //     E1p,
-  //     point.point,
-  //     lp
-  //   )
-
-  //   let l: number[], r: number[], mp: number[], radius: number
-
-  //   if (lIntersection?.points?.[0]) {
-  //     const { x, y } = lIntersection?.points?.[0]
-  //     l = [x, y]
-  //   }
-
-  //   if (rIntersection?.points?.[0]) {
-  //     const { x, y } = rIntersection?.points?.[0]
-  //     r = [x, y]
-  //   }
-
-  //   if (l && r) {
-  //     mp = vec.med(l, r)
-  //     radius = vec.dist(l, r) / 2
-  //   }
-
-  //   return [
-  //     svg.ellipse(l, zoom < 1 ? 4 : 4 / zoom),
-  //     svg.ellipse(r, zoom < 1 ? 4 : 4 / zoom),
-  //     //  l ? svg.ellipse(l, zoom < 1 ? 4 : 4 / zoom) : "",
-  //     // svg.moveTo(lp),
-  //     // svg.lineTo(rp),
-  //     svg.ellipse(point.point, zoom < 1 ? 4 : 4 / zoom),
-  //     //  l && r ? svg.ellipse(mp, radius) : "",
-  //   ].join(" ")
-
-  //   // const path: string[] = []
-
-  //   // const pts: number[][] = []
-
-  //   // for (let i = 0; i < 21; i++) {
-  //   //   const l = bez2d(E0, F0, F1, E1, i / 20) // left
-  //   //   const lp = bez2d(E0p, F0p, F1p, E1p, i / 20) // right
-  //   //   pts.push(vec.med(l, lp))
-  //   //   path.push(svg.moveTo(l), svg.lineTo(lp), svg.ellipse(vec.med(l, lp), 3))
-  //   // }
-
-  //   // for (let i = 0; i < 21; i++) {
-  //   //   const l = bez2d(E0, F0, F1, E1, i / 20) // left
-  //   //   const lp = bez2d(E0p, F0p, F1p, E1p, i / 20) // right
-  //   //   pts.push(vec.med(l, lp))
-  //   // }
-
-  //   // const curve = getCurvePoints(pts)
-
-  //   // return path.join(" ")
-  // })
-
-  const mvSplitControl = useTransform(
+  // Find a circle that touches the glob's two curves
+  const mvCircleOnMiddlePath = useTransform(
     // @ts-ignore
     mvNearestPointOnMiddlePath,
     (point) => {
-      const { zoom } = state.data.camera
-      // if (point === null || point.distance > 16) return ""
-      if (point === null) return ""
       const middlePath = rMiddlePath.current
       if (!middlePath) return ""
+      if (point === null) return ""
 
       const { x, y } = middlePath.getPointAtLength(
         middlePath.getTotalLength() * point.t + 0.005
       )
-      const n = vec.uni(vec.vec([x, y], point.point))
-      const lp = vec.add(point.point, vec.mul(vec.per(n), 10000))
-      const rp = vec.sub(point.point, vec.mul(vec.per(n), 10000))
+
+      const normal = vec.uni(vec.vec([x, y], point.point))
+
+      // Left and right points of test line
+      const lp = vec.add(point.point, vec.mul(vec.per(normal), 10000))
+      const rp = vec.sub(point.point, vec.mul(vec.per(normal), 10000))
 
       const lIntersection = getBezierLineSegmentIntersections(
         E0,
@@ -190,6 +93,7 @@ export default function CenterLine({ glob }: Props) {
         rp
       )
 
+      // Left and right intersections, midpoint and radius of circle
       let l: number[], r: number[], mp: number[], radius: number
 
       if (lIntersection?.points?.[0]) {
@@ -239,7 +143,7 @@ export default function CenterLine({ glob }: Props) {
         cursor="pointer"
       />
       <motion.path
-        d={mvSplitControl}
+        d={mvCircleOnMiddlePath}
         className={classNames(["stroke-outline", "strokewidth-s"])}
         fill="none"
         cursor="pointer"
