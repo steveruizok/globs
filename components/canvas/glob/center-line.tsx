@@ -7,7 +7,7 @@ import {
   getCurvePoints,
 } from "lib/utils"
 import { bez2d } from "lib/bez"
-import state, { mvPointer } from "lib/state"
+import { mvPointer } from "lib/state"
 import { useMemo, useRef } from "react"
 import { motion, useTransform } from "framer-motion"
 import classNames from "classnames"
@@ -56,7 +56,6 @@ export default function CenterLine({ glob }: Props) {
 
   // Find a circle that touches the glob's two curves
   const mvCircleOnMiddlePath = useTransform(
-    // @ts-ignore
     mvNearestPointOnMiddlePath,
     (point) => {
       const middlePath = rMiddlePath.current
