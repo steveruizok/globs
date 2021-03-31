@@ -35,7 +35,7 @@ export function Draggable({
       onPanEnd={onDragEnd}
       onPan={(_, info) => isDragging && onDrag([info.point.x, info.point.y])}
       whileTap={{ backgroundColor: "var(--muted)" }}
-      style={{ backgroundColor: "transparent" }}
+      style={{ backgroundColor: "rgba(144, 144, 144,0)" }}
       transition={{
         type: "spring",
         stiffness: 900,
