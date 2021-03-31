@@ -1,30 +1,48 @@
 import * as svg from "lib/svg"
 import * as vec from "lib/vec"
+import state from "lib/state"
+import Anchor from "./anchor"
 import Handle from "./handle"
+import Dot from "../dot"
+import classNames from "classnames"
+import { IGlob } from "lib/types"
 
 interface HandlesProps {
-  start: number[]
-  end: number[]
-  position: number[]
+  glob: IGlob
   isDragging: boolean
   isSelected: boolean
-  color: string
-  onSelect: () => void
+  isPrime: boolean
 }
 
 export default function Handles({
-  onSelect,
-  start,
-  end,
-  position,
+  glob,
   isDragging,
   isSelected,
-  color,
+  isPrime,
 }: HandlesProps) {
+  const { points, id } = glob
+  const start = isPrime ? points.E0p : points.E0
+  const end = isPrime ? points.E1p : points.E1
+  const position = isPrime ? points.Dp : points.D
+
+  const [p0, p1] = isPrime ? [points.Dp1, points.Dp2] : [points.D1, points.D2]
+
   return (
-    <>
+    <g
+      className={classNames([
+        {
+          "opacity-m": !isSelected,
+          "opacity-full": isSelected,
+        },
+      ])}
+    >
       {isDragging ? (
-        <ExtendedLines start={start} end={end} position={position} />
+        <ExtendedLines
+          position={position}
+          start={start}
+          end={end}
+          isPrime={isPrime}
+        />
       ) : (
         <path
           d={[
@@ -32,15 +50,74 @@ export default function Handles({
             svg.lineTo(position),
             svg.lineTo(end),
           ].toString()}
-          fill="none"
-          stroke={color}
-          className="stroke-s dash-array-normal"
           pointerEvents="none"
-          opacity={isSelected ? 1 : 0.5}
+          className={classNames([
+            "fill-none",
+            "strokewidth-s",
+            "dash-array-m",
+            {
+              "stroke-left": !isPrime,
+              "stroke-right": isPrime,
+            },
+          ])}
         />
       )}
-      <Handle color={color} position={position} onSelect={onSelect} />
-    </>
+      {/* Projected Points */}
+      <use
+        href="#dot"
+        x={p0[0]}
+        y={p0[1]}
+        pointerEvents="none"
+        className={classNames({
+          "fill-left": !isPrime,
+          "fill-right": isPrime,
+        })}
+      />
+      <use
+        href="#dot"
+        x={p1[0]}
+        y={p1[1]}
+        pointerEvents="none"
+        className={classNames({
+          "fill-left": !isPrime,
+          "fill-right": isPrime,
+        })}
+      />
+      {/* Anchors */}
+      <Anchor
+        position={isPrime ? points.F0p : points.F0}
+        isSelected={isSelected}
+        isPrime={isPrime}
+        onSelect={() =>
+          state.send("SELECTED_ANCHOR", {
+            id,
+            anchor: isPrime ? "ap" : "a",
+          })
+        }
+      />
+      <Anchor
+        position={isPrime ? points.F1p : points.F1}
+        isSelected={isSelected}
+        isPrime={isPrime}
+        onSelect={() =>
+          state.send("SELECTED_ANCHOR", {
+            id,
+            anchor: isPrime ? "bp" : "b",
+          })
+        }
+      />
+      {/* Handle */}
+      <Handle
+        isPrime={isPrime}
+        position={position}
+        onSelect={() =>
+          state.send("POINTED_HANDLE", {
+            id,
+            handle: isPrime ? "Dp" : "D",
+          })
+        }
+      />
+    </g>
   )
 }
 
@@ -48,26 +125,34 @@ interface ExtendedLinesProps {
   start: number[]
   end: number[]
   position: number[]
+  isPrime: boolean
 }
 
-function ExtendedLines({ start, end, position }: ExtendedLinesProps) {
+function ExtendedLines({ start, end, position, isPrime }: ExtendedLinesProps) {
   const [n0, n1] = [
-    vec.uni(vec.sub(position, start)),
-    vec.uni(vec.sub(position, end)),
+    vec.uni(vec.sub(start, position)),
+    vec.uni(vec.sub(end, position)),
   ]
   return (
     <path
       d={[
-        svg.moveTo(vec.add(position, vec.mul(n0, 10000))),
-        svg.lineTo(vec.add(position, vec.mul(n0, -10000))),
-        svg.moveTo(vec.add(position, vec.mul(n1, 10000))),
-        svg.lineTo(vec.add(position, vec.mul(n1, -10000))),
+        svg.moveTo(position),
+        svg.lineTo(vec.add(position, vec.mul(n0, 10000))),
+        svg.moveTo(position),
+        svg.lineTo(vec.add(position, vec.mul(n1, 10000))),
       ].join(" ")}
       fill="none"
       stroke="red"
       opacity={0.5}
       pointerEvents="none"
-      className="stroke-s"
+      className={classNames([
+        "strokewidth-s",
+        "fill-none",
+        {
+          "stroke-left": !isPrime,
+          "stroke-right": isPrime,
+        },
+      ])}
     />
   )
 }

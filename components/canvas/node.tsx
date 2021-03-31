@@ -3,6 +3,7 @@ import state, { useSelector } from "lib/state"
 import { deepCompareArrays, deepCompare } from "lib/utils"
 import { useEffect, useRef } from "react"
 import Dot from "./dot"
+import classNames from "classnames"
 
 interface Props {
   id: string
@@ -44,11 +45,16 @@ export default function Node({ id, fill }: Props) {
         cx={node.point[0]}
         cy={node.point[1]}
         r={node.radius}
-        fill={
-          hasGlobs ? "transparent" : fill ? "black" : "rgba(255, 255, 255, .72)"
-        }
-        stroke={fill ? "transparent" : isSelected ? "red" : "black"}
-        className="stroke-m"
+        className={classNames([
+          "strokewidth-m",
+          {
+            "fill-flat": fill,
+            "fill-soft": !fill,
+            "stroke-none": fill,
+            "stroke-selected": !fill && isSelected,
+            "stroke-outline": !fill && !isSelected,
+          },
+        ])}
         pointerEvents="none"
       />
       <circle
@@ -68,10 +74,9 @@ export default function Node({ id, fill }: Props) {
             href="#anchor"
             x={node.point[0]}
             y={node.point[1]}
-            className="stroke-m dash-array-normal"
+            className="strokewidth-m dash-array-m"
             pointerEvents="none"
             fill="none"
-            stroke="black"
           />
         ) : (
           <Dot position={node.point} />

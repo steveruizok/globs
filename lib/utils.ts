@@ -10,6 +10,7 @@ import {
   INodeSnapshot,
 } from "./types"
 import * as vec from "./vec"
+import { Intersection, ShapeInfo } from "kld-intersections"
 
 // A helper for getting tangents.
 export function getCircleTangentToPoint(
@@ -780,7 +781,10 @@ function distance2(p: DOMPoint, point: number[]) {
  * @param point
  * @returns
  */
-export function closestPointOnPath(pathNode: SVGPathElement, point: number[]) {
+export function getClosestPointOnPath(
+  pathNode: SVGPathElement,
+  point: number[]
+) {
   var pathLen = pathNode.getTotalLength(),
     p = 8,
     best: DOMPoint,
@@ -831,6 +835,7 @@ export function closestPointOnPath(pathNode: SVGPathElement, point: number[]) {
 
   return {
     point: [best.x, best.y],
+    distance: bestDist,
     length: (bl + al) / 2,
     t: (bl + al) / 2 / pathLen,
   }
@@ -1271,3 +1276,45 @@ export function getCornerRotater(
 export type EdgeResizer = ReturnType<typeof getEdgeResizer>
 export type CornerResizer = ReturnType<typeof getCornerResizer>
 export type CornerRotater = ReturnType<typeof getCornerRotater>
+
+export function getGlobOutline(
+  { C0, r0, C1, r1, E0, E1, F0, F1, E0p, E1p, F0p, F1p }: IGlobPoints,
+  startCap: "round" | "flat" = "round",
+  endCap: "round" | "flat" = "round"
+) {
+  return [
+    svg.moveTo(E0),
+    startCap === "round" ? svg.arcTo(C0, r0, E0, E0p) : svg.lineTo(E0p),
+    svg.bezierTo(F0p, F1p, E1p),
+    endCap === "round" ? svg.arcTo(C1, r1, E1p, E1) : svg.lineTo(E1),
+    svg.bezierTo(F1, F0, E0),
+  ].join(" ")
+}
+
+export function getBezierCircleIntersections(
+  p1: number[],
+  p2: number[],
+  p3: number[],
+  p4: number[],
+  center: number[],
+  radius: number
+) {
+  return Intersection.intersect(
+    ShapeInfo.cubicBezier({ p1, p2, p3, p4 }),
+    ShapeInfo.circle({ center, radius })
+  )
+}
+
+export function getBezierLineSegmentIntersections(
+  p1: number[],
+  p2: number[],
+  p3: number[],
+  p4: number[],
+  start: number[],
+  end: number[]
+) {
+  return Intersection.intersect(
+    ShapeInfo.cubicBezier({ p1, p2, p3, p4 }),
+    ShapeInfo.line({ p1: start, p2: end })
+  )
+}

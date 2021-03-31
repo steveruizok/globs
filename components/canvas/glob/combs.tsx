@@ -75,14 +75,14 @@ export default function Combs({
           y1={p0[1]}
           x2={p1[0]}
           y2={p1[1]}
-          className="stroke-s"
+          className="strokewidth-s"
           stroke={getNormalColor(m)}
         />
       ))}
       <polyline
         points={skeletonPts.map((p) => p[1]).join(" ")}
         opacity={0.5}
-        className="stroke-s"
+        className="strokewidth-s"
         stroke="red"
         fill="transparent"
       />
