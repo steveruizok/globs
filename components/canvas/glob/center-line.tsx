@@ -17,8 +17,6 @@ interface Props {
 }
 
 export default function CenterLine({ glob }: Props) {
-  const rLeftPath = useRef<SVGPathElement>(null)
-  const rRightPath = useRef<SVGPathElement>(null)
   const rMiddlePath = useRef<SVGPathElement>(null)
 
   const { E0, E0p, E1, E1p, F0, F1, F0p, F1p } = glob.points
@@ -66,14 +64,14 @@ export default function CenterLine({ glob }: Props) {
       if (point === null) return ""
 
       const { x, y } = middlePath.getPointAtLength(
-        middlePath.getTotalLength() * point.t + 0.005
+        middlePath.getTotalLength() * point.t - 0.005
       )
 
       const normal = vec.uni(vec.vec([x, y], point.point))
 
       // Left and right points of test line
-      const lp = vec.add(point.point, vec.mul(vec.per(normal), 10000))
-      const rp = vec.sub(point.point, vec.mul(vec.per(normal), 10000))
+      const lp = vec.sub(point.point, vec.mul(vec.per(normal), 10000))
+      const rp = vec.add(point.point, vec.mul(vec.per(normal), 10000))
 
       const lIntersection = getBezierLineSegmentIntersections(
         E0,
@@ -117,20 +115,6 @@ export default function CenterLine({ glob }: Props) {
 
   return (
     <>
-      <path
-        ref={rLeftPath}
-        d={[svg.moveTo(E0), svg.bezierTo(F0, F1, E1)].join()}
-        opacity="0"
-        fill="none"
-        pointerEvents="none"
-      />
-      <path
-        ref={rRightPath}
-        d={[svg.moveTo(E0p), svg.bezierTo(F0p, F1p, E1p)].join()}
-        opacity="0"
-        fill="none"
-        pointerEvents="none"
-      />
       <path
         ref={rMiddlePath}
         d={middlePath}

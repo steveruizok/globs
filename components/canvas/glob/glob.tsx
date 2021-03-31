@@ -85,7 +85,7 @@ export default function Glob({ id, fill }: Props) {
       )}
       {!fill && safe && (
         <>
-          {/* {isSelected && isHovered && <CenterLine glob={glob} />} */}
+          {isSelected && isHovered && <CenterLine glob={glob} />}
           <Handles
             glob={glob}
             isPrime={false}
