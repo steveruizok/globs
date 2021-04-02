@@ -708,67 +708,6 @@ export function computePointOnCurve(t: number, points: number[][]) {
   } // higher order curves: use de Casteljau's computation
 }
 
-// Generate a lookup table by sampling the curve.
-function getBezierCurveLUT(points: number[][], samples = 100) {
-  return Array.from(Array(samples)).map((_, i) =>
-    computePointOnCurve(i / (samples - 1 - i), points)
-  )
-}
-
-// Find the closest point among points in a lookup table
-function closestPointInLUT(A: number[], LUT: number[][]) {
-  let mdist = Math.pow(2, 63),
-    mpos: number,
-    d: number
-  LUT.forEach(function(p, idx) {
-    d = vec.dist(A, p)
-
-    if (d < mdist) {
-      mdist = d
-      mpos = idx
-    }
-  })
-  return {
-    mdist: mdist,
-    mpos: mpos,
-  }
-}
-
-export function getNearestPointOnCurve(A: number[], points: number[][]) {
-  // Create lookup table
-  const LUT = getBezierCurveLUT(points)
-
-  // step 1: coarse check
-  const l = LUT.length - 1,
-    closest = closestPointInLUT(A, LUT),
-    mpos = closest.mpos,
-    t1 = (mpos - 1) / l,
-    t2 = (mpos + 1) / l,
-    step = 0.1 / l // step 2: fine check
-
-  let mdist = closest.mdist,
-    t = t1,
-    ft = t,
-    p: number[]
-  mdist += 1
-
-  for (let d: number; t < t2 + step; t += step) {
-    p = computePointOnCurve(t, points)
-    d = vec.dist(A, p)
-
-    if (d < mdist) {
-      mdist = d
-      ft = t
-    }
-  }
-
-  ft = ft < 0 ? 0 : ft > 1 ? 1 : ft
-  p = computePointOnCurve(ft, points)
-  // p.t = ft
-  // p.d = mdist
-  return p
-}
-
 function distance2(p: DOMPoint, point: number[]) {
   var dx = p.x - point[0],
     dy = p.y - point[1]
@@ -1317,4 +1256,101 @@ export function getBezierLineSegmentIntersections(
     ShapeInfo.cubicBezier({ p1, p2, p3, p4 }),
     ShapeInfo.line({ p1: start, p2: end })
   )
+}
+
+// Generate a lookup table by sampling the curve.
+function getBezierCurveLUT(points: number[][], samples = 100) {
+  return Array.from(Array(samples)).map((_, i) =>
+    computePointOnCurve(i / (samples - 1 - i), points)
+  )
+}
+
+// Find the closest point among points in a lookup table
+function closestPointInLUT(A: number[], LUT: number[][]) {
+  let mdist = Math.pow(2, 63),
+    mpos: number,
+    d: number
+  LUT.forEach(function(p, idx) {
+    d = vec.dist(A, p)
+
+    if (d < mdist) {
+      mdist = d
+      mpos = idx
+    }
+  })
+  return {
+    mdist: mdist,
+    mpos: mpos,
+  }
+}
+
+export function getClosestPointOnCurve(A: number[], points: number[][]) {
+  // Create lookup table
+  const LUT = getBezierCurveLUT(points)
+
+  // step 1: coarse check
+  const l = LUT.length - 1,
+    closest = closestPointInLUT(A, LUT),
+    mpos = closest.mpos,
+    t1 = (mpos - 1) / l,
+    t2 = (mpos + 1) / l,
+    step = 0.1 / l // step 2: fine check
+
+  let mdist = closest.mdist,
+    t = t1,
+    ft = t,
+    p: number[]
+  mdist += 1
+
+  for (let d: number; t < t2 + step; t += step) {
+    p = computePointOnCurve(t, points)
+    d = vec.dist(A, p)
+
+    if (d < mdist) {
+      mdist = d
+      ft = t
+    }
+  }
+
+  ft = ft < 0 ? 0 : ft > 1 ? 1 : ft
+  p = computePointOnCurve(ft, points)
+  // p.t = ft
+  // p.d = mdist
+  return p
+}
+
+function lineIntersection(P: number[], r: number, Q: number[], s: number) {
+  // line1 = P + lambda1 * r
+  // line2 = Q + lambda2 * s
+  // r and s must be normalized (length = 1)
+  // returns intersection point O of line1 with line2 = [ Ox, Oy ]
+  // returns null if lines do not intersect or are identical
+  var PQx = Q[0] - P[0]
+  var PQy = Q[1] - P[1]
+  var rx = r[0]
+  var ry = r[1]
+  var rxt = -ry
+  var ryt = rx
+  var qx = PQx * rx + PQy * ry
+  var qy = PQx * rxt + PQy * ryt
+  var sx = s[0] * rx + s[1] * ry
+  var sy = s[0] * rxt + s[1] * ryt
+  // if lines are identical or do not cross...
+  if (sy == 0) return null
+  var a = qx - (qy * sx) / sy
+  return [P[0] + a * rx, P[1] + a * ry]
+}
+
+export function getLineLineIntersection(
+  A: number[],
+  B: number[],
+  C: number[],
+  D: number[]
+) {
+  const int = Intersection.intersect(
+    ShapeInfo.line({ p1: A, p2: B }),
+    ShapeInfo.line({ p1: C, p2: D })
+  )
+  if (!int.points[0]) return undefined
+  return [int.points[0].x, int.points[0].y]
 }

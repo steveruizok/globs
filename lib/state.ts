@@ -26,7 +26,9 @@ import {
   rectContainsRect,
   round,
   throttle,
+  getLineLineIntersection,
 } from "utils"
+import { getClosestPointOnCurve, getNormalOnCurve } from "lib/bez"
 import { initialData } from "./data"
 import { motionValue } from "framer-motion"
 import {
@@ -105,6 +107,10 @@ const state = createState({
                 UNHOVERED_NODE: "pullHoveredNode",
                 MOVED_NODE_ORDER: "moveNodeOrder",
                 MOVED_GLOB_ORDER: "moveGlobOrder",
+                SPLIT_GLOB: {
+                  if: "hasMeta",
+                  do: ["splitGlob", "clearSelection", "saveData"],
+                },
                 SELECTED_NODE: [
                   {
                     if: "hasShift",
@@ -120,7 +126,6 @@ const state = createState({
 
                   { if: "nodeIsHovered", to: "pointingNodes" },
                 ],
-                SPLIT_GLOB: "splitGlobAtPoint",
                 SELECTED_GLOB: [
                   {
                     if: "globIsSelected",
@@ -147,6 +152,7 @@ const state = createState({
                   to: "pointingHandle",
                 },
                 POINTED_CANVAS: [
+                  { if: "hasMeta", break: true },
                   {
                     if: "hasSelection",
                     do: ["clearSelection"],
@@ -294,7 +300,7 @@ const state = createState({
             CANCELLED: { to: "selecting" },
             POINTED_CANVAS: { to: "selecting" },
             SELECTED_NODE: {
-              do: "createGlobBetweenNodes",
+              do: ["createGlobBetweenNodes", "clearSelection"],
               to: "selecting",
             },
           },
@@ -852,9 +858,6 @@ const state = createState({
 
       // Now update the globs!
     },
-    splitGlobAtPoint(data) {
-      // TODO
-    },
     setSelectedGlobOptions(data, payload: Partial<IGlob["options"]>) {
       const { globs, selectedGlobs } = data
       for (let id of selectedGlobs) {
@@ -969,6 +972,128 @@ const state = createState({
       const { globIds } = data
       globIds.splice(globIds.indexOf(payload.id), 1)
       globIds.splice(payload.to, 0, payload.id)
+    },
+    splitGlob(data, payload: { id: string }) {
+      console.log("splitting glob")
+      const { globs, nodes, nodeIds, globIds } = data
+
+      const glob = globs[payload.id]
+
+      const point = mvPointer.world.get()
+
+      const { E0, E0p, E1, E1p, F0, F1, F0p, F1p, D, Dp } = glob.points
+
+      // Points on curve
+      const closestP = getClosestPointOnCurve(point, E0, F0, F1, E1)
+      const closestPp = getClosestPointOnCurve(point, E0p, F0p, F1p, E1p)
+
+      if (!(closestP.point && closestPp.point)) {
+        console.log("Could not find closest points.")
+        return
+      }
+
+      const P = closestP.point
+      const Pp = closestPp.point
+
+      // Normals
+      const N = getNormalOnCurve(E0, F0, F1, E1, closestP.t)
+      const Np = getNormalOnCurve(E0p, F0p, F1p, E1p, closestPp.t)
+      const center = vec.med(N, Np)
+
+      // Find the circle
+      let C: number[], r: number
+
+      // Find intersection between normals
+      const intA = getLineLineIntersection(
+        vec.sub(P, vec.mul(N, 1000000)),
+        vec.add(P, vec.mul(N, 1000000)),
+        vec.sub(Pp, vec.mul(Np, 1000000)),
+        vec.add(Pp, vec.mul(Np, 1000000))
+      )
+      if (!intA) {
+        console.log("lines are parallel")
+        // If the lines are parallel, we won't have an intersection.
+        // In this case, create a circle between the two points.
+        C = vec.med(P, Pp)
+        r = vec.dist(P, Pp) / 2
+      } else {
+        const L0 = vec.sub(P, vec.mul(vec.per(N), 10000000))
+        const L1 = vec.add(P, vec.mul(vec.per(N), 10000000))
+
+        // Center intersection
+        const intB = getLineLineIntersection(
+          L0,
+          L1,
+          vec.sub(intA, vec.mul(center, 10000000)),
+          vec.add(intA, vec.mul(center, 10000000))
+        )
+
+        if (!intB) {
+          console.log("No center intersection... why?")
+          C = vec.med(P, Pp)
+          r = vec.dist(P, Pp) / 2
+        } else {
+          // Create a circle at the point of intersection. The distance
+          // will be the same to either point.
+          C = intB
+          r = vec.dist(P, C)
+        }
+      }
+      // Find an intersection between E0->D and L0->inverted D
+
+      const PL = [
+        vec.sub(P, vec.mul(N, 10000000)),
+        vec.add(P, vec.mul(N, 10000000)),
+      ]
+
+      const PLp = [
+        vec.sub(Pp, vec.mul(Np, 10000000)),
+        vec.add(Pp, vec.mul(Np, 10000000)),
+      ]
+
+      const D0 = getLineLineIntersection(PL[0], PL[1], E0, D)
+      const D1 = getLineLineIntersection(PL[0], PL[1], E1, D)
+      const D0p = getLineLineIntersection(PLp[0], PLp[1], E0p, Dp)
+      const D1p = getLineLineIntersection(PLp[0], PLp[1], E1p, Dp)
+
+      try {
+        const oldEndNode = nodes[glob.nodes[1]]
+
+        const newStartNode = createNode(C, r)
+        nodeIds.push(newStartNode.id)
+        nodes[newStartNode.id] = newStartNode
+
+        // // Old glob
+        const oldGlob = glob
+        oldGlob.nodes[1] = newStartNode.id
+        oldGlob.options.D = D0
+        oldGlob.options.Dp = D0p
+
+        // New Glob
+        const newGlob = createGlob(newStartNode, oldEndNode)
+        globIds.push(newGlob.id)
+        globs[newGlob.id] = newGlob
+        newGlob.options.D = D1
+        newGlob.options.Dp = D1p
+
+        for (let glob of [oldGlob, newGlob]) {
+          const [start, end] = glob.nodes.map((id) => nodes[id])
+          glob.points = getGlob(
+            start.point,
+            start.radius,
+            end.point,
+            end.radius,
+            glob.options.D,
+            glob.options.Dp,
+            glob.options.a * 1.5,
+            glob.options.b * 1.5,
+            glob.options.ap * 1.5,
+            glob.options.bp * 1.5
+          )
+        }
+      } catch (e) {
+        console.log(e)
+      }
     },
 
     // HANDLES
@@ -1422,7 +1547,7 @@ function createGlob(A: INode, B: INode): IGlob {
   }
 }
 
-function createNode(point: number[]): INode {
+function createNode(point: number[], radius = 25): INode {
   const id = "node_" + Math.random() * Date.now()
 
   return {
@@ -1430,7 +1555,7 @@ function createNode(point: number[]): INode {
     name: "Node",
     point,
     type: ICanvasItems.Node,
-    radius: 25,
+    radius,
     cap: "round",
     zIndex: 1,
     locked: false,

@@ -4807,6 +4807,11 @@ js-yaml@^3.13.1:
     argparse "^1.0.7"
     esprima "^4.0.0"
 
+jsbezier@^0.9.5:
+  version "0.9.5"
+  resolved "https://registry.yarnpkg.com/jsbezier/-/jsbezier-0.9.5.tgz#bc02aead52a299e001f286db8af11fc36511636d"
+  integrity sha512-Kisqs67tAYYlWEEsPPvS9Wx66Q9MHRdkGJ8TNc4tePPKfF2avFr+aQD+NpxK6JkwIYhNfYN8dnuSXqH4lxClpw==
+
 jsbn@~0.1.0:
   version "0.1.1"
   resolved "https://registry.yarnpkg.com/jsbn/-/jsbn-0.1.1.tgz#a5e654c2e5a2deb5f201d96cefbca80c0ef2f513"

@@ -28,16 +28,6 @@ const DOT_RADIUS = 2,
   TOUCH_RADIUS = 12,
   CORNER_SIZE = 5
 
-const letters = {
-  A: [-1864, 2707, 1.5],
-  B: [3423, 2736, 1.3],
-  C: [1500, -1025, 1],
-  D: [-2362, -5992, 1.2],
-  E: [900, 2000, 1.2],
-  F: [-3000, -2000, 1.2],
-  G: [500, 0, 1],
-}
-
 export default function Editor() {
   const rContainer = useRef<HTMLDivElement>(null)
   const rSvg = useRef<SVGSVGElement>(null)
@@ -257,23 +247,3 @@ const SVGWrapper = styled(ContextMenuTrigger)`
   grid-row: 1 / span 3;
   background-color: var(--muted);
 `
-
-function Letters() {
-  return (
-    <>
-      {Object.entries(letters).map(([key, point], i) => (
-        <text
-          fontSize={1200 * point[2]}
-          fontFamily="Crimson Pro"
-          key={key}
-          x={point[0]}
-          y={point[1]}
-          opacity={0.1}
-          pointerEvents="none"
-        >
-          {key}
-        </text>
-      ))}
-    </>
-  )
-}

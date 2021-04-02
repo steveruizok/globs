@@ -15,6 +15,8 @@ export default function HoverGlob({ id }: Props) {
 
   const nodes = glob?.nodes.map((id) => state.data.nodes[id])
 
+  if (!nodes.every(Boolean)) return null
+
   const { D, Dp, a, b, ap, bp } = glob.options
 
   const [
