@@ -670,23 +670,26 @@ const state = createState({
         document,
       } = data
 
-      if (nodeIds.length + globIds.length === 0) return null
+      camera.point = [0, 0]
+      camera.zoom = 1
 
-      const bounds = getCommonBounds(
-        ...globIds
-          .map((id) => globs[id])
-          .filter((glob) => glob.points !== null)
-          .map((glob) =>
-            getGlobBounds(glob, nodes[glob.nodes[0]], nodes[glob.nodes[1]])
-          ),
-        ...nodeIds.map((id) => getNodeBounds(nodes[id]))
-      )
+      // if (nodeIds.length + globIds.length === 0) return null
 
-      camera.point = [bounds.x - 800, bounds.y - 200]
-      camera.zoom = (viewport.size[0] - 400) / bounds.width
+      // const bounds = getCommonBounds(
+      //   ...globIds
+      //     .map((id) => globs[id])
+      //     .filter((glob) => glob.points !== null)
+      //     .map((glob) =>
+      //       getGlobBounds(glob, nodes[glob.nodes[0]], nodes[glob.nodes[1]])
+      //     ),
+      //   ...nodeIds.map((id) => getNodeBounds(nodes[id]))
+      // )
 
-      document.size = vec.round(vec.div(viewport.size, camera.zoom))
-      document.point = camera.point
+      // camera.point = [bounds.x - 800, bounds.y - 200]
+      // camera.zoom = (viewport.size[0] - 400) / bounds.width
+
+      // document.size = vec.round(vec.div(viewport.size, camera.zoom))
+      // document.point = camera.point
     },
 
     // VIEWPORT
