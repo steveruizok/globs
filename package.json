@@ -14,6 +14,7 @@
     "@types/react-beautiful-dnd": "^13.0.0",
     "classnames": "^2.2.6",
     "framer-motion": "^4.0.3",
+    "jsbezier": "^0.9.5",
     "kld-intersections": "^0.7.0",
     "kld-polynomial": "^0.3.0",
     "next": "10.0.8",

@@ -1,13 +1,9 @@
 import { IGlob } from "lib/types"
 import * as vec from "lib/vec"
 import * as svg from "lib/svg"
-import {
-  getBezierLineSegmentIntersections,
-  getClosestPointOnPath,
-  getCurvePoints,
-} from "lib/utils"
+import { getCurvePoints, getCircleInGlob } from "lib/utils"
 import { bez2d } from "lib/bez"
-import { mvPointer } from "lib/state"
+import state, { useSelector, mvPointer } from "lib/state"
 import { useMemo, useRef } from "react"
 import { motion, useTransform } from "framer-motion"
 import classNames from "classnames"
@@ -19,7 +15,9 @@ interface Props {
 export default function CenterLine({ glob }: Props) {
   const rMiddlePath = useRef<SVGPathElement>(null)
 
-  const { E0, E0p, E1, E1p, F0, F1, F0p, F1p } = glob.points
+  const isSplitting = useSelector((state) => state.isIn("splittingGlob"))
+
+  const { E0, E0p, E1, E1p, F0, F1, F0p, F1p, C1 } = glob.points
 
   // Calculate SVG path data for the glob's middle line
   const middlePath = useMemo(() => {
@@ -41,76 +39,18 @@ export default function CenterLine({ glob }: Props) {
       path.push(svg.bezierTo(curve[i], curve[i + 1], curve[i + 2]))
     }
 
+    path.push(svg.lineTo(C1))
+
     return path.join(" ")
   }, [glob])
 
   // Find the neartest point on the middle path
-  const mvNearestPointOnMiddlePath = useTransform(mvPointer.world, (point) => {
-    const path = rMiddlePath.current
-    if (!path) return null
-
-    const result = getClosestPointOnPath(path, point)
-
-    return result
+  const mvSplitCircle = useTransform(mvPointer.world, (point) => {
+    if (!point) return ""
+    const circle = getCircleInGlob(point, glob)
+    if (!circle) return ""
+    return svg.ellipse(circle.point, circle.radius)
   })
-
-  // Find a circle that touches the glob's two curves
-  const mvCircleOnMiddlePath = useTransform(
-    mvNearestPointOnMiddlePath,
-    (point) => {
-      const middlePath = rMiddlePath.current
-      if (!middlePath) return ""
-      if (point === null) return ""
-
-      const { x, y } = middlePath.getPointAtLength(
-        middlePath.getTotalLength() * point.t - 0.005
-      )
-
-      const normal = vec.uni(vec.vec([x, y], point.point))
-
-      // Left and right points of test line
-      const lp = vec.sub(point.point, vec.mul(vec.per(normal), 10000))
-      const rp = vec.add(point.point, vec.mul(vec.per(normal), 10000))
-
-      const lIntersection = getBezierLineSegmentIntersections(
-        E0,
-        F0,
-        F1,
-        E1,
-        lp,
-        rp
-      )
-
-      const rIntersection = getBezierLineSegmentIntersections(
-        E0p,
-        F0p,
-        F1p,
-        E1p,
-        lp,
-        rp
-      )
-
-      // Left and right intersections, midpoint and radius of circle
-      let l: number[], r: number[], mp: number[], radius: number
-
-      if (lIntersection?.points?.[0]) {
-        const { x, y } = lIntersection?.points?.[0]
-        l = [x, y]
-      }
-
-      if (rIntersection?.points?.[0]) {
-        const { x, y } = rIntersection?.points?.[0]
-        r = [x, y]
-      }
-
-      if (l && r) {
-        mp = vec.med(l, r)
-        radius = vec.dist(l, r) / 2
-      }
-
-      return [l && r ? svg.ellipse(mp, radius) : ""].join(" ")
-    }
-  )
 
   return (
     <>
@@ -124,13 +64,17 @@ export default function CenterLine({ glob }: Props) {
         ])}
         fill="none"
         cursor="pointer"
+        pointerEvents="none"
       />
-      <motion.path
-        d={mvCircleOnMiddlePath}
-        className={classNames(["stroke-outline", "strokewidth-s"])}
-        fill="none"
-        cursor="pointer"
-      />
+      {isSplitting && (
+        <motion.path
+          d={mvSplitCircle}
+          stroke="blue"
+          fill="none"
+          className="strokewidth-m stroke-outline"
+          onPointerDown={() => state.send("SPLIT_GLOB", { id: glob.id })}
+        />
+      )}
     </>
   )
 }

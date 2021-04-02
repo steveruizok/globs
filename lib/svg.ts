@@ -19,6 +19,10 @@ export function lineTo(v: number[]) {
   return `L ${v[0]},${v[1]} `
 }
 
+export function line(a: number[], ...pts: number[][]) {
+  return moveTo(a) + pts.map((p) => lineTo(p)).join()
+}
+
 export function bezierTo(A: number[], B: number[], C: number[]) {
   return `C ${A[0]},${A[1]} ${B[0]},${B[1]} ${C[0]},${C[1]} `
 }

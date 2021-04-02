@@ -18,7 +18,6 @@ export default function Toolbar() {
   const hasSelectedGlobs = useSelector((s) => s.data.selectedGlobs.length > 0)
   const isLinking = useSelector((s) => s.isIn("linkingNodes"))
   const isCreating = useSelector((s) => s.isIn("creatingNodes"))
-  const isBranching = useSelector((s) => s.isIn("branchingNodes"))
 
   return (
     <StyledContainer>
@@ -55,15 +54,6 @@ export default function Toolbar() {
             onClick={() => state.send("STARTED_LINKING_NODES")}
           >
             <ArrowRight />
-          </button>
-        )}
-        {hasSelectedNodes && (
-          <button
-            title="Branch Nodes"
-            data-active={isBranching}
-            onClick={() => state.send("STARTED_BRANCHING_NODES")}
-          >
-            <ArrowUp />
           </button>
         )}
         {(hasSelectedNodes || hasSelectedGlobs) && (

@@ -9,6 +9,7 @@ import {
   INode,
   INodeSnapshot,
 } from "./types"
+import { getNormalOnCurve, getClosestPointOnCurve } from "./bez"
 import * as vec from "./vec"
 import { Intersection, ShapeInfo } from "kld-intersections"
 
@@ -232,7 +233,6 @@ export function copyToClipboard(string: string) {
     textarea.setSelectionRange(0, textarea.value.length)
     result = document.execCommand("copy")
   } catch (err) {
-    console.error(err)
     result = null
   } finally {
     document.body.removeChild(textarea)
@@ -706,67 +706,6 @@ export function computePointOnCurve(t: number, points: number[][]) {
       a * p[0][1] + b * p[1][1] + c * p[2][1] + d * p[3][1],
     ]
   } // higher order curves: use de Casteljau's computation
-}
-
-// Generate a lookup table by sampling the curve.
-function getBezierCurveLUT(points: number[][], samples = 100) {
-  return Array.from(Array(samples)).map((_, i) =>
-    computePointOnCurve(i / (samples - 1 - i), points)
-  )
-}
-
-// Find the closest point among points in a lookup table
-function closestPointInLUT(A: number[], LUT: number[][]) {
-  let mdist = Math.pow(2, 63),
-    mpos: number,
-    d: number
-  LUT.forEach(function(p, idx) {
-    d = vec.dist(A, p)
-
-    if (d < mdist) {
-      mdist = d
-      mpos = idx
-    }
-  })
-  return {
-    mdist: mdist,
-    mpos: mpos,
-  }
-}
-
-export function getNearestPointOnCurve(A: number[], points: number[][]) {
-  // Create lookup table
-  const LUT = getBezierCurveLUT(points)
-
-  // step 1: coarse check
-  const l = LUT.length - 1,
-    closest = closestPointInLUT(A, LUT),
-    mpos = closest.mpos,
-    t1 = (mpos - 1) / l,
-    t2 = (mpos + 1) / l,
-    step = 0.1 / l // step 2: fine check
-
-  let mdist = closest.mdist,
-    t = t1,
-    ft = t,
-    p: number[]
-  mdist += 1
-
-  for (let d: number; t < t2 + step; t += step) {
-    p = computePointOnCurve(t, points)
-    d = vec.dist(A, p)
-
-    if (d < mdist) {
-      mdist = d
-      ft = t
-    }
-  }
-
-  ft = ft < 0 ? 0 : ft > 1 ? 1 : ft
-  p = computePointOnCurve(ft, points)
-  // p.t = ft
-  // p.d = mdist
-  return p
 }
 
 function distance2(p: DOMPoint, point: number[]) {
@@ -1317,4 +1256,152 @@ export function getBezierLineSegmentIntersections(
     ShapeInfo.cubicBezier({ p1, p2, p3, p4 }),
     ShapeInfo.line({ p1: start, p2: end })
   )
+}
+
+// Generate a lookup table by sampling the curve.
+function getBezierCurveLUT(points: number[][], samples = 100) {
+  return Array.from(Array(samples)).map((_, i) =>
+    computePointOnCurve(i / (samples - 1 - i), points)
+  )
+}
+
+// Find the closest point among points in a lookup table
+function closestPointInLUT(A: number[], LUT: number[][]) {
+  let mdist = Math.pow(2, 63),
+    mpos: number,
+    d: number
+  LUT.forEach(function(p, idx) {
+    d = vec.dist(A, p)
+
+    if (d < mdist) {
+      mdist = d
+      mpos = idx
+    }
+  })
+  return {
+    mdist: mdist,
+    mpos: mpos,
+  }
+}
+
+// export function getClosestPointOnCurve(A: number[], points: number[][]) {
+//   // Create lookup table
+//   const LUT = getBezierCurveLUT(points)
+
+//   // step 1: coarse check
+//   const l = LUT.length - 1,
+//     closest = closestPointInLUT(A, LUT),
+//     mpos = closest.mpos,
+//     t1 = (mpos - 1) / l,
+//     t2 = (mpos + 1) / l,
+//     step = 0.1 / l // step 2: fine check
+
+//   let mdist = closest.mdist,
+//     t = t1,
+//     ft = t,
+//     p: number[]
+//   mdist += 1
+
+//   for (let d: number; t < t2 + step; t += step) {
+//     p = computePointOnCurve(t, points)
+//     d = vec.dist(A, p)
+
+//     if (d < mdist) {
+//       mdist = d
+//       ft = t
+//     }
+//   }
+
+//   ft = ft < 0 ? 0 : ft > 1 ? 1 : ft
+//   p = computePointOnCurve(ft, points)
+//   // p.t = ft
+//   // p.d = mdist
+//   return p
+// }
+
+function lineIntersection(P: number[], r: number, Q: number[], s: number) {
+  // line1 = P + lambda1 * r
+  // line2 = Q + lambda2 * s
+  // r and s must be normalized (length = 1)
+  // returns intersection point O of line1 with line2 = [ Ox, Oy ]
+  // returns null if lines do not intersect or are identical
+  var PQx = Q[0] - P[0]
+  var PQy = Q[1] - P[1]
+  var rx = r[0]
+  var ry = r[1]
+  var rxt = -ry
+  var ryt = rx
+  var qx = PQx * rx + PQy * ry
+  var qy = PQx * rxt + PQy * ryt
+  var sx = s[0] * rx + s[1] * ry
+  var sy = s[0] * rxt + s[1] * ryt
+  // if lines are identical or do not cross...
+  if (sy == 0) return null
+  var a = qx - (qy * sx) / sy
+  return [P[0] + a * rx, P[1] + a * ry]
+}
+
+export function getLineLineIntersection(
+  A: number[],
+  B: number[],
+  C: number[],
+  D: number[]
+) {
+  const int = Intersection.intersect(
+    ShapeInfo.line({ p1: A, p2: B }),
+    ShapeInfo.line({ p1: C, p2: D })
+  )
+  if (!int.points[0]) return undefined
+  return [int.points[0].x, int.points[0].y]
+}
+
+/**
+ * Get a split point circle for a glob nearest to a given point.
+ * @param point
+ * @param glob
+ * @returns
+ */
+export function getCircleInGlob(point: number[], glob: IGlob) {
+  const { E0, E0p, E1, E1p, F0, F1, F0p, F1p } = glob.points
+
+  // Points on curve
+  const P = getClosestPointOnCurve(point, E0, F0, F1, E1)
+  const Pp = getClosestPointOnCurve(point, E0p, F0p, F1p, E1p)
+
+  // Normals
+  const N = getNormalOnCurve(E0, F0, F1, E1, P.t)
+  const Np = getNormalOnCurve(E0p, F0p, F1p, E1p, Pp.t)
+  const center = vec.med(N, Np)
+
+  // Find intersection between normals
+  const intA = getLineLineIntersection(
+    vec.sub(P.point, vec.mul(N, 1000000)),
+    vec.add(P.point, vec.mul(N, 1000000)),
+    vec.sub(Pp.point, vec.mul(Np, 1000000)),
+    vec.add(Pp.point, vec.mul(Np, 1000000))
+  )
+
+  let C: number[], r: number
+
+  if (!intA) {
+    C = vec.med(P.point, Pp.point)
+    r = vec.dist(P.point, Pp.point) / 2
+  } else {
+    // Center intersection
+    C = getLineLineIntersection(
+      vec.sub(P.point, vec.mul(vec.per(N), 10000000)),
+      vec.add(P.point, vec.mul(vec.per(N), 10000000)),
+      vec.sub(intA, vec.mul(center, 10000000)),
+      vec.add(intA, vec.mul(center, 10000000))
+    )
+
+    r = vec.dist(P.point, C)
+  }
+
+  if (vec.dist(point, C) > 16) {
+    // Something has gone terribly wrong
+    return false
+  }
+
+  return { point: C, radius: r }
 }

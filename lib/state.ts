@@ -26,7 +26,9 @@ import {
   rectContainsRect,
   round,
   throttle,
+  getLineLineIntersection,
 } from "utils"
+import { getClosestPointOnCurve, getNormalOnCurve } from "lib/bez"
 import { initialData } from "./data"
 import { motionValue } from "framer-motion"
 import {
@@ -48,10 +50,7 @@ const state = createState({
     UNMOUNTED: "teardown",
     RESIZED: "setViewport",
     STARTED_CREATING_NODES: { to: "creatingNodes" },
-    STARTED_BRANCHING_NODES: {
-      if: "hasSelectedNodes",
-      to: "branchingNodes",
-    },
+
     STARTED_LINKING_NODES: {
       if: "hasSelectedNodes",
       to: "linkingNodes",
@@ -62,8 +61,8 @@ const state = createState({
     SET_NODES_CAP: ["setSelectedNodesCap", "updateNodeGlobPoints"],
     SET_NODES_LOCKED: "setSelectedNodesLocked",
     SET_GLOB_OPTIONS: ["setSelectedGlobOptions", "updateSelectedGlobsPoints"],
-    ENABLED_FILL: "enableFill",
-    DISABLED_FILL: "disableFill",
+    PRESSED_SPACE: "enableFill",
+    RELEASED_SPACE: "disableFill",
     TOGGLED_NODE_LOCKED: "toggleNodeLocked",
     WHEELED: {
       ifAny: ["hasShift", "isTrackpadZoom"],
@@ -120,8 +119,11 @@ const state = createState({
 
                   { if: "nodeIsHovered", to: "pointingNodes" },
                 ],
-                SPLIT_GLOB: "splitGlobAtPoint",
                 SELECTED_GLOB: [
+                  {
+                    if: ["globIsSelected", "hasMeta"],
+                    to: "splittingGlob",
+                  },
                   {
                     if: "globIsSelected",
                     then: {
@@ -147,6 +149,7 @@ const state = createState({
                   to: "pointingHandle",
                 },
                 POINTED_CANVAS: [
+                  { if: "hasMeta", break: true },
                   {
                     if: "hasSelection",
                     do: ["clearSelection"],
@@ -292,22 +295,26 @@ const state = createState({
           onExit: "saveData",
           on: {
             CANCELLED: { to: "selecting" },
-            POINTED_CANVAS: { to: "selecting" },
-            SELECTED_NODE: {
-              do: "createGlobBetweenNodes",
-              to: "selecting",
-            },
-          },
-        },
-        branchingNodes: {
-          onExit: "saveData",
-          on: {
-            CANCELLED: { to: "selecting" },
             POINTED_CANVAS: {
               do: ["createNodeAndGlob", "saveData"],
               to: "selecting",
             },
             SELECTED_NODE: {
+              do: ["createGlobBetweenNodes", "clearSelection"],
+              to: "selecting",
+            },
+            HOVERED_NODE: { do: "setHoveredNode" },
+            UNHOVERED_NODE: { do: "pullHoveredNode" },
+          },
+        },
+
+        splittingGlob: {
+          on: {
+            POINTED_CANVAS: { unless: "hasMeta", to: "selecting" },
+            CANCELLED: { to: "selecting" },
+            RELEASED_META: { to: "selecting" },
+            SPLIT_GLOB: {
+              do: ["splitGlob", "clearSelection", "saveData"],
               to: "selecting",
             },
           },
@@ -502,9 +509,25 @@ const state = createState({
         let bounds: IBounds
 
         if (target.type === "node") {
+          const node = nodes[target.id]
+
+          if (!node) {
+            throw Error("Could not find that node!")
+          }
+
           bounds = getNodeBounds(nodes[target.id])
         } else {
-          bounds = getGlobInnerBounds(globs[target.id])
+          const glob = globs[target.id]
+
+          if (!glob) {
+            throw Error("Could not find that glob!")
+          }
+
+          try {
+            bounds = getGlobInnerBounds(globs[target.id])
+          } catch (e) {
+            console.warn("Could not get bounds", e)
+          }
         }
 
         if (
@@ -626,6 +649,13 @@ const state = createState({
       const index = data.hoveredNodes.indexOf(payload.id)
       data.hoveredNodes.splice(index, 1)
     },
+    setHoveredNode(data, payload: { id: string }) {
+      data.hoveredNodes = []
+    },
+    clearHovers(data) {
+      data.hoveredGlobs = []
+      data.hoveredNodes = []
+    },
 
     // NODES
     createNode(data) {
@@ -634,6 +664,8 @@ const state = createState({
       const node = createNode(point)
       nodeIds.push(node.id)
       nodes[node.id] = node
+      data.hoveredNodes = [node.id]
+      data.selectedNodes = [node.id]
     },
     resizeNode(data) {
       const { nodes, hoveredNodes, camera, selectedNodes } = data
@@ -690,11 +722,13 @@ const state = createState({
 
       // pull(data.nodeIds, ...data.selectedNodes)
       for (let id of selectedNodes) {
-        // pull(nodeIds, id)
         delete nodes[id]
 
         for (let gid of globIds) {
-          if (globs[gid].nodes.includes(id)) {
+          const glob = globs[gid]
+          if (!glob) continue
+
+          if (glob.nodes.includes(id)) {
             data.globIds = data.globIds.filter((g) => g !== gid)
             delete globs[gid]
           }
@@ -719,7 +753,7 @@ const state = createState({
       nodeIds.splice(payload.to, 0, payload.id)
     },
 
-    // BRANCHING NODES
+    // GLOBS
     createNodeAndGlob(data) {
       const { selectedNodes, nodes, globs, globIds, camera } = data
 
@@ -743,10 +777,9 @@ const state = createState({
         data.globs[glob.id] = glob
       }
 
+      data.selectedGlobs = []
       data.selectedNodes = [newNode.id]
     },
-
-    // GLOBS
     setSelectedGlob(data, payload: { id: string }) {
       data.bounds = undefined
       data.selectedHandle = undefined
@@ -852,9 +885,6 @@ const state = createState({
 
       // Now update the globs!
     },
-    splitGlobAtPoint(data) {
-      // TODO
-    },
     setSelectedGlobOptions(data, payload: Partial<IGlob["options"]>) {
       const { globs, selectedGlobs } = data
       for (let id of selectedGlobs) {
@@ -923,6 +953,7 @@ const state = createState({
       for (let id of selectedNodes) {
         if (payload.id === id) continue
 
+        // Don't re-glob
         for (let glob of globsArr) {
           if (arrsIntersect(glob.nodes, [id, payload.id])) continue
         }
@@ -969,6 +1000,157 @@ const state = createState({
       const { globIds } = data
       globIds.splice(globIds.indexOf(payload.id), 1)
       globIds.splice(payload.to, 0, payload.id)
+    },
+    splitGlob(data, payload: { id: string }) {
+      const { globs, nodes, nodeIds, globIds } = data
+
+      const glob = globs[payload.id]
+
+      const point = mvPointer.world.get()
+
+      const { E0, E0p, E1, E1p, F0, F1, F0p, F1p, D, Dp } = glob.points
+
+      // Points on curve
+      const closestP = getClosestPointOnCurve(point, E0, F0, F1, E1)
+      const closestPp = getClosestPointOnCurve(point, E0p, F0p, F1p, E1p)
+
+      if (!(closestP.point && closestPp.point)) {
+        console.warn("Could not find closest points.")
+        return
+      }
+
+      const P = closestP.point
+      const Pp = closestPp.point
+
+      // Normals
+      const N = getNormalOnCurve(E0, F0, F1, E1, closestP.t)
+      const Np = getNormalOnCurve(E0p, F0p, F1p, E1p, closestPp.t)
+      const center = vec.med(N, Np)
+
+      // Find the circle
+      let C: number[], r: number
+
+      // Find intersection between normals
+      const intA = getLineLineIntersection(
+        vec.sub(P, vec.mul(N, 1000000)),
+        vec.add(P, vec.mul(N, 1000000)),
+        vec.sub(Pp, vec.mul(Np, 1000000)),
+        vec.add(Pp, vec.mul(Np, 1000000))
+      )
+      if (!intA) {
+        // If the lines are parallel, we won't have an intersection.
+        // In this case, create a circle between the two points.
+        C = vec.med(P, Pp)
+        r = vec.dist(P, Pp) / 2
+      } else {
+        const L0 = vec.sub(P, vec.mul(vec.per(N), 10000000))
+        const L1 = vec.add(P, vec.mul(vec.per(N), 10000000))
+
+        // Center intersection
+        const intB = getLineLineIntersection(
+          L0,
+          L1,
+          vec.sub(intA, vec.mul(center, 10000000)),
+          vec.add(intA, vec.mul(center, 10000000))
+        )
+
+        if (!intB) {
+          C = vec.med(P, Pp)
+          r = vec.dist(P, Pp) / 2
+        } else {
+          // Create a circle at the point of intersection. The distance
+          // will be the same to either point.
+          C = intB
+          r = vec.dist(P, C)
+        }
+      }
+      // Find an intersection between E0->D and L0->inverted D
+
+      const PL = [
+        vec.sub(P, vec.mul(N, 10000000)),
+        vec.add(P, vec.mul(N, 10000000)),
+      ]
+
+      const PLp = [
+        vec.sub(Pp, vec.mul(Np, 10000000)),
+        vec.add(Pp, vec.mul(Np, 10000000)),
+      ]
+
+      const D0 = getLineLineIntersection(PL[0], PL[1], E0, D)
+      const D1 = getLineLineIntersection(PL[0], PL[1], E1, D)
+      const D0p = getLineLineIntersection(PLp[0], PLp[1], E0p, Dp)
+      const D1p = getLineLineIntersection(PLp[0], PLp[1], E1p, Dp)
+
+      // The radio of distances between old and new handles
+      const d0 = vec.dist(E0, D0) / vec.dist(E0, D)
+      const d0p = vec.dist(E0p, D0p) / vec.dist(E0p, Dp)
+      const d1 = vec.dist(E1, D1) / vec.dist(E1, D)
+      const d1p = vec.dist(E1p, D1p) / vec.dist(E1p, Dp)
+
+      // Not sure why this part works
+      const t0 = 0.75 - d0 * 0.25
+      const t0p = 0.75 - d0p * 0.25
+      const t1 = 0.75 - d1 * 0.25
+      const t1p = 0.75 - d1p * 0.25
+
+      const a0 = t0,
+        b0 = t0,
+        a0p = t0p,
+        b0p = t0p,
+        a1 = t1,
+        b1 = t1,
+        a1p = t1p,
+        b1p = t1p
+
+      try {
+        const oldEndNode = nodes[glob.nodes[1]]
+
+        const newStartNode = createNode(C, r)
+        nodeIds.push(newStartNode.id)
+        nodes[newStartNode.id] = newStartNode
+
+        // Old glob
+        const oldGlob = glob
+        oldGlob.nodes[1] = newStartNode.id
+        oldGlob.options.D = D0
+        oldGlob.options.Dp = D0p
+        oldGlob.options.a = a0
+        oldGlob.options.b = b0
+        oldGlob.options.ap = a0p
+        oldGlob.options.bp = b0p
+
+        // New Glob
+        const newGlob = createGlob(newStartNode, oldEndNode)
+        globIds.push(newGlob.id)
+        globs[newGlob.id] = newGlob
+        newGlob.options.D = D1
+        newGlob.options.Dp = D1p
+        oldGlob.options.a = a1
+        oldGlob.options.b = b1
+        oldGlob.options.ap = a1p
+        oldGlob.options.bp = b1p
+
+        for (let g of [oldGlob, newGlob]) {
+          const [start, end] = g.nodes.map((id) => nodes[id])
+          g.points = getGlob(
+            start.point,
+            start.radius,
+            end.point,
+            end.radius,
+            g.options.D,
+            g.options.Dp,
+            g.options.a,
+            g.options.b,
+            g.options.ap,
+            g.options.bp
+          )
+        }
+
+        data.hoveredGlobs = []
+        data.hoveredNodes = [newStartNode.id]
+      } catch (e) {
+        // console.warn("Could not create glob.")
+      }
     },
 
     // HANDLES
@@ -1350,12 +1532,24 @@ const handlePointerMove = throttle((e: PointerEvent) => {
 // Keyboard commands
 
 const downCommands: Record<string, KeyCommand[]> = {
+  z: [
+    { eventName: "UNDID", modifiers: ["Meta"] },
+    { eventName: "REDID", modifiers: ["Meta", "Shift"] },
+  ],
+  c: [{ eventName: "COPIED", modifiers: ["Meta"] }],
+  v: [{ eventName: "PASTED", modifiers: ["Meta"] }],
+  g: [{ eventName: "STARTED_LINKING_NODES", modifiers: [] }],
+  l: [{ eventName: "LOCKED_NODES", modifiers: ["Meta"] }],
+  n: [{ eventName: "STARTED_CREATING_NODES", modifiers: [] }],
+  Option: [{ eventName: "PRESSED_OPTION", modifiers: [] }],
+  Shift: [{ eventName: "PRESSED_SHIFT", modifiers: [] }],
+  Alt: [{ eventName: "PRESSED_ALT", modifiers: [] }],
+  Meta: [{ eventName: "PRESSED_META", modifiers: [] }],
   Escape: [{ eventName: "CANCELLED", modifiers: [] }],
   Enter: [{ eventName: "CONFIRMED", modifiers: [] }],
   Delete: [{ eventName: "DELETED", modifiers: [] }],
   Backspace: [{ eventName: "DELETED", modifiers: [] }],
-  " ": [{ eventName: "ENABLED_FILL", modifiers: [] }],
-  l: [{ eventName: "LOCKED_NODES", modifiers: ["Meta"] }],
+  " ": [{ eventName: "PRESSED_SPACE", modifiers: [] }],
   "]": [{ eventName: "MOVED_FORWARD", modifiers: ["Meta"] }],
   "[": [{ eventName: "MOVED_BACKWARD", modifiers: ["Meta"] }],
   "‘": [{ eventName: "MOVED_TO_FRONT", modifiers: ["Meta", "Shift"] }],
@@ -1363,7 +1557,11 @@ const downCommands: Record<string, KeyCommand[]> = {
 }
 
 const upCommands = {
-  " ": "DISABLED_FILL",
+  " ": [{ eventName: "RELEASED_SPACE", modifiers: [] }],
+  Option: [{ eventName: "RELEASED_OPTION", modifiers: [] }],
+  Shift: [{ eventName: "RELEASED_SHIFT", modifiers: [] }],
+  Alt: [{ eventName: "RELEASED_ALT", modifiers: [] }],
+  Meta: [{ eventName: "RELEASED_META", modifiers: [] }],
 }
 
 function handleKeyDown(e: KeyboardEvent) {
@@ -1373,7 +1571,7 @@ function handleKeyDown(e: KeyboardEvent) {
       if (modifiers.every((command) => keys[command])) {
         e.preventDefault()
         state.send(eventName)
-        return
+        break
       }
     }
   }
@@ -1383,10 +1581,17 @@ function handleKeyDown(e: KeyboardEvent) {
 
 function handleKeyUp(e: KeyboardEvent) {
   keys[e.key] = false
-  state.send("RELEASED_KEY", { key: e.key })
   if (e.key in upCommands) {
-    state.send(upCommands[e.key])
+    for (let { modifiers, eventName } of upCommands[e.key]) {
+      if (modifiers.every((command) => keys[command])) {
+        e.preventDefault()
+        state.send(eventName)
+        break
+      }
+    }
   }
+
+  state.send("RELEASED_KEY", { key: e.key })
 }
 
 function screenToWorld(point: number[], offset: number[], zoom: number) {
@@ -1397,7 +1602,7 @@ function worldToScreen(point: number[], offset: number[], zoom: number) {
   return vec.mul(vec.sub(point, offset), zoom)
 }
 
-function createGlob(A: INode, B: INode): IGlob {
+export function createGlob(A: INode, B: INode): IGlob {
   const { point: C0, radius: r0 } = A
   const { point: C1, radius: r1 } = B
 
@@ -1422,7 +1627,7 @@ function createGlob(A: INode, B: INode): IGlob {
   }
 }
 
-function createNode(point: number[]): INode {
+function createNode(point: number[], radius = 25): INode {
   const id = "node_" + Math.random() * Date.now()
 
   return {
@@ -1430,7 +1635,7 @@ function createNode(point: number[]): INode {
     name: "Node",
     point,
     type: ICanvasItems.Node,
-    radius: 25,
+    radius,
     cap: "round",
     zIndex: 1,
     locked: false,
