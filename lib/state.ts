@@ -487,7 +487,7 @@ const state = createState({
       brush.end = screenToWorld(pointer.point, camera.point, camera.zoom)
     },
     updateBrushSelection(data) {
-      const { brush, nodes, globs, document } = data
+      const { brush, nodes, globs } = data
       const { start, end } = brush
       const x0 = Math.min(start[0], end[0])
       const y0 = Math.min(start[1], end[1])
@@ -509,9 +509,25 @@ const state = createState({
         let bounds: IBounds
 
         if (target.type === "node") {
+          const node = nodes[target.id]
+
+          if (!node) {
+            throw Error("Could not find that node!")
+          }
+
           bounds = getNodeBounds(nodes[target.id])
         } else {
-          bounds = getGlobInnerBounds(globs[target.id])
+          const glob = globs[target.id]
+
+          if (!glob) {
+            throw Error("Could not find that glob!")
+          }
+
+          try {
+            bounds = getGlobInnerBounds(globs[target.id])
+          } catch (e) {
+            console.warn("Could not get bounds", e)
+          }
         }
 
         if (
@@ -706,11 +722,13 @@ const state = createState({
 
       // pull(data.nodeIds, ...data.selectedNodes)
       for (let id of selectedNodes) {
-        // pull(nodeIds, id)
         delete nodes[id]
 
         for (let gid of globIds) {
-          if (globs[gid].nodes.includes(id)) {
+          const glob = globs[gid]
+          if (!glob) continue
+
+          if (glob.nodes.includes(id)) {
             data.globIds = data.globIds.filter((g) => g !== gid)
             delete globs[gid]
           }
@@ -1539,7 +1557,7 @@ const downCommands: Record<string, KeyCommand[]> = {
 }
 
 const upCommands = {
-  " ": "RELEASED_SPACE",
+  " ": [{ eventName: "RELEASED_SPACE", modifiers: [] }],
   Option: [{ eventName: "RELEASED_OPTION", modifiers: [] }],
   Shift: [{ eventName: "RELEASED_SHIFT", modifiers: [] }],
   Alt: [{ eventName: "RELEASED_ALT", modifiers: [] }],

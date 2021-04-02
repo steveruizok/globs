@@ -9,9 +9,9 @@ import { getGlob, getGlobOutline, getOuterTangents } from "lib/utils"
 export default function GhostBranchGlob() {
   const fill = useSelector((s) => s.data.fill)
   const path = useTransform(mvPointer.world, (point) => {
-    const { hoveredNodes, selectedNodes, nodes } = state.data
+    const { selectedNodes, nodes } = state.data
 
-    // if (selectedNodes.length === 0) return null
+    if (selectedNodes.length === 0) return null
 
     const selected = selectedNodes.map((id) => nodes[id])
 
@@ -23,8 +23,6 @@ export default function GhostBranchGlob() {
     const ghost = { point, radius: avgRadius }
 
     const commands: string[] = [svg.ellipse(ghost.point, ghost.radius)]
-
-    console.log(hoveredNodes)
 
     for (let id of selectedNodes) {
       const node = nodes[id]
@@ -45,9 +43,7 @@ export default function GhostBranchGlob() {
         commands.push(
           getGlobOutline(getGlob(C0, r0, C1, r1, D, Dp, a, b, ap, bp))
         )
-      } catch (e) {
-        console.log(e)
-      }
+      } catch (e) {}
     }
 
     return commands.join(" ")
