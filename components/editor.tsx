@@ -20,6 +20,7 @@ import Brush from "components/canvas/brush"
 import Bounds from "components/canvas/bounds/bounds"
 import BoundsBg from "components/canvas/bounds/bounds-bg"
 import LearnPanel from "components/ui/learn-panel"
+import ZoomPanel from "components/ui/zoom-panel"
 
 const DOT_RADIUS = 2,
   ANCHOR_RADIUS = 4,
@@ -31,6 +32,7 @@ const DOT_RADIUS = 2,
 export default function Editor() {
   const rContainer = useRef<HTMLDivElement>(null)
   const rSvg = useRef<SVGSVGElement>(null)
+  const rContent = useRef<SVGGElement>(null)
   const rDot = useRef<SVGCircleElement>(null)
   const rAnchor = useRef<SVGCircleElement>(null)
   const rHandle = useRef<SVGCircleElement>(null)
@@ -59,6 +61,10 @@ export default function Editor() {
       const next = [``, point, size].join(`
 `)
       if (next !== prev) {
+        // rContent.current.setAttribute(
+        //   "transform",
+        //   `translate(${-point[0]}, ${-point[1]}) scale(${zoom})`
+        // )
         svg.setAttribute("viewBox", next)
         prev = next
       }
@@ -153,13 +159,15 @@ export default function Editor() {
                     height={5}
                   />
                 </defs>
-                <BoundsBg />
-                <Globs />
-                <Nodes />
-                <HoveredNodes />
-                <HoveredGlobs />
-                <Bounds />
-                <Brush />
+                <g ref={rContent}>
+                  <BoundsBg />
+                  <Globs />
+                  <Nodes />
+                  <HoveredNodes />
+                  <HoveredGlobs />
+                  <Bounds />
+                  <Brush />
+                </g>
               </svg>
               <ContextMenu />
             </SVGWrapper>
@@ -169,6 +177,7 @@ export default function Editor() {
             <StatusBar />
             <Main ref={rMain}>
               <LearnPanel bounds={rMain} />
+              <ZoomPanel />
             </Main>
           </Layout>
         </EditorContainer>

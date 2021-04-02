@@ -862,47 +862,7 @@ export function throttle<T extends (...args: any[]) => any>(
   }
 }
 
-// Get element bounding boxes
-// export const getBounds = (elements: SVGPathElement[]) => {
-//   let bounds: IBounds = {
-//     x: 0,
-//     y: 0,
-//     maxX: 0,
-//     maxY: 0,
-//     width: 0,
-//     height: 0,
-//   }
-
-//   for (let i = 0; i < elements.length; i++) {
-//     const elm = elements[i]
-
-//     const bbox = elm.getBBox()
-
-//     if (i === 0) {
-//       bounds = {
-//         x: bbox.x,
-//         y: bbox.y,
-//         maxX: bbox.x + bbox.width,
-//         maxY: bbox.y + bbox.height,
-//         width: 0,
-//         height: 0,
-//       }
-//       continue
-//     }
-
-//     bounds.x = Math.min(bounds.x, bbox.x)
-//     bounds.y = Math.min(bounds.y, bbox.y)
-//     bounds.maxX = Math.max(bounds.maxX, bbox.x + bbox.width)
-//     bounds.maxY = Math.max(bounds.maxY, bbox.y + bbox.height)
-//   }
-
-//   bounds.width = Math.abs(bounds.maxX - bounds.x)
-//   bounds.height = Math.abs(bounds.maxY - bounds.y)
-
-//   return bounds
-// }
-
-function getSnapshots(
+export function getSnapshots(
   nodes: INode[],
   bounds: IBounds
 ): Record<string, INodeSnapshot> {
@@ -931,7 +891,7 @@ function getSnapshots(
   return acc
 }
 
-function getSnapglobs(globs: IGlob[], bounds: IBounds) {
+export function getSnapglobs(globs: IGlob[], bounds: IBounds) {
   return Object.fromEntries(
     globs.map((glob) => {
       let {
@@ -966,6 +926,60 @@ function getSnapglobs(globs: IGlob[], bounds: IBounds) {
       ]
     })
   )
+}
+
+export function resizeBounds(
+  nodes: INode[],
+  globs: IGlob[],
+  bounds: IBounds,
+  deltaX: number,
+  deltaY: number
+) {
+  const snapshots = getSnapshots(nodes, bounds)
+  const snapglobs = getSnapglobs(globs, bounds)
+
+  let { x: x0, y: y0, maxX: x1, maxY: y1 } = bounds
+  let { maxX: mx, maxY: my, width: mw, height: mh } = bounds
+
+  const [x, y] = [
+    bounds.x + bounds.width + deltaX,
+    bounds.y + bounds.height + deltaY,
+  ]
+
+  y1 = y
+  my = y0
+  mh = Math.abs(y1 - y0)
+
+  x1 = x
+  mx = x0
+  mw = Math.abs(x1 - x0)
+
+  for (let node of nodes) {
+    const { nx, nmx, ny, nmy, nw, nh } = snapshots[node.id]
+
+    node.point = vec.round([mx + nx * mw, my + ny * mh])
+    node.radius = (nw * mw + nh * mh) / 2
+  }
+
+  for (let glob of globs) {
+    const { D, Dp, a, ap, b, bp } = snapglobs[glob.id]
+
+    Object.assign(glob.options, {
+      a: a,
+      ap: ap,
+      b: b,
+      bp: bp,
+    })
+
+    Object.assign(glob.options, {
+      D: [mx + D.nx * mw, my + D.ny * mh],
+      Dp: [mx + Dp.nx * mw, my + Dp.ny * mh],
+      a,
+      ap,
+      b,
+      bp,
+    })
+  }
 }
 
 export function getEdgeResizer(
@@ -1362,6 +1376,8 @@ export function getLineLineIntersection(
  * @returns
  */
 export function getCircleInGlob(point: number[], glob: IGlob) {
+  if (glob.points === null) return false
+
   const { E0, E0p, E1, E1p, F0, F1, F0p, F1p } = glob.points
 
   // Points on curve
@@ -1394,6 +1410,8 @@ export function getCircleInGlob(point: number[], glob: IGlob) {
       vec.sub(intA, vec.mul(center, 10000000)),
       vec.add(intA, vec.mul(center, 10000000))
     )
+
+    if (!C) return false
 
     r = vec.dist(P.point, C)
   }

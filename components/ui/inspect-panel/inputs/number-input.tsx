@@ -1,6 +1,6 @@
 import { motion, PanInfo } from "framer-motion"
 import { clamp } from "lib/utils"
-import React, { memo, useRef, useState } from "react"
+import React, { memo, useEffect, useRef, useState } from "react"
 import { PropContainer } from "./shared"
 
 interface Props {
@@ -12,16 +12,34 @@ interface Props {
   onChange: (value: number) => void
 }
 
-function NumberInput({ min, max, step, value, label, onChange }: Props) {
+function NumberInput({ min, max, step = 1, value, label, onChange }: Props) {
   const rInput = useRef<HTMLInputElement>(null)
+  const [val, setVal] = useState(value === "mixed" ? 0 : value)
   const [isHovered, setIsHovered] = useState(false)
   const [isFocused, setIsFocused] = useState(false)
 
-  let rPanStart = useRef(Math.round(Number(value) * 100) / 100)
+  let rWillEdit = useRef(true)
+  let rPanStart = useRef(Math.round(Number(val) * 100) / 100)
+
+  useEffect(() => {
+    rPanStart.current = Math.round(Number(val) * 100) / 100
+  }, [val])
+
+  useEffect(() => {
+    if (value !== val) {
+      setVal(value === "mixed" ? 0 : value)
+    }
+  }, [value])
+
+  function handlePanStart() {
+    document.body.style.cursor = "ew-resize"
+  }
 
   function handlePan(_: PointerEvent, info: PanInfo) {
     if (!isFocused && value !== "mixed") {
       rPanStart.current += info.delta.x
+      setVal(rPanStart.current)
+
       const next = Math.round(Number(rPanStart.current) * 100) / 100
       onChange(min !== undefined ? clamp(next, min, max) : next)
     }
@@ -31,7 +49,7 @@ function NumberInput({ min, max, step, value, label, onChange }: Props) {
     currentTarget: { value },
   }: React.ChangeEvent<HTMLInputElement>) {
     const next = Math.round(Number(value) * 100) / 100
-    onChange(min !== undefined ? clamp(next, min, max) : next)
+    setVal(next)
   }
 
   function handleTap() {
@@ -42,8 +60,29 @@ function NumberInput({ min, max, step, value, label, onChange }: Props) {
   }
 
   function handleBlur(e: React.FocusEvent<HTMLInputElement>) {
-    setIsFocused(false)
-    if (value !== "mixed") handleChange(e)
+    if (rWillEdit.current) {
+      setIsFocused(false)
+      if (value !== "mixed") {
+        const next = Math.round(Number(val) * 100) / 100
+        onChange(min !== undefined ? clamp(next, min, max) : next)
+      }
+    } else {
+      setVal(value === "mixed" ? 0 : value)
+    }
+  }
+
+  function handleKeyDown(e: React.KeyboardEvent) {
+    e.stopPropagation()
+    if (e.key === "Escape") {
+      rWillEdit.current = false
+      rInput.current.blur()
+    } else if (e.key === "Enter") {
+      rInput.current.blur()
+    }
+  }
+
+  function handleFocus() {
+    rWillEdit.current = true
   }
 
   return (
@@ -61,12 +100,13 @@ function NumberInput({ min, max, step, value, label, onChange }: Props) {
         <input
           ref={rInput}
           type="number"
-          value={value === "mixed" ? 0 : value}
+          value={val}
           min={min}
           max={max}
           step={step}
           onKeyDown={handleKeyDown}
           onChange={handleChange}
+          onFocus={handleFocus}
           onBlur={handleBlur}
           style={{ pointerEvents: isFocused ? "all" : "none" }}
         />
@@ -77,14 +117,6 @@ function NumberInput({ min, max, step, value, label, onChange }: Props) {
 
 export default memo(NumberInput)
 
-function handlePanStart() {
-  document.body.style.cursor = "ew-resize"
-}
-
 function handlePanEnd() {
   document.body.style.cursor = "default"
-}
-
-function handleKeyDown(e: React.KeyboardEvent) {
-  e.stopPropagation()
 }

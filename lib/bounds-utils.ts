@@ -1,4 +1,5 @@
 import { INode, IGlob, IBounds, ICanvasItem } from "types"
+import { round } from "./utils"
 
 // Evaluate a 2D bezier curve
 export function bez2d(
@@ -142,12 +143,12 @@ export function getGlobInnerBounds(glob: IGlob) {
  * @returns
  */
 export function getExpandedBounds(a: IBounds, b: IBounds) {
-  const x = Math.min(a.x, b.x),
-    y = Math.min(a.y, b.y),
-    maxX = Math.max(a.maxX, b.maxX),
-    maxY = Math.max(a.maxY, b.maxY),
-    width = Math.abs(maxX - x),
-    height = Math.abs(maxY - y)
+  const x = round(Math.min(a.x, b.x)),
+    y = round(Math.min(a.y, b.y)),
+    maxX = round(Math.max(a.maxX, b.maxX)),
+    maxY = round(Math.max(a.maxY, b.maxY)),
+    width = round(Math.abs(maxX - x)),
+    height = round(Math.abs(maxY - y))
 
   return { x, y, maxX, maxY, width, height }
 }

@@ -27,6 +27,9 @@ import {
   round,
   throttle,
   getLineLineIntersection,
+  getSnapshots,
+  getSnapglobs,
+  resizeBounds,
 } from "utils"
 import { getClosestPointOnCurve, getNormalOnCurve } from "lib/bez"
 import { initialData } from "./data"
@@ -55,12 +58,16 @@ const state = createState({
       if: "hasSelectedNodes",
       to: "linkingNodes",
     },
-    SET_NODES_X: ["setSelectedNodesPointX", "updateNodeGlobPoints"],
-    SET_NODES_Y: ["setSelectedNodesPointY", "updateNodeGlobPoints"],
-    SET_NODES_RADIUS: ["setSelectedNodesRadius", "updateNodeGlobPoints"],
-    SET_NODES_CAP: ["setSelectedNodesCap", "updateNodeGlobPoints"],
+    SET_NODES_X: ["setSelectedNodesPointX", "updateGlobPoints"],
+    SET_NODES_Y: ["setSelectedNodesPointY", "updateGlobPoints"],
+    SET_NODES_RADIUS: ["setSelectedNodesRadius", "updateGlobPoints"],
+    SET_NODES_CAP: ["setSelectedNodesCap", "updateGlobPoints"],
     SET_NODES_LOCKED: "setSelectedNodesLocked",
-    SET_GLOB_OPTIONS: ["setSelectedGlobOptions", "updateSelectedGlobsPoints"],
+    SET_GLOB_OPTIONS: ["setSelectedGlobOptions", "updateGlobPoints"],
+    CHANGED_BOUNDS_X: ["changeBoundsX", "updateGlobPoints"],
+    CHANGED_BOUNDS_Y: ["changeBoundsY", "updateGlobPoints"],
+    CHANGED_BOUNDS_WIDTH: ["changeBoundsWidth", "updateGlobPoints"],
+    CHANGED_BOUNDS_HEIGHT: ["changeBoundsHeight", "updateGlobPoints"],
     PRESSED_SPACE: "enableFill",
     RELEASED_SPACE: "disableFill",
     TOGGLED_NODE_LOCKED: "toggleNodeLocked",
@@ -70,6 +77,7 @@ const state = createState({
       else: ["wheelPanCamera", "updateMvPointer"],
     },
     MOVED_POINTER: { secretlyDo: "updateMvPointer" },
+    ZOOMED_TO_FIT: "zoomToFit",
   },
   states: {
     tool: {
@@ -191,8 +199,8 @@ const state = createState({
               onExit: "saveData",
               on: {
                 CANCELLED: { do: "returnSelected", to: "notPointing" },
-                WHEELED: ["moveSelected", "updateSelectedGlobsPoints"],
-                MOVED_POINTER: ["moveSelected", "updateSelectedGlobsPoints"],
+                WHEELED: ["moveSelected", "updateGlobPoints"],
+                MOVED_POINTER: ["moveSelected", "updateGlobPoints"],
                 STOPPED_POINTING: {
                   to: "notPointing",
                 },
@@ -203,12 +211,12 @@ const state = createState({
               onEnter: ["setInitialPoints", "setSnapPoints"],
               on: {
                 CANCELLED: { do: "returnSelected", to: "notPointing" },
-                WHEELED: ["moveSelected", "updateSelectedGlobsPoints"],
+                WHEELED: ["moveSelected", "updateGlobPoints"],
                 MOVED_POINTER: [
                   {
                     if: "hasMeta",
-                    do: ["resizeNode", "updateSelectedGlobsPoints"],
-                    else: ["moveSelected", "updateSelectedGlobsPoints"],
+                    do: ["resizeNode", "updateGlobPoints"],
+                    else: ["moveSelected", "updateGlobPoints"],
                   },
                 ],
                 STOPPED_POINTING: {
@@ -252,8 +260,8 @@ const state = createState({
             edgeResizing: {
               onEnter: ["setBounds", "setResizingEdge"],
               on: {
-                MOVED_POINTER: ["edgeResize", "updateSelectedGlobsPoints"],
-                WHEELED: ["edgeResize", "updateSelectedGlobsPoints"],
+                MOVED_POINTER: ["edgeResize", "updateGlobPoints"],
+                WHEELED: ["edgeResize", "updateGlobPoints"],
                 STOPPED_POINTING: { to: "notPointing" },
                 CANCELLED: { to: "notPointing" },
               },
@@ -261,8 +269,8 @@ const state = createState({
             cornerResizing: {
               onEnter: ["setBounds", "setResizingCorner"],
               on: {
-                MOVED_POINTER: ["cornerResize", "updateSelectedGlobsPoints"],
-                WHEELED: ["cornerResize", "updateSelectedGlobsPoints"],
+                MOVED_POINTER: ["cornerResize", "updateGlobPoints"],
+                WHEELED: ["cornerResize", "updateGlobPoints"],
                 STOPPED_POINTING: { to: "notPointing" },
                 CANCELLED: { to: "notPointing" },
               },
@@ -270,8 +278,8 @@ const state = createState({
             cornerRotating: {
               onEnter: ["setBounds", "setRotatingCorner"],
               on: {
-                MOVED_POINTER: ["cornerRotate", "updateSelectedGlobsPoints"],
-                WHEELED: ["cornerRotate", "updateSelectedGlobsPoints"],
+                MOVED_POINTER: ["cornerRotate", "updateGlobPoints"],
+                WHEELED: ["cornerRotate", "updateGlobPoints"],
                 STOPPED_POINTING: { to: "notPointing" },
                 CANCELLED: { to: "notPointing" },
               },
@@ -365,6 +373,76 @@ const state = createState({
     // BOUNDS
     setBounds(data, payload: { bounds: IBounds }) {
       data.bounds = payload.bounds
+    },
+    changeBoundsX(data, payload: { value: number }) {
+      const { selectedNodes, selectedGlobs, nodes, globs } = data
+      const bounds = getSelectedBoundingBox(data)
+      const dx = payload.value - bounds.x
+
+      const sNodes = selectedNodes.map((id) => nodes[id])
+      const sGlobs = selectedGlobs.map((id) => globs[id])
+
+      let nodesToChange = new Set(sNodes)
+
+      // for (let glob of sGlobs) {
+      //   nodesToChange.add(nodes[glob.nodes[0]])
+      //   nodesToChange.add(nodes[glob.nodes[1]])
+      // }
+
+      for (let node of nodesToChange) {
+        node.point[0] += dx
+      }
+
+      for (let glob of sGlobs) {
+        glob.options.D[0] += dx
+        glob.options.Dp[0] += dx
+      }
+    },
+    changeBoundsY(data, payload: { value: number }) {
+      const { selectedNodes, selectedGlobs, nodes, globs } = data
+      const bounds = getSelectedBoundingBox(data)
+      const dy = payload.value - bounds.y
+
+      const sNodes = selectedNodes.map((id) => nodes[id])
+      const sGlobs = selectedGlobs.map((id) => globs[id])
+
+      let nodesToChange = new Set(sNodes)
+
+      // for (let glob of sGlobs) {
+      //   nodesToChange.add(nodes[glob.nodes[0]])
+      //   nodesToChange.add(nodes[glob.nodes[1]])
+      // }
+
+      for (let node of nodesToChange) {
+        node.point[1] += dy
+      }
+
+      for (let glob of sGlobs) {
+        glob.options.D[1] += dy
+        glob.options.Dp[1] += dy
+      }
+    },
+    changeBoundsWidth(data, payload: { value: number }) {
+      const { selectedNodes, selectedGlobs, nodes, globs } = data
+      const bounds = getSelectedBoundingBox(data)
+
+      const dx = payload.value - bounds.width
+
+      const sNodes = selectedNodes.map((id) => nodes[id])
+      const sGlobs = selectedGlobs.map((id) => globs[id])
+
+      resizeBounds(sNodes, sGlobs, bounds, dx, 0)
+    },
+    changeBoundsHeight(data, payload: { value: number }) {
+      const { selectedNodes, selectedGlobs, nodes, globs } = data
+      const bounds = getSelectedBoundingBox(data)
+
+      const dy = payload.value - bounds.height
+
+      const sNodes = selectedNodes.map((id) => nodes[id])
+      const sGlobs = selectedGlobs.map((id) => globs[id])
+
+      resizeBounds(sNodes, sGlobs, bounds, 0, dy)
     },
 
     // RESIZING
@@ -565,16 +643,47 @@ const state = createState({
       const { camera, viewport, document } = data
       const { point } = pointer
 
-      const delta = (vec.mul(vec.neg(payload.delta), 5)[1] / 500) * camera.zoom
+      const delta =
+        (vec.mul(vec.neg(payload.delta), 5)[1] / 500) *
+        Math.max(0.1, camera.zoom)
 
       const pt0 = vec.add(vec.div(point, camera.zoom), camera.point)
 
-      camera.zoom = Math.max(Math.min(camera.zoom + delta, 10), 0.25)
+      camera.zoom = Math.max(Math.min(camera.zoom + delta, 10), 0.001)
       camera.zoom = Math.round(camera.zoom * 100) / 100
 
       const pt1 = vec.add(vec.div(point, camera.zoom), camera.point)
 
       camera.point = vec.round(vec.sub(camera.point, vec.sub(pt1, pt0)))
+
+      document.size = vec.round(vec.div(viewport.size, camera.zoom))
+      document.point = camera.point
+    },
+    zoomToFit(data) {
+      const {
+        nodeIds,
+        globIds,
+        nodes,
+        globs,
+        camera,
+        viewport,
+        document,
+      } = data
+
+      if (nodeIds.length + globIds.length === 0) return null
+
+      const bounds = getCommonBounds(
+        ...globIds
+          .map((id) => globs[id])
+          .filter((glob) => glob.points !== null)
+          .map((glob) =>
+            getGlobBounds(glob, nodes[glob.nodes[0]], nodes[glob.nodes[1]])
+          ),
+        ...nodeIds.map((id) => getNodeBounds(nodes[id]))
+      )
+
+      camera.point = [bounds.x - 800, bounds.y - 200]
+      camera.zoom = (viewport.size[0] - 400) / bounds.width
 
       document.size = vec.round(vec.div(viewport.size, camera.zoom))
       document.point = camera.point
@@ -892,59 +1001,48 @@ const state = createState({
         Object.assign(glob.options, payload)
       }
     },
-    updateNodeGlobPoints(data) {
-      const { globs, nodes, selectedNodes, selectedGlobs } = data
-      Object.values(globs)
-        .filter((glob) => arrsIntersect(glob.nodes, selectedNodes))
-        .forEach((glob) => {
-          try {
-            const [start, end] = glob.nodes.map((id) => nodes[id])
-            glob.points = getGlob(
-              start.point,
-              start.radius,
-              end.point,
-              end.radius,
-              glob.options.D,
-              glob.options.Dp,
-              glob.options.a,
-              glob.options.b,
-              glob.options.ap,
-              glob.options.bp
-            )
-          } catch (e) {
-            glob.points = null
-          }
-        })
-    },
-    updateSelectedGlobsPoints(data) {
-      const { globs, nodes, selectedNodes, selectedGlobs } = data
+    updateGlobPoints(data) {
+      const { globs, globIds, nodes, selectedNodes, selectedGlobs } = data
 
-      // Update glob points
-      for (let id in globs) {
-        const glob = globs[id]
+      const nodesToUpdate = new Set(selectedNodes)
+
+      const globsToUpdate = new Set(selectedGlobs.map((id) => globs[id]))
+
+      const sGlobs = globIds.map((id) => globs[id])
+
+      for (let glob of sGlobs) {
+        nodesToUpdate.add(glob.nodes[0])
+        nodesToUpdate.add(glob.nodes[1])
+      }
+
+      for (let glob of sGlobs) {
         if (
-          selectedGlobs.includes(id) ||
-          arrsIntersect(selectedNodes, glob.nodes)
+          nodesToUpdate.has(glob.nodes[0]) ||
+          nodesToUpdate.has(glob.nodes[1])
         ) {
-          try {
-            const [start, end] = glob.nodes.map((id) => nodes[id])
-            glob.points = getGlob(
-              start.point,
-              start.radius,
-              end.point,
-              end.radius,
-              glob.options.D,
-              glob.options.Dp,
-              glob.options.a,
-              glob.options.b,
-              glob.options.ap,
-              glob.options.bp
-            )
-          } catch (e) {
-            glob.points = null
-          }
+          globsToUpdate.add(glob)
         }
       }
+
+      globsToUpdate.forEach((glob) => {
+        const [start, end] = glob.nodes.map((id) => nodes[id])
+        try {
+          glob.points = getGlob(
+            start.point,
+            start.radius,
+            end.point,
+            end.radius,
+            glob.options.D,
+            glob.options.Dp,
+            glob.options.a,
+            glob.options.b,
+            glob.options.ap,
+            glob.options.bp
+          )
+        } catch (e) {
+          glob.points = null
+        }
+      })
     },
     createGlobBetweenNodes(data, payload: { id: string }) {
       const { selectedNodes, globs, globIds, nodes } = data
@@ -1615,7 +1713,7 @@ export function createGlob(A: INode, B: INode): IGlob {
     ap = 0.5,
     bp = 0.5
 
-  const id = "node_" + Math.random() * Date.now()
+  const id = "glob_" + Math.random() * Date.now()
 
   return {
     id,

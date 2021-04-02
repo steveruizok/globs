@@ -27,11 +27,6 @@ export default function Docs() {
         and then click the second node.
       </p>
       <p>
-        To <b>branch</b> a node into a glob: select a node, click the{" "}
-        <ArrowUp size={14} strokeWidth={3} style={{ marginBottom: -2 }} /> and
-        then click on the canvas.
-      </p>
-      <p>
         To <b>delete</b> a node: select a node and then click the{" "}
         <X size={14} strokeWidth={3} style={{ marginBottom: -2 }} />.
       </p>

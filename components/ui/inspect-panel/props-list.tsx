@@ -4,6 +4,7 @@ import styled from "styled-components"
 import Docs from "./docs"
 import NodesProps from "./nodes-props"
 import GlobsProps from "./globs-props"
+import BoundsProps from "./bounds-props"
 
 export default function PropsList() {
   const selectedNodes = useSelector((s) => s.data.selectedNodes)
@@ -22,7 +23,7 @@ export default function PropsList() {
         ) : selectedNodes.length === 0 && selectedGlobs.length > 0 ? (
           <GlobsProps />
         ) : (
-          <p>Mixed...</p>
+          <BoundsProps />
         )}
       </PropsTable>
     </>

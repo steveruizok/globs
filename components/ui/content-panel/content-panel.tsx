@@ -20,10 +20,7 @@ export default function ContentPanel() {
   const mvWidth = useTransform(mvOffsetX, (v) => MIN + v)
 
   return (
-    <PanelContainer
-      // data-bp-desktop
-      style={{ width: mvWidth }}
-    >
+    <PanelContainer data-bp-desktop style={{ width: mvWidth }}>
       <PanelInnerContainer>
         <NodeList />
         <GlobList />

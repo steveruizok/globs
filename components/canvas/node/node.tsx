@@ -13,6 +13,10 @@ interface Props {
 export default function Node({ id, fill }: Props) {
   const node = useSelector((s) => s.data.nodes[id], deepCompare)
 
+  const hasGlobs = useSelector((s) =>
+    Object.values(s.data.globs).find((glob) => glob.nodes.includes(id))
+  )
+
   const isSelected = useSelector((s) => s.data.selectedNodes.includes(id))
 
   const rOutline = useRegisteredElement<SVGCircleElement>(id)
@@ -27,7 +31,12 @@ export default function Node({ id, fill }: Props) {
     }
   }, [])
 
-  if (!node) return null
+  if (!node) {
+    // This component's hook updated before its parent's!
+    return null
+  }
+
+  if (hasGlobs && fill) return null
 
   return (
     <>
