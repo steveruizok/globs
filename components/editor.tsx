@@ -104,7 +104,10 @@ export default function Editor() {
         <EditorContainer ref={rContainer}>
           <Layout>
             <SVGWrapper
-              onPointerDown={() => state.send("POINTED_CANVAS")}
+              onPointerDown={(e) => {
+                if (e.target.constructor.name !== "SVGSVGElement") return
+                state.send("POINTED_CANVAS")
+              }}
               onTouchStart={handleTouchStart}
               onTouchEnd={handleTouchMove}
               onWheel={handleWheel}

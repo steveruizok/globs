@@ -2,7 +2,7 @@ import useRegisteredElement from "hooks/useRegisteredElement"
 import state, { useSelector } from "lib/state"
 import { deepCompareArrays, deepCompare } from "lib/utils"
 import { useEffect, useRef } from "react"
-import Dot from "./dot"
+import Dot from "../dot"
 import classNames from "classnames"
 
 interface Props {
@@ -12,10 +12,6 @@ interface Props {
 
 export default function Node({ id, fill }: Props) {
   const node = useSelector((s) => s.data.nodes[id], deepCompare)
-
-  const hasGlobs = useSelector((s) =>
-    Object.values(s.data.globs).find((glob) => glob.nodes.includes(id))
-  )
 
   const isSelected = useSelector((s) => s.data.selectedNodes.includes(id))
 
@@ -31,12 +27,7 @@ export default function Node({ id, fill }: Props) {
     }
   }, [])
 
-  if (!node) {
-    // This component's hook updated before its parent's!
-    return null
-  }
-
-  // if (hasGlobs) return null
+  if (!node) return null
 
   return (
     <>
