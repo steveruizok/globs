@@ -487,7 +487,7 @@ const state = createState({
       brush.end = screenToWorld(pointer.point, camera.point, camera.zoom)
     },
     updateBrushSelection(data) {
-      const { brush, nodes, globs } = data
+      const { brush, nodes, globs, document } = data
       const { start, end } = brush
       const x0 = Math.min(start[0], end[0])
       const y0 = Math.min(start[1], end[1])
@@ -759,6 +759,7 @@ const state = createState({
         data.globs[glob.id] = glob
       }
 
+      data.selectedGlobs = []
       data.selectedNodes = [newNode.id]
     },
     setSelectedGlob(data, payload: { id: string }) {
