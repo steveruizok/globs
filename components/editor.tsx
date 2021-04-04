@@ -8,19 +8,19 @@ import ContextMenu, {
   ContextMenuTrigger,
 } from "./ui/context-menu"
 
-import Globs from "./canvas/globs"
-import Nodes from "./canvas/nodes"
-import HoveredGlobs from "./canvas/hovers/hovered-globs"
-import HoveredNodes from "./canvas/hovers/hovered-nodes"
+import Globs from "./svg/globs"
+import Nodes from "./svg/nodes"
+import HoveredGlobs from "./svg/hovers/hovered-globs"
+import HoveredNodes from "./svg/hovers/hovered-nodes"
 import InspectPanel from "components/ui/inspect-panel/inspect-panel"
 import ContentPanel from "components/ui/content-panel/content-panel"
 import Toolbar from "components/ui/toolbar"
 import StatusBar from "components/ui/statusbar"
-import Brush from "components/canvas/brush"
-import Bounds from "components/canvas/bounds/bounds"
-import BoundsBg from "components/canvas/bounds/bounds-bg"
-import LearnPanel from "components/ui/learn-panel"
-import ZoomPanel from "components/ui/zoom-panel"
+import Brush from "./svg/brush"
+import Bounds from "./svg/bounds/bounds"
+import BoundsBg from "./svg/bounds/bounds-bg"
+import LearnPanel from "./ui/learn-panel"
+import ZoomPanel from "./ui/zoom-panel"
 
 const DOT_RADIUS = 2,
   ANCHOR_RADIUS = 4,
@@ -48,7 +48,7 @@ export default function Editor() {
     const svg = rSvg.current!
     const root = document.documentElement
 
-    let prev = ``
+    let prevViewbox = ``
     let prevZoom = 1
 
     return state.onUpdate((s) => {
@@ -57,16 +57,12 @@ export default function Editor() {
         document: { point, size },
       } = s.data
 
-      // Update view box when panning or zooming
-      const next = [``, point, size].join(`
+      // Viewbox
+      const nextViewbox = [``, point, size].join(`
 `)
-      if (next !== prev) {
-        // rContent.current.setAttribute(
-        //   "transform",
-        //   `translate(${-point[0]}, ${-point[1]}) scale(${zoom})`
-        // )
-        svg.setAttribute("viewBox", next)
-        prev = next
+      if (nextViewbox !== prevViewbox) {
+        svg.setAttribute("viewBox", nextViewbox)
+        prevViewbox = nextViewbox
       }
 
       // Update stroke widths when zooming
@@ -195,16 +191,6 @@ const EditorContainer = styled.div`
   z-index: 0;
   /* height: 100vh; */
 
-  & > svg {
-    position: absolute;
-    top: 0;
-    right: 0;
-    bottom: 0;
-    left: 0;
-    z-index: 1;
-    touch-action: none;
-  }
-
   g > *.hover-hidey {
     visibility: hidden;
   }
@@ -258,4 +244,17 @@ const SVGWrapper = styled(ContextMenuTrigger)`
   grid-column: 1 / span 3;
   grid-row: 1 / span 3;
   background-color: var(--muted);
+
+  & > svg {
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    z-index: 1;
+    touch-action: none;
+    shape-rendering: optimizeSpeed;
+    text-rendering: optimizeSpeed;
+    image-rendering: optimizeSpeed;
+  }
 `
