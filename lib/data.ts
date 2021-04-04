@@ -130,13 +130,16 @@ export const initialData: IData = {
   globIds: ["g0", "g1", "g2"],
   hoveredNodes: [],
   hoveredGlobs: [],
+  initialNodes: {},
+  initialGlobs: {},
   highlightNodes: [],
   highlightGlobs: [],
   selectedNodes: [],
   selectedGlobs: [],
   selectedAnchor: undefined,
   selectedHandle: undefined,
-  cloning: [],
+  cloningNodes: [],
+  cloningGlobs: [],
 }
 
 for (let key in initialData.globs) {

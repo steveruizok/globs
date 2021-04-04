@@ -195,7 +195,8 @@ const state = createState({
               },
             },
             pointingBounds: {
-              onExit: ["clearSnaps", "saveData"],
+              onEnter: ["setInitialNodes", "setInitialGlobs"],
+              onExit: ["clearInitialNodes", "clearSnaps", "saveData"],
               on: {
                 CANCELLED: { do: "returnSelected", to: "notPointing" },
                 WHEELED: ["moveSelected", "updateGlobPoints"],
@@ -206,8 +207,13 @@ const state = createState({
               },
             },
             pointingNodes: {
-              onExit: ["clearSnaps", "saveData"],
-              onEnter: ["setInitialPoints", "setSnapPoints"],
+              onExit: ["clearInitialNodes", "clearSnaps", "saveData"],
+              onEnter: [
+                "setInitialNodes",
+                "setInitialGlobs",
+                "setInitialPoints",
+                "setSnapPoints",
+              ],
               on: {
                 CANCELLED: { do: "returnSelected", to: "notPointing" },
                 WHEELED: ["moveSelected", "updateGlobPoints"],
@@ -225,7 +231,7 @@ const state = createState({
             },
             pointingHandle: {
               onExit: ["clearSnaps", "saveData"],
-              onEnter: ["setSnapPoints"],
+              onEnter: ["setInitialGlobs", "setSnapPoints"],
               on: {
                 WHEELED: ["moveSelectedHandle"],
                 MOVED_POINTER: ["moveSelectedHandle"],
@@ -286,7 +292,15 @@ const state = createState({
           },
         },
         cloningNodes: {
+          onEnter: "createClones",
           onExit: "saveData",
+          on: {
+            CANCELLED: { to: "selecting" },
+            MOVED_POINTER: {},
+            STOPPED_POINTING: {
+              to: "selecting",
+            },
+          },
         },
         creatingNodes: {
           onExit: "saveData",
@@ -369,6 +383,8 @@ const state = createState({
     },
   },
   actions: {
+    // CLONES
+    createClones(data) {},
     // BOUNDS
     setBounds(data, payload: { bounds: IBounds }) {
       data.bounds = payload.bounds
@@ -659,18 +675,12 @@ const state = createState({
       document.point = camera.point
     },
     zoomToFit(data) {
-      const {
-        nodeIds,
-        globIds,
-        nodes,
-        globs,
-        camera,
-        viewport,
-        document,
-      } = data
+      const { camera, viewport, document } = data
 
-      camera.point = [0, 0]
+      camera.point = [-viewport.size[0] / 2, -viewport.size[1] / 2]
       camera.zoom = 1
+      document.size = vec.round(vec.div(viewport.size, camera.zoom))
+      document.point = camera.point
 
       // if (nodeIds.length + globIds.length === 0) return null
 
@@ -863,6 +873,25 @@ const state = createState({
       nodeIds.splice(nodeIds.indexOf(payload.id), 1)
       nodeIds.splice(payload.to, 0, payload.id)
     },
+    setInitialNodes(data) {
+      const { selectedNodes, selectedGlobs, globs, nodes } = data
+
+      data.initialNodes = {}
+
+      for (let id of selectedNodes) {
+        data.initialNodes[id] = { ...nodes[id] }
+      }
+
+      for (let globId of selectedGlobs) {
+        const glob = globs[globId]
+        for (let nodeId of glob.nodes) {
+          data.initialNodes[nodeId] = { ...nodes[nodeId] }
+        }
+      }
+    },
+    clearInitialNodes(data) {
+      data.initialNodes = {}
+    },
 
     // GLOBS
     createNodeAndGlob(data) {
@@ -921,8 +950,30 @@ const state = createState({
         globs[globId].options.Dp = initialPoints.globs[globId].Dp
       }
     },
+    setInitialGlobs(data) {
+      const { selectedGlobs, globs } = data
+
+      data.initialGlobs = {}
+
+      for (let id of selectedGlobs) {
+        data.initialGlobs[id] = { ...globs[id] }
+      }
+    },
+    clearInitialGlobs(data) {
+      data.initialGlobs = {}
+    },
     moveSelected(data) {
-      const { selectedGlobs, selectedNodes, globs, nodes, snaps, camera } = data
+      const {
+        selectedGlobs,
+        selectedNodes,
+        globs,
+        nodes,
+        snaps,
+        camera,
+        initialNodes,
+        initialGlobs,
+      } = data
+
       const delta = vec.div(pointer.delta, camera.zoom)
       const originDelta = vec.div(
         vec.sub(pointer.point, pointer.origin),
@@ -934,8 +985,22 @@ const state = createState({
       // Just moving one node?
       if (selectedNodes.length === 1 && selectedGlobs.length === 0) {
         const node = nodes[selectedNodes[0]]
+        let next: number[]
 
-        let next = vec.round(vec.add(nodes[node.id].point, delta), 2)
+        if (keys.Shift) {
+          next = vec.round(
+            vec.add(data.initialPoints.nodes[node.id], originDelta)
+          )
+
+          if (pointer.axis === "x") {
+            node.point = [next[0], initialNodes[node.id].point[1]]
+          } else if (pointer.axis === "y") {
+            node.point = [initialNodes[node.id].point[0], next[1]]
+          }
+          return
+        }
+
+        next = vec.round(vec.add(nodes[node.id].point, delta), 2)
 
         if (!keys.Alt) {
           let snappedX = false
@@ -954,6 +1019,7 @@ const state = createState({
               next = vec.round(
                 vec.add(data.initialPoints.nodes[node.id], originDelta)
               )
+              break
             } else if (d < 2) {
               // Snap to point
               next = snap.point
@@ -987,6 +1053,7 @@ const state = createState({
                 next = vec.round(
                   vec.add(data.initialPoints.nodes[node.id], originDelta)
                 )
+                break
               } else if (dx < 2) {
                 // Snap to x
                 next[0] = x1
@@ -999,6 +1066,7 @@ const state = createState({
                 break
               }
 
+              // Secondary checks on the x axis
               if (camera.zoom >= 1) {
                 // Check left
                 x0 = next[0] - node.radius
@@ -1010,6 +1078,7 @@ const state = createState({
                   next = vec.round(
                     vec.add(data.initialPoints.nodes[node.id], originDelta)
                   )
+                  break
                 } else if (dx < 2) {
                   // Snap to x
                   next[0] = x1 + node.radius
@@ -1032,6 +1101,7 @@ const state = createState({
                   next = vec.round(
                     vec.add(data.initialPoints.nodes[node.id], originDelta)
                   )
+                  break
                 } else if (dx < 2) {
                   // Snap to x
                   next[0] = x1 - node.radius
@@ -1054,6 +1124,7 @@ const state = createState({
                   next = vec.round(
                     vec.add(data.initialPoints.nodes[node.id], originDelta)
                   )
+                  break
                 } else if (dx < 2) {
                   // Snap to x
                   next[0] = x1 + node.radius
@@ -1076,6 +1147,7 @@ const state = createState({
                   next = vec.round(
                     vec.add(data.initialPoints.nodes[node.id], originDelta)
                   )
+                  break
                 } else if (dx < 2) {
                   // Snap to x
                   next[0] = x1 - node.radius
@@ -1110,6 +1182,7 @@ const state = createState({
                 next = vec.round(
                   vec.add(data.initialPoints.nodes[node.id], originDelta)
                 )
+                break
               } else if (dy < 2) {
                 // Snap to y
                 next[1] = y1
@@ -1122,6 +1195,7 @@ const state = createState({
                 break
               }
 
+              // Secondary checks on the y axis
               if (camera.zoom >= 1) {
                 // Check top to top
                 y0 = next[1] - node.radius
@@ -1132,6 +1206,7 @@ const state = createState({
                   next = vec.round(
                     vec.add(data.initialPoints.nodes[node.id], originDelta)
                   )
+                  break
                 } else if (dy < 2) {
                   // Snap top to top
                   next[1] = y1 + node.radius
@@ -1153,6 +1228,7 @@ const state = createState({
                   next = vec.round(
                     vec.add(data.initialPoints.nodes[node.id], originDelta)
                   )
+                  break
                 } else if (dy < 2) {
                   next[1] = y1 - node.radius
                   snaps.active.push({
@@ -1173,6 +1249,7 @@ const state = createState({
                   next = vec.round(
                     vec.add(data.initialPoints.nodes[node.id], originDelta)
                   )
+                  break
                 } else if (dy < 2) {
                   next[1] = y1 + node.radius
                   snaps.active.push({
@@ -1190,12 +1267,11 @@ const state = createState({
                 dy = Math.abs(y0 - y1)
 
                 if (y0 === y1 && dy > 2) {
-                  // Unsnap from x
                   next = vec.round(
                     vec.add(data.initialPoints.nodes[node.id], originDelta)
                   )
+                  break
                 } else if (dy < 2) {
-                  // Snap to x
                   next[1] = y1 - node.radius
                   snaps.active.push({
                     type: ISnapTypes.NodesX,
@@ -1226,59 +1302,65 @@ const state = createState({
           nodesToMove.push(nodeId)
         }
 
-        glob.options.D = vec.round(vec.add(glob.options.D, delta))
-        glob.options.Dp = vec.round(vec.add(glob.options.Dp, delta))
+        let nextD = vec.round(vec.add(glob.options.D, delta))
+        let nextDp = vec.round(vec.add(glob.options.Dp, delta))
+
+        if (keys.Shift) {
+          if (pointer.axis === "x") {
+            nextD[1] = initialGlobs[glob.id].options.D[1]
+            nextDp[1] = initialGlobs[glob.id].options.Dp[1]
+          } else {
+            nextD[0] = initialGlobs[glob.id].options.D[0]
+            nextDp[0] = initialGlobs[glob.id].options.Dp[0]
+          }
+        }
+
+        glob.options.D = nextD
+        glob.options.Dp = nextDp
       }
 
+      // Move nodes
       for (let id of nodesToMove) {
         const node = nodes[id]
         if (node.locked) continue
 
         let next = vec.round(vec.add(nodes[id].point, delta), 2)
-        if (!keys.Alt) {
-          for (let snapId in snaps.nodes) {
-            if (snapId === id) continue
-            const snap = snaps.nodes[snapId]
-            const d = vec.dist(next, snap.point) * camera.zoom
 
-            if (vec.isEqual(node.point, snap.point) && d > 3) {
-              // unsnap from point, move to pointer
-              next = vec.round(
-                vec.add(data.initialPoints.nodes[node.id], originDelta)
-              )
-            } else if (d < 3) {
-              // Snap to point
-              next = snap.point
-            }
-          }
-        }
-
-        for (let id in globs) {
-          const glob = globs[id]
-          if (arrsIntersect(glob.nodes, nodesToMove)) {
-            const { options } = glob
-            const [start, end] = glob.nodes.map((id) => nodes[id])
-
-            try {
-              glob.points = getGlob(
-                start.point,
-                start.radius,
-                end.point,
-                end.radius,
-                options.D,
-                options.Dp,
-                options.a,
-                options.b,
-                options.ap,
-                options.bp
-              )
-            } catch (e) {
-              glob.points = null
-            }
+        if (keys.Shift) {
+          if (pointer.axis === "x") {
+            next[1] = initialNodes[node.id].point[1]
+          } else {
+            next[0] = initialNodes[node.id].point[0]
           }
         }
 
         node.point = next
+      }
+
+      // Move globs
+      for (let id in globs) {
+        const glob = globs[id]
+        if (arrsIntersect(glob.nodes, nodesToMove)) {
+          const { options } = glob
+          const [start, end] = glob.nodes.map((id) => nodes[id])
+
+          try {
+            glob.points = getGlob(
+              start.point,
+              start.radius,
+              end.point,
+              end.radius,
+              options.D,
+              options.Dp,
+              options.a,
+              options.b,
+              options.ap,
+              options.bp
+            )
+          } catch (e) {
+            glob.points = null
+          }
+        }
       }
 
       // Now update the globs!
@@ -1548,70 +1630,109 @@ const state = createState({
       data.selectedNodes = []
     },
     moveSelectedHandle(data) {
-      const { camera, nodes, globs, selectedHandle, snaps } = data
+      const { camera, nodes, globs, selectedHandle, snaps, initialGlobs } = data
       const glob = globs[selectedHandle.id]
       const [start, end] = glob.nodes
 
       let next = screenToWorld(pointer.point, camera.point, camera.zoom)
 
-      if (!keys.Alt) {
-        const originDelta = vec.div(
-          vec.sub(pointer.point, pointer.origin),
-          camera.zoom
-        )
+      if (keys.Shift) {
+        next = getSafeHandlePoint(nodes[start], nodes[end], next)
 
-        for (let id in snaps.globs) {
-          if (id === selectedHandle.id) continue
+        if (pointer.axis === "x") {
+          next[1] = initialGlobs[glob.id].options[selectedHandle.handle][1]
+        } else {
+          next[0] = initialGlobs[glob.id].options[selectedHandle.handle][0]
+        }
 
-          const pts = snaps.globs[id]
+        // Move the other handle, too.
+        if (keys.Meta) {
+          const otherHandle = selectedHandle.handle === "D" ? "Dp" : "D"
+          const otherNext = getSafeHandlePoint(
+            nodes[start],
+            nodes[end],
+            vec.add(
+              initialGlobs[glob.id].options[otherHandle],
+              vec.sub(
+                next,
+                initialGlobs[glob.id].options[selectedHandle.handle]
+              )
+            )
+          )
 
-          if (globs[id].points === null) continue
-
-          const { E0: a, D: b, E1: c, E0p: ap, Dp: bp, E1p: cp } = globs[
-            id
-          ].points
-
-          if (Math.abs(vec.distanceToLine(a, b, next)) < 3) {
-            next = vec.nearestPointOnLine(a, b, next, false)
-          } else if (Math.abs(vec.distanceToLine(b, c, next)) < 3) {
-            next = vec.nearestPointOnLine(b, c, next, false)
-          } else if (Math.abs(vec.distanceToLine(ap, bp, next)) < 3) {
-            next = vec.nearestPointOnLine(ap, bp, next, false)
-          } else if (Math.abs(vec.distanceToLine(bp, cp, next)) < 3) {
-            next = vec.nearestPointOnLine(bp, cp, next, false)
+          if (pointer.axis === "x") {
+            otherNext[1] = initialGlobs[glob.id].options[otherHandle][1]
+          } else {
+            otherNext[0] = initialGlobs[glob.id].options[otherHandle][0]
           }
 
-          for (let snap of pts) {
-            const d = vec.dist(next, snap) * camera.zoom
+          glob.options[otherHandle] = otherNext
+        }
 
-            if (vec.isEqual(next, snap) && d > 3) {
-              // unsnap from point, move to pointer
-              next = vec.add(glob.options[selectedHandle.handle], originDelta)
-            } else if (d < 3) {
-              // Snap to point
-              next = snap
+        glob.options[selectedHandle.handle] = next
+      } else {
+        if (!keys.Alt) {
+          const originDelta = vec.div(
+            vec.sub(pointer.point, pointer.origin),
+            camera.zoom
+          )
+
+          for (let id in snaps.globs) {
+            if (id === selectedHandle.id) continue
+
+            const pts = snaps.globs[id]
+
+            if (globs[id].points === null) continue
+
+            const { E0: a, D: b, E1: c, E0p: ap, Dp: bp, E1p: cp } = globs[
+              id
+            ].points
+
+            if (Math.abs(vec.distanceToLine(a, b, next)) < 3) {
+              next = vec.nearestPointOnLine(a, b, next, false)
+            } else if (Math.abs(vec.distanceToLine(b, c, next)) < 3) {
+              next = vec.nearestPointOnLine(b, c, next, false)
+            } else if (Math.abs(vec.distanceToLine(ap, bp, next)) < 3) {
+              next = vec.nearestPointOnLine(ap, bp, next, false)
+            } else if (Math.abs(vec.distanceToLine(bp, cp, next)) < 3) {
+              next = vec.nearestPointOnLine(bp, cp, next, false)
+            }
+
+            for (let snap of pts) {
+              const d = vec.dist(next, snap) * camera.zoom
+
+              if (vec.isEqual(next, snap) && d > 3) {
+                // unsnap from point, move to pointer
+                next = vec.add(glob.options[selectedHandle.handle], originDelta)
+              } else if (d < 3) {
+                // Snap to point
+                next = snap
+              }
             }
           }
         }
-      }
 
-      next = getSafeHandlePoint(nodes[start], nodes[end], next)
+        next = getSafeHandlePoint(nodes[start], nodes[end], next)
 
-      // Move the other handle, too.
-      if (keys.Meta) {
-        const otherHandle = selectedHandle.handle === "D" ? "Dp" : "D"
-        glob.options[otherHandle] = getSafeHandlePoint(
-          nodes[start],
-          nodes[end],
-          vec.add(
-            glob.options[otherHandle],
-            vec.sub(next, glob.options[selectedHandle.handle])
+        // Move the other handle, too.
+        if (keys.Meta) {
+          const otherHandle = selectedHandle.handle === "D" ? "Dp" : "D"
+          glob.options[otherHandle] = getSafeHandlePoint(
+            nodes[start],
+            nodes[end],
+            vec.add(
+              initialGlobs[glob.id].options[otherHandle],
+              vec.sub(
+                next,
+                initialGlobs[glob.id].options[selectedHandle.handle]
+              )
+            )
           )
-        )
-      }
+        }
 
-      // Apply the change to the handle
-      glob.options[selectedHandle.handle] = vec.round(next)
+        // Apply the change to the handle
+        glob.options[selectedHandle.handle] = vec.round(next)
+      }
 
       try {
         // Rebuild the glob points
@@ -1846,6 +1967,7 @@ const pointer = {
   delta: [0, 0],
   origin: [0, 0],
   buttons: 0,
+  axis: "any" as "any" | "x" | "y",
   points: new Set<number>(),
 }
 
@@ -1877,6 +1999,7 @@ function handlePointerDown(e: PointerEvent) {
     id: e.pointerId,
     type: e.pointerType,
     buttons: e.buttons,
+    direction: "any",
   })
 
   const x = e.clientX
@@ -1900,6 +2023,7 @@ function handlePointerUp(e: PointerEvent) {
   pointer.buttons = e.buttons
   pointer.delta = vec.sub([x, y], pointer.point)
   pointer.point = [x, y]
+  pointer.axis = "any"
 
   document.body.style.cursor = "default"
 
@@ -1911,6 +2035,10 @@ const handlePointerMove = throttle((e: PointerEvent) => {
   const x = e.clientX
   const y = e.clientY
 
+  const ox = Math.abs(x - pointer.origin[0])
+  const oy = Math.abs(y - pointer.origin[1])
+
+  pointer.axis = ox > oy ? "x" : "y"
   pointer.buttons = e.buttons
   pointer.delta = vec.sub([x, y], pointer.point)
   pointer.point = [x, y]

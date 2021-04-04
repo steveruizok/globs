@@ -137,8 +137,10 @@ export interface IData {
   fill: boolean
   nodeIds: string[]
   nodes: Record<string, INode>
+  initialNodes: Record<string, INode>
   globIds: string[]
   globs: Record<string, IGlob>
+  initialGlobs: Record<string, IGlob>
   selectedAnchor: { id: string; anchor: string }
   selectedHandle?: { id: string; handle: string }
   selectedGlobs: string[]
@@ -147,7 +149,8 @@ export interface IData {
   highlightNodes: string[]
   highlightGlobs: string[]
   selectedNodes: string[]
-  cloning: string[]
+  cloningNodes: string[]
+  cloningGlobs: string[]
 }
 
 export type IBounds = {
