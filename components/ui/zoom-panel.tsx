@@ -21,10 +21,11 @@ const Container = styled.div`
   background-color: var(--colors-panel);
   border: 1px solid var(--border);
   color: var(--colors-muted);
-  pointer-events: all;
   user-select: none;
   padding: 4px 8px;
   font: var(--fonts-mono);
+  pointer-events: all;
+  z-index: 2;
 
   &:hover {
     color: var(--colors-text);

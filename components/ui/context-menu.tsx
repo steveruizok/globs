@@ -25,6 +25,8 @@ const StyledContent = styled(_ContextMenu.Content)`
   border-radius: 4px;
   padding: 5px;
   box-shadow: 2px 2px 12px -4px rgba(0, 0, 0, 0.2);
+  pointer-events: all;
+  z-index: 2;
 `
 
 const StyledItem = styled(_ContextMenu.Item)`

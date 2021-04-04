@@ -43,6 +43,8 @@ const PanelContainer = styled(motion.div)`
   grid-area: content;
   overflow: hidden;
   user-select: none;
+  pointer-events: all;
+  z-index: 2;
 `
 const PanelInnerContainer = styled.div`
   width: 100%;

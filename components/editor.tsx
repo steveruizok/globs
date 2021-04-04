@@ -8,17 +8,17 @@ import ContextMenu, {
   ContextMenuTrigger,
 } from "./ui/context-menu"
 
-import Globs from "./canvas/globs"
-import Nodes from "./canvas/nodes"
-import HoveredGlobs from "./canvas/hovers/hovered-globs"
-import HoveredNodes from "./canvas/hovers/hovered-nodes"
+import Globs from "./svg/globs"
+import Nodes from "./svg/nodes"
+import HoveredGlobs from "./svg/hovers/hovered-globs"
+import HoveredNodes from "./svg/hovers/hovered-nodes"
 import InspectPanel from "components/ui/inspect-panel/inspect-panel"
 import ContentPanel from "components/ui/content-panel/content-panel"
 import Toolbar from "components/ui/toolbar"
 import StatusBar from "components/ui/statusbar"
-import Brush from "components/canvas/brush"
-import Bounds from "components/canvas/bounds/bounds"
-import BoundsBg from "components/canvas/bounds/bounds-bg"
+import Brush from "components/svg/brush"
+import Bounds from "components/svg/bounds/bounds"
+import BoundsBg from "components/svg/bounds/bounds-bg"
 import LearnPanel from "components/ui/learn-panel"
 import ZoomPanel from "components/ui/zoom-panel"
 
@@ -195,16 +195,6 @@ const EditorContainer = styled.div`
   z-index: 0;
   /* height: 100vh; */
 
-  & > svg {
-    position: absolute;
-    top: 0;
-    right: 0;
-    bottom: 0;
-    left: 0;
-    z-index: 1;
-    touch-action: none;
-  }
-
   g > *.hover-hidey {
     visibility: hidden;
   }
@@ -258,4 +248,17 @@ const SVGWrapper = styled(ContextMenuTrigger)`
   grid-column: 1 / span 3;
   grid-row: 1 / span 3;
   background-color: var(--muted);
+
+  & > svg {
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    z-index: 1;
+    touch-action: none;
+    shape-rendering: optimizeSpeed;
+    text-rendering: optimizeSpeed;
+    image-rendering: optimizeSpeed;
+  }
 `

@@ -649,7 +649,7 @@ const state = createState({
 
       const pt0 = vec.add(vec.div(point, camera.zoom), camera.point)
 
-      camera.zoom = Math.max(Math.min(camera.zoom + delta, 10), 0.001)
+      camera.zoom = Math.max(Math.min(camera.zoom + delta, 10), 0.01)
       camera.zoom = Math.round(camera.zoom * 100) / 100
 
       const pt1 = vec.add(vec.div(point, camera.zoom), camera.point)
@@ -1552,7 +1552,16 @@ export const mvPointer = {
   world: motionValue([0, 0]),
 }
 
-const pointer = {
+function updateMvPointer(point: typeof pointer, camera: IData["camera"]) {
+  mvPointer.screen.set(pointer.point)
+  mvPointer.world.set(screenToWorld(pointer.point, camera.point, camera.zoom))
+}
+
+/* ------------------ INPUT EVENTS ------------------ */
+
+export const keys: Record<string, boolean> = {}
+
+export const pointer = {
   id: -1,
   type: "mouse",
   point: [0, 0],
@@ -1561,15 +1570,6 @@ const pointer = {
   buttons: 0,
   points: new Set<number>(),
 }
-
-function updateMvPointer(point: typeof pointer, camera: IData["camera"]) {
-  mvPointer.screen.set(pointer.point)
-  mvPointer.world.set(screenToWorld(pointer.point, camera.point, camera.zoom))
-}
-
-const keys: Record<string, boolean> = {}
-
-/* ------------------ INPUT EVENTS ------------------ */
 
 function handlePointerLeave() {
   for (let id in keys) {

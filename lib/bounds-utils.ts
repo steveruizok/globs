@@ -1,26 +1,6 @@
 import { INode, IGlob, IBounds, ICanvasItem } from "types"
 import { round } from "./utils"
-
-// Evaluate a 2D bezier curve
-export function bez2d(
-  A: number[],
-  B: number[],
-  C: number[],
-  D: number[],
-  t: number
-) {
-  return [bez1d(A[0], B[0], C[0], D[0], t), bez1d(A[1], B[1], C[1], D[1], t)]
-}
-
-// Evaluate a point along a 1d bezier curve.
-export function bez1d(a: number, b: number, c: number, d: number, t: number) {
-  return (
-    a * (1 - t) * (1 - t) * (1 - t) +
-    3 * b * t * (1 - t) * (1 - t) +
-    3 * c * t * t * (1 - t) +
-    d * t * t * t
-  )
-}
+import { bez1d } from "./bez"
 
 /**
  * Get the bounding box of a cubic bezier curve.

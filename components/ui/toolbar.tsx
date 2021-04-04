@@ -83,6 +83,8 @@ const StyledContainer = styled.div`
   justify-content: space-between;
   background-color: #ffffff;
   border-bottom: 1px solid rgba(0, 0, 0, 0.2);
+  pointer-events: all;
+  z-index: 2;
 
   & > section {
     display: flex;

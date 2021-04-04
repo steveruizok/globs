@@ -191,8 +191,9 @@ const PanelContainer = styled(motion.div)`
   border-radius: 4px;
   overflow: hidden;
   border: 1px solid var(--border);
-  pointer-events: all;
   user-select: none;
+  pointer-events: all;
+  z-index: 2;
 
   button {
     border: none;

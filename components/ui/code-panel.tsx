@@ -19,6 +19,8 @@ export default function CodePanel() {
 
 const DragWrapper = styled.div`
   grid-area: main;
+  pointer-events: all;
+  z-index: 2;
 `
 
 const CodePanelContainer = styled(motion.div)`
