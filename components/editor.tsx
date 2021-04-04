@@ -20,6 +20,7 @@ import Bounds from "./svg/bounds/bounds"
 import BoundsBg from "./svg/bounds/bounds-bg"
 import LearnPanel from "./ui/learn-panel"
 import ZoomPanel from "./ui/zoom-panel"
+import Snaps from "./svg/snaps"
 
 const DOT_RADIUS = 2,
   ANCHOR_RADIUS = 4,
@@ -38,6 +39,7 @@ export default function Editor() {
   const rTouchSmall = useRef<SVGCircleElement>(null)
   const rTouch = useRef<SVGCircleElement>(null)
   const rCorner = useRef<SVGRectElement>(null)
+  const rSnap = useRef<SVGPathElement>(null)
   const rMain = useRef<HTMLDivElement>(null)
 
   // When we zoom or pan, manually update the svg's viewbox
@@ -77,6 +79,11 @@ export default function Editor() {
         rTouchSmall.current!.setAttribute("r", (TOUCH_SM_RADIUS * z).toString())
         rCorner.current!.setAttribute("width", (CORNER_SIZE * z).toString())
         rCorner.current!.setAttribute("height", (CORNER_SIZE * z).toString())
+        const dz = z * 3
+        rSnap.current!.setAttribute(
+          "d",
+          `M -${dz},-${dz} L ${dz},${dz} M -${dz},${dz} L ${dz},-${dz}`
+        )
       }
     })
   }, [])
@@ -153,12 +160,17 @@ export default function Editor() {
                     width={5}
                     height={5}
                   />
+                  <path
+                    ref={rSnap}
+                    id="snap"
+                    d="M -2,-2 L 2,2 M -2,2 L 2,-2"
+                    className="strokewidth-s stroke-selected"
+                  />
                 </defs>
                 <g ref={rContent}>
                   <BoundsBg />
-                  {/* <Globs />
-                  <Nodes /> */}
                   <Contents />
+                  <Snaps />
                   <HoveredNodes />
                   <HoveredGlobs />
                   <Bounds />
@@ -244,6 +256,7 @@ const SVGWrapper = styled(ContextMenuTrigger)`
   grid-column: 1 / span 3;
   grid-row: 1 / span 3;
   background-color: var(--muted);
+  /* transform: scale(0.2); */
 
   & > svg {
     position: absolute;

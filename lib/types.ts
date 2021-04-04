@@ -75,6 +75,36 @@ export interface INode extends ICanvasItem {
   locked: boolean
 }
 
+export enum ISnapTypes {
+  NodesCenter = "NodesCenter",
+  NodesX = "NodesX",
+  NodesY = "NodesY",
+}
+
+export interface IBaseSnap {
+  type: ISnapTypes
+}
+
+interface NodeCentersSnap extends IBaseSnap {
+  type: ISnapTypes.NodesCenter
+  from: number[]
+  to: number[]
+}
+
+interface NodeXSnap extends IBaseSnap {
+  type: ISnapTypes.NodesX
+  from: number[]
+  to: number[]
+}
+
+interface NodeYSnap extends IBaseSnap {
+  type: ISnapTypes.NodesY
+  from: number[]
+  to: number[]
+}
+
+type ISnap = NodeCentersSnap | NodeXSnap | NodeYSnap
+
 export interface IData {
   viewport: {
     point: number[]
@@ -100,8 +130,9 @@ export interface IData {
     globs: Record<string, { D: number[]; Dp: number[] }>
   }
   snaps: {
-    nodes: Record<string, number[]>
+    nodes: Record<string, { point: number[]; radius: number }>
     globs: Record<string, number[][]>
+    active: ISnap[]
   }
   fill: boolean
   nodeIds: string[]

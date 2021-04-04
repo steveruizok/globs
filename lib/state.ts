@@ -8,6 +8,7 @@ import {
   IData,
   IBounds,
   KeyCommand,
+  ISnapTypes,
 } from "lib/types"
 import intersect from "path-intersection"
 import {
@@ -27,8 +28,6 @@ import {
   round,
   throttle,
   getLineLineIntersection,
-  getSnapshots,
-  getSnapglobs,
   resizeBounds,
 } from "utils"
 import { getClosestPointOnCurve, getNormalOnCurve } from "lib/bez"
@@ -196,7 +195,7 @@ const state = createState({
               },
             },
             pointingBounds: {
-              onExit: "saveData",
+              onExit: ["clearSnaps", "saveData"],
               on: {
                 CANCELLED: { do: "returnSelected", to: "notPointing" },
                 WHEELED: ["moveSelected", "updateGlobPoints"],
@@ -207,7 +206,7 @@ const state = createState({
               },
             },
             pointingNodes: {
-              onExit: "saveData",
+              onExit: ["clearSnaps", "saveData"],
               onEnter: ["setInitialPoints", "setSnapPoints"],
               on: {
                 CANCELLED: { do: "returnSelected", to: "notPointing" },
@@ -225,7 +224,7 @@ const state = createState({
               },
             },
             pointingHandle: {
-              onExit: "saveData",
+              onExit: ["clearSnaps", "saveData"],
               onEnter: ["setSnapPoints"],
               on: {
                 WHEELED: ["moveSelectedHandle"],
@@ -237,7 +236,7 @@ const state = createState({
               },
             },
             pointingAnchor: {
-              onExit: "saveData",
+              onExit: ["clearSnaps", "saveData"],
               on: {
                 WHEELED: ["moveSelectedAnchor"],
                 MOVED_POINTER: ["moveSelectedAnchor"],
@@ -925,11 +924,294 @@ const state = createState({
     moveSelected(data) {
       const { selectedGlobs, selectedNodes, globs, nodes, snaps, camera } = data
       const delta = vec.div(pointer.delta, camera.zoom)
-      const nodesToMove: string[] = [...selectedNodes]
       const originDelta = vec.div(
         vec.sub(pointer.point, pointer.origin),
         camera.zoom
       )
+
+      snaps.active = []
+
+      // Just moving one node?
+      if (selectedNodes.length === 1 && selectedGlobs.length === 0) {
+        const node = nodes[selectedNodes[0]]
+
+        let next = vec.round(vec.add(nodes[node.id].point, delta), 2)
+
+        if (!keys.Alt) {
+          let snappedX = false
+          let snappedY = false
+
+          // Centers
+          for (let id in snaps.nodes) {
+            if (id === node.id) continue
+            const snap = snaps.nodes[id]
+
+            if (!isInView(snap.point, data.document)) continue
+
+            const d = vec.dist(next, snap.point) * camera.zoom
+            if (vec.isEqual(node.point, snap.point) && d > 2) {
+              // unsnap from point, move to pointer
+              next = vec.round(
+                vec.add(data.initialPoints.nodes[node.id], originDelta)
+              )
+            } else if (d < 2) {
+              // Snap to point
+              next = snap.point
+              snaps.active.push({
+                type: ISnapTypes.NodesCenter,
+                from: snap.point,
+                to: next,
+              })
+              snappedX = true
+              snappedY = true
+              break
+            }
+          }
+
+          // Xs and Ys
+          if (!snappedX) {
+            let x0: number, x1: number, dx: number
+            for (let id in snaps.nodes) {
+              if (id === node.id) continue
+              const snap = snaps.nodes[id]
+
+              if (!isInView(snap.point, data.document)) continue
+
+              x0 = next[0]
+              x1 = snap.point[0]
+              dx = Math.abs(x0 - x1)
+
+              // Check center X
+              if (x0 === x1 && dx > 2) {
+                // Unsnap from x
+                next = vec.round(
+                  vec.add(data.initialPoints.nodes[node.id], originDelta)
+                )
+              } else if (dx < 2) {
+                // Snap to x
+                next[0] = x1
+                snaps.active.push({
+                  type: ISnapTypes.NodesX,
+                  from: snap.point,
+                  to: next,
+                })
+                snappedX = true
+                break
+              }
+
+              // Check left
+              x0 = next[0] - node.radius
+              x1 = snap.point[0] - snap.radius
+              dx = Math.abs(x0 - x1)
+
+              if (x0 === x1 && dx > 2) {
+                // Unsnap from x
+                next = vec.round(
+                  vec.add(data.initialPoints.nodes[node.id], originDelta)
+                )
+              } else if (dx < 2) {
+                // Snap to x
+                next[0] = x1 + node.radius
+                snaps.active.push({
+                  type: ISnapTypes.NodesX,
+                  from: vec.sub(snap.point, [snap.radius, 0]),
+                  to: vec.sub(next, [node.radius, 0]),
+                })
+                snappedX = true
+                break
+              }
+
+              // Check right
+              x0 = next[0] + node.radius
+              x1 = snap.point[0] + snap.radius
+              dx = Math.abs(x0 - x1)
+
+              if (x0 === x1 && dx > 2) {
+                // Unsnap from x
+                next = vec.round(
+                  vec.add(data.initialPoints.nodes[node.id], originDelta)
+                )
+              } else if (dx < 2) {
+                // Snap to x
+                next[0] = x1 - node.radius
+                snaps.active.push({
+                  type: ISnapTypes.NodesX,
+                  from: vec.add(snap.point, [snap.radius, 0]),
+                  to: vec.add(next, [node.radius, 0]),
+                })
+                snappedX = true
+                break
+              }
+
+              // Check left to right
+              x0 = next[0] - node.radius
+              x1 = snap.point[0] + snap.radius
+              dx = Math.abs(x0 - x1)
+
+              if (x0 === x1 && dx > 2) {
+                // Unsnap from x
+                next = vec.round(
+                  vec.add(data.initialPoints.nodes[node.id], originDelta)
+                )
+              } else if (dx < 2) {
+                // Snap to x
+                next[0] = x1 + node.radius
+                snaps.active.push({
+                  type: ISnapTypes.NodesX,
+                  from: vec.add(snap.point, [snap.radius, 0]),
+                  to: vec.sub(next, [node.radius, 0]),
+                })
+                snappedX = true
+                break
+              }
+
+              // Check right to left
+              x0 = next[0] + node.radius
+              x1 = snap.point[0] - snap.radius
+              dx = Math.abs(x0 - x1)
+
+              if (x0 === x1 && dx > 2) {
+                // Unsnap from x
+                next = vec.round(
+                  vec.add(data.initialPoints.nodes[node.id], originDelta)
+                )
+              } else if (dx < 2) {
+                // Snap to x
+                next[0] = x1 - node.radius
+                snaps.active.push({
+                  type: ISnapTypes.NodesX,
+                  from: vec.sub(snap.point, [snap.radius, 0]),
+                  to: vec.add(next, [node.radius, 0]),
+                })
+                snappedX = true
+                break
+              }
+            }
+          }
+
+          // Xs and Ys
+          if (!snappedY) {
+            let y0: number, y1: number, dy: number
+            for (let id in snaps.nodes) {
+              if (id === node.id) continue
+              const snap = snaps.nodes[id]
+
+              if (!isInView(snap.point, data.document)) continue
+
+              y0 = next[1]
+              y1 = snap.point[1]
+              dy = Math.abs(y0 - y1)
+
+              // Check center Y
+              if (y0 === y1 && dy > 2) {
+                // Unsnap from y
+                next = vec.round(
+                  vec.add(data.initialPoints.nodes[node.id], originDelta)
+                )
+              } else if (dy < 2) {
+                // Snap to y
+                next[1] = y1
+                snaps.active.push({
+                  type: ISnapTypes.NodesY,
+                  from: snap.point,
+                  to: next,
+                })
+                snappedY = true
+                break
+              }
+
+              // Check top to top
+              y0 = next[1] - node.radius
+              y1 = snap.point[1] - snap.radius
+              dy = Math.abs(y0 - y1)
+
+              if (y0 === y1 && dy > 2) {
+                next = vec.round(
+                  vec.add(data.initialPoints.nodes[node.id], originDelta)
+                )
+              } else if (dy < 2) {
+                // Snap top to top
+                next[1] = y1 + node.radius
+                snaps.active.push({
+                  type: ISnapTypes.NodesY,
+                  from: vec.sub(snap.point, [0, snap.radius]),
+                  to: vec.sub(next, [0, node.radius]),
+                })
+                snappedY = true
+                break
+              }
+
+              // Check bottom to bottom
+              y0 = next[1] + node.radius
+              y1 = snap.point[1] + snap.radius
+              dy = Math.abs(y0 - y1)
+
+              if (y0 === y1 && dy > 2) {
+                next = vec.round(
+                  vec.add(data.initialPoints.nodes[node.id], originDelta)
+                )
+              } else if (dy < 2) {
+                next[1] = y1 - node.radius
+                snaps.active.push({
+                  type: ISnapTypes.NodesY,
+                  from: vec.add(snap.point, [0, snap.radius]),
+                  to: vec.add(next, [0, node.radius]),
+                })
+                snappedY = true
+                break
+              }
+
+              // Check top to bottom
+              y0 = next[1] - node.radius
+              y1 = snap.point[1] + snap.radius
+              dy = Math.abs(y0 - y1)
+
+              if (y0 === y1 && dy > 2) {
+                next = vec.round(
+                  vec.add(data.initialPoints.nodes[node.id], originDelta)
+                )
+              } else if (dy < 2) {
+                next[1] = y1 + node.radius
+                snaps.active.push({
+                  type: ISnapTypes.NodesX,
+                  from: vec.add(snap.point, [0, snap.radius]),
+                  to: vec.sub(next, [0, node.radius]),
+                })
+                snappedY = true
+                break
+              }
+
+              // Check bottom to top
+              y0 = next[1] + node.radius
+              y1 = snap.point[1] - snap.radius
+              dy = Math.abs(y0 - y1)
+
+              if (y0 === y1 && dy > 2) {
+                // Unsnap from x
+                next = vec.round(
+                  vec.add(data.initialPoints.nodes[node.id], originDelta)
+                )
+              } else if (dy < 2) {
+                // Snap to x
+                next[1] = y1 - node.radius
+                snaps.active.push({
+                  type: ISnapTypes.NodesX,
+                  from: vec.sub(snap.point, [0, snap.radius]),
+                  to: vec.add(next, [0, node.radius]),
+                })
+                snappedY = true
+                break
+              }
+            }
+          }
+        }
+
+        node.point = next
+        return
+      }
+
+      // Moving maybe nodes and globs
+      const nodesToMove: string[] = [...selectedNodes]
 
       for (let globId of selectedGlobs) {
         const glob = globs[globId]
@@ -953,16 +1235,16 @@ const state = createState({
           for (let snapId in snaps.nodes) {
             if (snapId === id) continue
             const snap = snaps.nodes[snapId]
-            const d = vec.dist(next, snap) * camera.zoom
+            const d = vec.dist(next, snap.point) * camera.zoom
 
-            if (vec.isEqual(node.point, snap) && d > 3) {
+            if (vec.isEqual(node.point, snap.point) && d > 3) {
               // unsnap from point, move to pointer
               next = vec.round(
                 vec.add(data.initialPoints.nodes[node.id], originDelta)
               )
             } else if (d < 3) {
               // Snap to point
-              next = snap
+              next = snap.point
             }
           }
         }
@@ -996,6 +1278,9 @@ const state = createState({
       }
 
       // Now update the globs!
+    },
+    clearSnaps(data) {
+      data.snaps.active = []
     },
     setSelectedGlobOptions(data, payload: Partial<IGlob["options"]>) {
       const { globs, selectedGlobs } = data
@@ -1441,7 +1726,8 @@ const state = createState({
       const nodePts: IData["snaps"]["nodes"] = {}
 
       for (let key in nodes) {
-        nodePts[key] = nodes[key].point
+        const node = nodes[key]
+        nodePts[key] = { point: node.point, radius: node.radius }
       }
 
       const globPts: IData["snaps"]["globs"] = {}
@@ -1776,5 +2062,14 @@ function getSelectedBoundingBox(data: IData) {
         getGlobBounds(glob, nodes[glob.nodes[0]], nodes[glob.nodes[1]])
       ),
     ...selectedNodes.map((id) => getNodeBounds(nodes[id]))
+  )
+}
+
+function isInView(point: number[], document: IData["document"]) {
+  return !(
+    point[0] < document.point[0] ||
+    point[0] > document.point[0] + document.size[0] ||
+    point[1] < document.point[1] ||
+    point[1] > document.point[1] + document.size[1]
   )
 }

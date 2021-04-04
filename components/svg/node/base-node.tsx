@@ -50,7 +50,7 @@ const BaseNode = forwardRef<SVGCircleElement, Props>(
               href="#anchor"
               x={cx}
               y={cy}
-              className="strokewidth-m dash-array-m"
+              className="stroke-outline strokewidth-m dash-array-m"
               pointerEvents="none"
               fill="none"
             />

@@ -124,6 +124,7 @@ export const initialData: IData = {
   snaps: {
     nodes: {},
     globs: {},
+    active: [],
   },
   nodeIds: ["0", "1", "2", "3", "4"],
   globIds: ["g0", "g1", "g2"],
