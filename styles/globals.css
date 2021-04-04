@@ -46,6 +46,7 @@ svg text {
   --colors-stroke: rgba(0, 0, 0, 1);
   --colors-left: dodgerblue;
   --colors-right: orange;
+  --colors-hover: rgba(255, 0, 0, 0.1);
   --colors-panel: #ffffff;
   --colors-canvas: #f2f2f2;
   --fonts-ui: 500 12px/14px "Inter", -apple-system, sans-serif;
@@ -146,6 +147,12 @@ svg text {
 
 .opacity-s {
   opacity: 0.2;
+}
+
+/* Globs */
+
+.fill-hover {
+  fill: var(--colors-hover);
 }
 
 /* Events */

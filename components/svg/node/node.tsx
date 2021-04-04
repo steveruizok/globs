@@ -4,83 +4,31 @@ import { deepCompareArrays, deepCompare } from "lib/utils"
 import { useEffect, useRef } from "react"
 import Dot from "../dot"
 import classNames from "classnames"
+import BaseNode from "./base-node"
 
 interface Props {
   id: string
   fill: boolean
+  isSelected: boolean
 }
 
-export default function Node({ id, fill }: Props) {
-  const node = useSelector((s) => s.data.nodes[id], deepCompare)
-
-  const hasGlobs = useSelector((s) =>
-    Object.values(s.data.globs).find((glob) => glob.nodes.includes(id))
-  )
-
-  const isSelected = useSelector((s) => s.data.selectedNodes.includes(id))
+export default function Node({ id, fill, isSelected }: Props) {
+  const node = useSelector((s) => s.data.nodes[id])
 
   const rOutline = useRegisteredElement<SVGCircleElement>(id)
 
-  useEffect(() => {
-    if (node) {
-      state.send("MOUNTED_ELEMENT", { id: node.id, elm: rOutline.current })
-    }
-
-    return () => {
-      state.send("UNMOUNTED_ELEMENT", { id: node?.id })
-    }
-  }, [])
-
-  if (!node) {
-    // This component's hook updated before its parent's!
-    return null
-  }
-
-  if (hasGlobs && fill) return null
+  if (!node) return null
 
   return (
-    <>
-      <circle
-        ref={rOutline}
-        cx={node.point[0]}
-        cy={node.point[1]}
-        r={node.radius}
-        className={classNames([
-          "strokewidth-m",
-          {
-            "fill-flat": fill,
-            "fill-soft": !fill,
-            "stroke-none": fill,
-            "stroke-selected": !fill && isSelected,
-            "stroke-outline": !fill && !isSelected,
-          },
-        ])}
-        pointerEvents="none"
-      />
-      <circle
-        cx={node.point[0]}
-        cy={node.point[1]}
-        r={Math.max(node.radius, 8)}
-        fill="transparent"
-        stroke="transparent"
-        onPointerDown={() => state.send("SELECTED_NODE", { id })}
-        onDoubleClick={() => state.send("TOGGLED_CAP", { id })}
-        onPointerOver={() => state.send("HOVERED_NODE", { id })}
-        onPointerOut={() => state.send("UNHOVERED_NODE", { id })}
-      />
-      {!fill &&
-        (node.locked ? (
-          <use
-            href="#anchor"
-            x={node.point[0]}
-            y={node.point[1]}
-            className="strokewidth-m dash-array-m"
-            pointerEvents="none"
-            fill="none"
-          />
-        ) : (
-          <Dot position={node.point} />
-        ))}
-    </>
+    <BaseNode
+      ref={rOutline}
+      id={node.id}
+      cx={node.point[0]}
+      cy={node.point[1]}
+      r={node.radius}
+      isFilled={fill}
+      isSelected={isSelected}
+      isLocked={node.locked}
+    />
   )
 }

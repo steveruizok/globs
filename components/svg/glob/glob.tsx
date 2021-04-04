@@ -1,32 +1,22 @@
 import React, { useRef, useCallback } from "react"
-import classNames from "classnames"
-import { deepCompare, getGlobOutline } from "utils"
+import { deepCompare } from "utils"
 import { IGlobPoints } from "types"
-import state, { useSelector, mvPointer } from "lib/state"
+import state, { useSelector } from "lib/state"
 import Handles from "./handles"
 import BrokenGlob from "./broken-glob"
-import useRegisteredElement from "hooks/useRegisteredElement"
-import CenterLine from "./center-line"
-import Dot from "../dot"
-import Combs from "./combs"
+import BaseGlob from "./base-glob"
+import BaseNode from "../node/base-node"
 
 interface Props {
   id: string
   fill: boolean
+  isSelected: boolean
 }
 
-export default function Glob({ id, fill }: Props) {
+export default function Glob({ id, fill, isSelected }: Props) {
   const glob = useSelector((s) => s.data.globs[id], deepCompare)
   const start = useSelector((s) => s.data.nodes[glob?.nodes[0]])
   const end = useSelector((s) => s.data.nodes[glob?.nodes[1]])
-
-  const rOutline = useRegisteredElement<SVGPathElement>(id)
-
-  const isHovered = useSelector((s) => s.data.hoveredGlobs.includes(id))
-
-  const isSelected = useSelector(({ data: { selectedGlobs } }) =>
-    selectedGlobs.includes(id)
-  )
 
   const isDraggingD = useSelector(
     ({ data: { selectedHandle } }) =>
@@ -40,17 +30,13 @@ export default function Glob({ id, fill }: Props) {
 
   const rPrevPts = useRef<IGlobPoints>()
 
-  function handleUnhoverGlob() {
+  const handleUnhoverGlob = useCallback(() => {
     state.send("UNHOVERED_GLOB", { id })
-  }
+  }, [])
 
-  function handleHoverGlob() {
+  const handleHoverGlob = useCallback(() => {
     state.send("HOVERED_GLOB", { id })
-  }
-
-  function handleSelectGlob() {
-    state.send("SELECTED_GLOB", { id })
-  }
+  }, [])
 
   if (!glob) return null
 
@@ -61,32 +47,22 @@ export default function Glob({ id, fill }: Props) {
 
   rPrevPts.current = globPts
 
-  const outline = getGlobOutline(globPts, start.cap, end.cap)
-
   return (
     <g onPointerLeave={handleUnhoverGlob} onPointerEnter={handleHoverGlob}>
       {safe ? (
-        <path
-          ref={rOutline}
-          d={outline}
-          onPointerDown={handleSelectGlob}
-          className={classNames([
-            "strokewidth-m",
-            {
-              "stroke-selected": !fill && isSelected,
-              "stroke-outline": !fill && !isSelected,
-              "fill-flat": fill,
-              "fill-soft": !fill,
-            },
-          ])}
+        <BaseGlob
+          id={glob.id}
+          points={globPts}
+          startCap={start.cap}
+          endCap={end.cap}
+          isFilled={fill}
+          isSelected={isSelected}
         />
       ) : (
         <BrokenGlob start={start} end={end} />
       )}
       {!fill && safe && (
         <>
-          {isSelected && isHovered && <CenterLine glob={glob} />}
-          {/* {isSelected && isHovered && <CenterLine glob={glob} />} */}
           <Handles
             glob={glob}
             isPrime={false}
@@ -100,6 +76,28 @@ export default function Glob({ id, fill }: Props) {
             isDragging={isDraggingDp}
           />
           {/* <Combs id={glob.id} points={glob.points} /> */}
+        </>
+      )}
+      {!fill && (
+        <>
+          <BaseNode
+            id={start.id}
+            cx={start.point[0]}
+            cy={start.point[1]}
+            r={start.radius}
+            isFilled={fill}
+            isSelected={isSelected}
+            isLocked={start.locked}
+          />
+          <BaseNode
+            id={end.id}
+            cx={end.point[0]}
+            cy={end.point[1]}
+            r={end.radius}
+            isFilled={fill}
+            isSelected={isSelected}
+            isLocked={end.locked}
+          />
         </>
       )}
     </g>

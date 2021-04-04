@@ -1,12 +1,14 @@
 import state, { useSelector } from "lib/state"
 import { deepCompare, getGlob, getGlobOutline } from "lib/utils"
 import { useRef } from "react"
+import CenterLine from "../glob/center-line"
 
 interface Props {
   id: string
+  isSelected: boolean
 }
 
-export default function HoverGlob({ id }: Props) {
+export default function HoverGlob({ id, isSelected }: Props) {
   const glob = useSelector((s) => s.data.globs[id], deepCompare)
 
   const rPrevPts = useRef<ReturnType<typeof getGlob>>()
@@ -33,10 +35,13 @@ export default function HoverGlob({ id }: Props) {
   }
 
   return (
-    <path
-      d={getGlobOutline(globPts, cap0, cap1)}
-      fill="rgba(255, 0, 0, .12)"
-      pointerEvents="none"
-    />
+    <>
+      <path
+        d={getGlobOutline(globPts, cap0, cap1)}
+        className="fill-hover"
+        pointerEvents="none"
+      />
+      {isSelected && <CenterLine glob={glob} />}
+    </>
   )
 }

@@ -9,11 +9,13 @@ export default function HoveringNodes() {
     // deepCompareArrays
   )
 
+  const selectedGlobIds = useSelector((s) => s.data.selectedGlobs)
+
   return (
-    <>
+    <g>
       {highlitGlobs.map((id) => (
-        <HoverGlob key={id} id={id} />
+        <HoverGlob key={id} id={id} isSelected={selectedGlobIds.includes(id)} />
       ))}
-    </>
+    </g>
   )
 }

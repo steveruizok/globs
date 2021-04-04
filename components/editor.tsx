@@ -8,8 +8,7 @@ import ContextMenu, {
   ContextMenuTrigger,
 } from "./ui/context-menu"
 
-import Globs from "./svg/globs"
-import Nodes from "./svg/nodes"
+import Contents from "./svg/contents"
 import HoveredGlobs from "./svg/hovers/hovered-globs"
 import HoveredNodes from "./svg/hovers/hovered-nodes"
 import InspectPanel from "components/ui/inspect-panel/inspect-panel"
@@ -157,8 +156,9 @@ export default function Editor() {
                 </defs>
                 <g ref={rContent}>
                   <BoundsBg />
-                  <Globs />
-                  <Nodes />
+                  {/* <Globs />
+                  <Nodes /> */}
+                  <Contents />
                   <HoveredNodes />
                   <HoveredGlobs />
                   <Bounds />
