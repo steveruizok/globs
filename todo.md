@@ -7,17 +7,26 @@
 - [ ] Move to Back
 - [ ] Move forward
 - [ ] Move backward
-- [ ] Zoom menu
+- [-] Zoom menu
 - [ ] Zoom to content
+- [x] Recenter camera
 - [ ] Lock mirrored adjacent handles
 - [ ] Lock handle position relative to some other position?
 - [ ] Lock node position relative to some other position?
-- [ ] Display midline
+- [x] Display midline
+- [x] Split globs
+- [x] Snap to midline
 - [ ] Copy to clipboard
 - [ ] Select two nodes and glob them
-- [ ] Keyboard shortcuts for toolbar
+- [x] Keyboard shortcuts for toolbar
 - [ ] Copy and paste
-- [ ] Bounding box
+- [x] Bounding box
+- [x] Bounds dragging
 - [ ] Locked globs
 - [ ] Drag-clone selection
 - [ ] Drag-glob nodes
+- [x] Locked-axis dragging
+- [x] More node snap points
+- [x] Node snap lines
+- [x] Handle snap lines
+- [ ] Bounds snapping

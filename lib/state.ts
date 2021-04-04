@@ -1630,9 +1630,19 @@ const state = createState({
       data.selectedNodes = []
     },
     moveSelectedHandle(data) {
-      const { camera, nodes, globs, selectedHandle, snaps, initialGlobs } = data
+      const {
+        camera,
+        nodes,
+        globs,
+        selectedHandle,
+        snaps,
+        initialGlobs,
+        document,
+      } = data
       const glob = globs[selectedHandle.id]
       const [start, end] = glob.nodes
+
+      snaps.active = []
 
       let next = screenToWorld(pointer.point, camera.point, camera.zoom)
 
@@ -1681,22 +1691,7 @@ const state = createState({
             if (id === selectedHandle.id) continue
 
             const pts = snaps.globs[id]
-
-            if (globs[id].points === null) continue
-
-            const { E0: a, D: b, E1: c, E0p: ap, Dp: bp, E1p: cp } = globs[
-              id
-            ].points
-
-            if (Math.abs(vec.distanceToLine(a, b, next)) < 3) {
-              next = vec.nearestPointOnLine(a, b, next, false)
-            } else if (Math.abs(vec.distanceToLine(b, c, next)) < 3) {
-              next = vec.nearestPointOnLine(b, c, next, false)
-            } else if (Math.abs(vec.distanceToLine(ap, bp, next)) < 3) {
-              next = vec.nearestPointOnLine(ap, bp, next, false)
-            } else if (Math.abs(vec.distanceToLine(bp, cp, next)) < 3) {
-              next = vec.nearestPointOnLine(bp, cp, next, false)
-            }
+            let snapped = false
 
             for (let snap of pts) {
               const d = vec.dist(next, snap) * camera.zoom
@@ -1704,11 +1699,73 @@ const state = createState({
               if (vec.isEqual(next, snap) && d > 3) {
                 // unsnap from point, move to pointer
                 next = vec.add(glob.options[selectedHandle.handle], originDelta)
+                snapped = true
               } else if (d < 3) {
                 // Snap to point
                 next = snap
+                snapped = true
               }
             }
+
+            if (!snapped) {
+              if (globs[id].points === null) continue
+
+              const { E0: a, D: b, E1: c, E0p: ap, Dp: bp, E1p: cp } = globs[
+                id
+              ].points
+
+              if (
+                isInView(a, document) &&
+                isInView(b, document) &&
+                Math.abs(vec.distanceToLine(a, b, next)) < 3
+              ) {
+                next = vec.nearestPointOnLine(a, b, next, false)
+                snaps.active.push({
+                  type: ISnapTypes.Handle,
+                  from: next,
+                  to: vec.dist(next, a) > vec.dist(next, b) ? a : b,
+                })
+                snapped = true
+              } else if (
+                isInView(b, document) &&
+                isInView(c, document) &&
+                Math.abs(vec.distanceToLine(b, c, next)) < 3
+              ) {
+                next = vec.nearestPointOnLine(b, c, next, false)
+                snaps.active.push({
+                  type: ISnapTypes.Handle,
+                  from: next,
+                  to: vec.dist(next, b) > vec.dist(next, c) ? b : c,
+                })
+                snapped = true
+              } else if (
+                isInView(ap, document) &&
+                isInView(bp, document) &&
+                Math.abs(vec.distanceToLine(ap, bp, next)) < 3
+              ) {
+                next = vec.nearestPointOnLine(ap, bp, next, false)
+                snaps.active.push({
+                  type: ISnapTypes.Handle,
+                  from: next,
+                  to: vec.dist(next, ap) > vec.dist(next, bp) ? ap : bp,
+                })
+                snapped = true
+              } else if (
+                isInView(bp, document) &&
+                isInView(cp, document) &&
+                Math.abs(vec.distanceToLine(bp, cp, next)) < 3
+              ) {
+                next = vec.nearestPointOnLine(bp, cp, next, false)
+                snaps.active.push({
+                  type: ISnapTypes.Handle,
+                  from: next,
+                  to: vec.dist(next, bp) > vec.dist(next, cp) ? bp : cp,
+                })
+                snapped = true
+              }
+            }
+
+            if (snapped) break
           }
         }
 
