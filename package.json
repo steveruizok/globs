@@ -10,20 +10,15 @@
   "dependencies": {
     "@radix-ui/react-context-menu": "^0.0.10",
     "@state-designer/react": "^1.6.9",
-    "@types/classnames": "^2.2.11",
-    "@types/react-beautiful-dnd": "^13.0.0",
     "classnames": "^2.2.6",
     "framer-motion": "^4.0.3",
-    "jsbezier": "^0.9.5",
     "kld-intersections": "^0.7.0",
     "kld-polynomial": "^0.3.0",
     "next": "10.0.8",
     "path-intersection": "^2.2.1",
     "react": "17.0.1",
-    "react-dnd": "^14.0.2",
     "react-dom": "17.0.1",
     "react-feather": "^2.0.9",
-    "react-use-gesture": "^9.1.3",
     "styled-components": "^5.2.1"
   },
   "devDependencies": {
@@ -32,6 +27,7 @@
     "@types/react": "^17.0.3",
     "@types/react-dom": "^17.0.2",
     "@types/styled-components": "^5.1.9",
+    "@types/classnames": "^2.2.11",
     "typescript": "^4.2.3"
   }
 }
