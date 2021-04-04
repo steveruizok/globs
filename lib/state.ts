@@ -1775,14 +1775,14 @@ const state = createState({
     saveData(data) {
       if (typeof window === "undefined") return
       if (typeof localStorage === "undefined") return
-      localStorage.setItem("glob_aldata_v4", JSON.stringify(data))
+      localStorage.setItem("glob_aldata_v5", JSON.stringify(data))
     },
 
     // EVENTS
     setup(data) {
       if (typeof window === "undefined") return
       if (typeof localStorage === "undefined") return
-      const saved = localStorage.getItem("glob_aldata_v4")
+      const saved = localStorage.getItem("glob_aldata_v5")
       if (saved) {
         Object.assign(data, JSON.parse(saved))
       }
