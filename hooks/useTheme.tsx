@@ -6,7 +6,8 @@ if (typeof window !== "undefined") {
   const saved = localStorage.getItem("globs_editor_theme")
   if (saved !== null) {
     theme = JSON.parse(saved).theme
-    theme && document.body.classList.add(theme)
+    document.body.classList.remove(theme === "dark" ? "light" : "dark")
+    document.body.classList.add(theme === "dark" ? "dark" : "light")
   }
 }
 
