@@ -9,6 +9,7 @@ body {
   overflow: hidden;
   overscroll-behavior: none;
   box-sizing: border-box;
+  color: var(--colors-text);
 }
 
 a {
@@ -28,35 +29,46 @@ svg text {
 }
 
 :root {
-  --left: dodgerblue;
-  --right: orange;
-  --select: #ff0000;
   --zoomed: 2px;
   --zoom: 2px;
-  --background: #ffffff;
-  --text: #2d2d2d;
-  --border: rgba(0, 0, 0, 0.15);
-  --muted: rgba(0, 0, 0, 0.05);
-  --colors-select: #ff0000;
-  --colors-outline: rgba(0, 0, 0, 1);
-  --colors-fill: rgba(0, 0, 0, 1);
-  --colors-soft: rgba(255, 255, 255, 0.72);
-  --colors-text: rgba(20, 20, 16, 1);
-  --colors-muted: rgba(144, 144, 144, 1);
-  --colors-stroke: rgba(0, 0, 0, 1);
-  --colors-left: dodgerblue;
-  --colors-right: orange;
-  --colors-hover: rgba(255, 0, 0, 0.1);
-  --colors-panel: #ffffff;
-  --colors-canvas: #f2f2f2;
   --fonts-ui: 500 12px/14px "Inter", -apple-system, sans-serif;
+  --fonts-section: 600 12px/14px "Inter", monospace;
   --fonts-mono: 500 12px/14px "IBM Plex Mono", monospace;
 }
 
+.light {
+  --colors-canvas: rgba(239, 239, 239, 1);
+  --colors-panel: rgba(255, 255, 255, 1);
+  --colors-section: rgba(251, 250, 250, 1);
+  --colors-border: rgba(231, 231, 231, 1);
+  --colors-text: rgba(37, 37, 37, 1);
+  --colors-soft: rgba(255, 255, 255, 0.62);
+  --colors-outline: rgba(0, 0, 0, 1);
+  --colors-left: rgba(29, 144, 255, 1);
+  --colors-right: rgba(255, 141, 30, 1);
+  --colors-selected: rgba(255, 0, 0, 1);
+  --colors-hovered: rgba(255, 0, 0, 0.1);
+  --colors-fill: rgba(0, 0, 0, 1);
+  --colors-bounds: rgb(0, 106, 255);
+  --colors-bounds-bg: rgba(0, 106, 255, 0.05);
+}
+
 .dark {
-  --background: #2d2d2d;
-  --text: #efefef;
-  --muted: rgba(255, 255, 255, 0.07);
+  --colors-canvas: rgba(29, 29, 28, 1);
+  --colors-panel: rgba(19, 19, 18, 1);
+  --colors-section: rgba(21, 21, 21, 1);
+  --colors-border: rgba(0, 0, 0, 1);
+  --colors-text: rgba(239, 239, 239, 1);
+  --colors-soft: rgba(52, 52, 52, 0.72);
+  --colors-muted: rgba(255, 255, 255, 0.62);
+  --colors-outline: rgba(231, 231, 231, 1);
+  --colors-left: rgba(29, 144, 255, 1);
+  --colors-right: rgba(255, 141, 30, 1);
+  --colors-selected: rgba(255, 0, 0, 1);
+  --colors-hovered: rgba(255, 0, 0, 0.1);
+  --colors-fill: rgba(255, 255, 255, 1);
+  --colors-bounds: rgb(0, 106, 255);
+  --colors-bounds-bg: rgba(0, 106, 255, 0.05);
 }
 
 /* Strokes */
@@ -96,7 +108,7 @@ svg text {
 }
 
 .stroke-selected {
-  stroke: var(--colors-select);
+  stroke: var(--colors-selected);
 }
 
 .stroke-outline {
@@ -105,6 +117,10 @@ svg text {
 
 .stroke-guide {
   stroke: var(--colors-guide);
+}
+
+.stroke-bounds {
+  stroke: var(--colors-bounds);
 }
 
 /* Dash Array */
@@ -131,6 +147,14 @@ svg text {
   fill: var(--colors-soft);
 }
 
+.fill-bounds-bg {
+  fill: var(--colors-bounds-bg);
+}
+
+.fill-corner {
+  fill: var(--colors-panel);
+}
+
 .fill-none {
   fill: none;
 }
@@ -152,7 +176,7 @@ svg text {
 /* Globs */
 
 .fill-hover {
-  fill: var(--colors-hover);
+  fill: var(--colors-hovered);
 }
 
 /* Events */

@@ -187,10 +187,10 @@ const PanelContainer = styled(motion.div)`
   position: absolute;
   top: 0;
   left: 0;
-  background-color: white;
+  background-color: var(--colors-panel);
   border-radius: 4px;
   overflow: hidden;
-  border: 1px solid var(--border);
+  border: 1px solid var(--colors-border);
   pointer-events: all;
   user-select: none;
 
@@ -202,9 +202,9 @@ const PanelContainer = styled(motion.div)`
 const IconButton = styled.button`
   height: 40px;
   width: 40px;
-  background-color: white;
+  background-color: var(--colors-panel);
   border-radius: 4px;
-  border: 1px solid var(--border);
+  border: 1px solid var(--colors-border);
   padding: 0;
   margin: 0;
   display: flex;
@@ -215,7 +215,7 @@ const IconButton = styled.button`
   cursor: pointer;
 
   &:hover:not(:disabled) {
-    background-color: var(--muted);
+    background-color: var(--colors-panel);
   }
 
   &:disabled {
@@ -226,6 +226,7 @@ const IconButton = styled.button`
     height: 20px;
     width: 20px;
     stroke-width: 2px;
+    stroke: var(--colors-text);
   }
 `
 
@@ -260,7 +261,7 @@ const Header = styled.div`
   grid-template-columns: auto 1fr;
   align-items: center;
   justify-content: center;
-  border-bottom: 1px solid var(--border);
+  border-bottom: 1px solid var(--colors-border);
 
   & button {
     grid-column: 1;

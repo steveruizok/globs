@@ -10,15 +10,15 @@ export default function PropsList() {
   const selectedNodes = useSelector((s) => s.data.selectedNodes)
   const selectedGlobs = useSelector((s) => s.data.selectedGlobs)
 
+  if (selectedNodes.length === 0 && selectedGlobs.length === 0) return null
+
   return (
     <>
       <section>
         <h2>Properties</h2>
       </section>
       <PropsTable>
-        {selectedNodes.length === 0 && selectedGlobs.length === 0 ? (
-          <Docs />
-        ) : selectedNodes.length > 0 && selectedGlobs.length === 0 ? (
+        {selectedNodes.length > 0 && selectedGlobs.length === 0 ? (
           <NodesProps />
         ) : selectedNodes.length === 0 && selectedGlobs.length > 0 ? (
           <GlobsProps />

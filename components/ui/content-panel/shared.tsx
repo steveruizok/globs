@@ -31,11 +31,10 @@ export function Draggable({
   return (
     <motion.li
       layout
+      data-isDragging={isDragging}
       onPanStart={(_, info) => onDragStart([info.point.x, info.point.y])}
       onPanEnd={onDragEnd}
       onPan={(_, info) => isDragging && onDrag([info.point.x, info.point.y])}
-      whileTap={{ backgroundColor: "var(--muted)" }}
-      style={{ backgroundColor: "rgba(144, 144, 144,0)" }}
       transition={{
         type: "spring",
         stiffness: 900,
@@ -71,10 +70,10 @@ export function PositionIndicator({
       transition={{ duration: 0 }}
       variants={{
         up: {
-          borderTop: "2px solid #000",
+          borderTop: "2px solid rgba(255, 0, 0, 1)",
         },
         down: {
-          borderBottom: "2px solid #000",
+          borderBottom: "2px solid rgba(255, 0, 0, 1)",
         },
       }}
     />

@@ -6,21 +6,21 @@ import usePinchZoom from "hooks/usePinchZoom"
 import ContextMenu, {
   ContextMenuRoot,
   ContextMenuTrigger,
-} from "./ui/context-menu"
+} from "../ui/context-menu"
 
-import Contents from "./svg/contents"
-import HoveredGlobs from "./svg/hovers/hovered-globs"
-import HoveredNodes from "./svg/hovers/hovered-nodes"
+import Contents from "./contents"
+import HoveredGlobs from "./hovers/hovered-globs"
+import HoveredNodes from "./hovers/hovered-nodes"
 import InspectPanel from "components/ui/inspect-panel/inspect-panel"
 import ContentPanel from "components/ui/content-panel/content-panel"
 import Toolbar from "components/ui/toolbar"
 import StatusBar from "components/ui/statusbar"
-import Brush from "./svg/brush"
-import Bounds from "./svg/bounds/bounds"
-import BoundsBg from "./svg/bounds/bounds-bg"
-import LearnPanel from "./ui/learn-panel"
-import ZoomPanel from "./ui/zoom-panel"
-import Snaps from "./svg/snaps"
+import Brush from "./brush"
+import Bounds from "./bounds/bounds"
+import BoundsBg from "./bounds/bounds-bg"
+import LearnPanel from "../ui/learn-panel"
+import ZoomPanel from "../ui/zoom-panel"
+import Snaps from "./snaps"
 
 const DOT_RADIUS = 2,
   ANCHOR_RADIUS = 4,
@@ -107,7 +107,7 @@ export default function Editor() {
   }, [])
 
   return (
-    <OuterWrapper className="light">
+    <OuterWrapper>
       <ContextMenuRoot>
         <EditorContainer ref={rContainer}>
           <Layout>
@@ -255,8 +255,7 @@ const SVGWrapper = styled(ContextMenuTrigger)`
   position: relative;
   grid-column: 1 / span 3;
   grid-row: 1 / span 3;
-  background-color: var(--muted);
-  /* transform: scale(0.2); */
+  background-color: var(--colors-canvas);
 
   & > svg {
     position: absolute;

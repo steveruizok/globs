@@ -22,7 +22,8 @@ export const PropContainer = styled(motion.div)`
     font-size: 12px;
     padding: 4px 8px;
     border: none;
-    background-color: #f3f3f3;
+    color: var(--colors-text);
+    background-color: var(--colors-canvas);
     border-radius: 2px;
     text-align: right;
   }

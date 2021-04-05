@@ -152,9 +152,7 @@ function Corner({
         onPanEnd={restoreCursor}
         onTap={restoreCursor}
         style={{ cursor }}
-        fill="white"
-        stroke="#005aff"
-        className="strokewidth-ui"
+        className="strokewidth-ui stroke-bounds fill-corner"
       />
     </g>
   )

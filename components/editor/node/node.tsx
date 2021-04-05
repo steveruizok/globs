@@ -1,9 +1,5 @@
 import useRegisteredElement from "hooks/useRegisteredElement"
-import state, { useSelector } from "lib/state"
-import { deepCompareArrays, deepCompare } from "lib/utils"
-import { useEffect, useRef } from "react"
-import Dot from "../dot"
-import classNames from "classnames"
+import { useSelector } from "lib/state"
 import BaseNode from "./base-node"
 
 interface Props {

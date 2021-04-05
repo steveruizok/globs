@@ -1,5 +1,5 @@
 import state, { useSelector } from "lib/state"
-import { useRef } from "react"
+import { useEffect, useRef } from "react"
 import { useStateDesigner } from "@state-designer/react"
 import { Draggable, PositionIndicator } from "./shared"
 import { clamp } from "lib/utils"
@@ -83,7 +83,7 @@ export default function GlobList() {
           (point[1] - listTop - offsetTop + scrollTop - HEADER_HEIGHT) /
           ITEM_HEIGHT
 
-        const nextIndex = Math.floor(y)
+        const nextIndex = clamp(Math.floor(y), 0, globIds.length - 1)
 
         const direction = nextIndex < draggingIndex ? "up" : "down"
 
@@ -161,6 +161,25 @@ export default function GlobList() {
       local.send("CANCELLED")
     }
   }
+
+  // Scroll the selected items into view, starting with the top selected
+  useEffect(() => {
+    if (selectedGlobIds.length > 0) {
+      const section = rContainer.current
+      const sorted = selectedGlobIds.sort(
+        (a, b) => globIds.indexOf(a) - globIds.indexOf(b)
+      )
+      const index = globIds.indexOf(sorted[0])
+      const y = ITEM_HEIGHT * index
+      const minY = section.scrollTop
+      const height = section.offsetHeight - ITEM_HEIGHT * 2
+      if (y < minY) {
+        section.scrollTo(0, y)
+      } else if (y > minY + height) {
+        section.scrollTo(0, y - height)
+      }
+    }
+  }, [selectedGlobIds, globIds])
 
   const isDragging = local.isIn("dragging")
 

@@ -22,13 +22,13 @@ const Container = styled.div`
   bottom: 0px;
   left: 0px;
   border-radius: 4px;
-  background-color: var(--colors-panel);
-  border: 1px solid var(--border);
-  color: var(--colors-muted);
   pointer-events: all;
   user-select: none;
   padding: 4px 8px;
   font: var(--fonts-mono);
+  color: var(--colors-muted);
+  background-color: var(--colors-panel);
+  border: 1px solid var(--border);
 
   &:hover {
     color: var(--colors-text);

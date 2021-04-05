@@ -1,7 +1,7 @@
 import state, { useSelector } from "lib/state"
 import NodeListItem from "./node-list-item"
 import { Draggable, PositionIndicator } from "./shared"
-import { useRef } from "react"
+import { useEffect, useRef } from "react"
 import { useStateDesigner } from "@state-designer/react"
 import { clamp } from "lib/utils"
 
@@ -82,9 +82,8 @@ export default function NodeList() {
         const y =
           (point[1] - offsetTop + scrollTop - HEADER_HEIGHT) / ITEM_HEIGHT
 
-        const nextIndex = Math.floor(y)
+        const nextIndex = clamp(Math.floor(y), 0, nodeIds.length - 1)
 
-        // const delta = vec.sub(point, start)
         const direction = nextIndex < draggingIndex ? "up" : "down"
 
         return {
@@ -170,6 +169,25 @@ export default function NodeList() {
   const isDragging = local.isIn("dragging")
 
   const { nextIndex, draggingIndex, draggingDirection } = local.data
+
+  // Scroll the selected items into view, starting with the top selected
+  useEffect(() => {
+    if (selectedNodeIds.length > 0) {
+      const section = rContainer.current
+      const sorted = selectedNodeIds.sort(
+        (a, b) => nodeIds.indexOf(a) - nodeIds.indexOf(b)
+      )
+      const index = nodeIds.indexOf(sorted[0])
+      const y = ITEM_HEIGHT * index
+      const minY = section.scrollTop
+      const height = section.offsetHeight - ITEM_HEIGHT * 2
+      if (y < minY) {
+        section.scrollTo(0, y)
+      } else if (y > minY + height) {
+        section.scrollTo(0, y - height)
+      }
+    }
+  }, [selectedNodeIds, nodeIds])
 
   return (
     <section ref={rContainer}>

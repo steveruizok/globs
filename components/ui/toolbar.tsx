@@ -8,8 +8,10 @@ import {
   Sun,
   ArrowUp,
   X,
+  Menu,
 } from "react-feather"
 import styled from "styled-components"
+import useTheme from "hooks/useTheme"
 
 export default function Toolbar() {
   const canUndo = useSelector((s) => s.can("UNDO"))
@@ -19,37 +21,46 @@ export default function Toolbar() {
   const isLinking = useSelector((s) => s.isIn("linkingNodes"))
   const isCreating = useSelector((s) => s.isIn("creatingNodes"))
 
+  const { toggle } = useTheme()
+
   return (
     <StyledContainer>
       <section>
         <button
+          title="Menu"
+          disabled={true}
+          onClick={() => state.send("OPENED_MENU")}
+        >
+          <Menu />
+        </button>
+        <button
           title="Undo"
-          disabled={!canUndo}
+          disabled={true} //!canUndo}
           onClick={() => state.send("UNDO")}
         >
-          <RotateCcw size={18} />
+          <RotateCcw />
         </button>
         <button
           title="Redo"
-          disabled={!canRedo}
+          disabled={true} //!canRedo}
           onClick={() => state.send("REDO")}
         >
-          <RotateCw size={18} />
+          <RotateCw />
         </button>
       </section>
       <Spacer />
 
       <section>
         <button
-          title="Create Node"
+          title="Create Node (N)"
           data-active={isCreating}
           onClick={() => state.send("STARTED_CREATING_NODES")}
         >
-          <Disc size={18} />
+          <Disc />
         </button>
         {hasSelectedNodes && (
           <button
-            title="Link Nodes"
+            title="Create Globs (L)"
             data-active={isLinking}
             onClick={() => state.send("STARTED_LINKING_NODES")}
           >
@@ -57,17 +68,20 @@ export default function Toolbar() {
           </button>
         )}
         {(hasSelectedNodes || hasSelectedGlobs) && (
-          <button title="Delete" onClick={() => state.send("DELETED")}>
+          <button
+            title="Delete Selected Items (Backspace)"
+            onClick={() => state.send("DELETED")}
+          >
             <X />
           </button>
         )}
       </section>
       <Spacer />
       <section>
-        <button>
-          <Copy size={18} />
+        <button disabled={true}>
+          <Copy />
         </button>
-        <button>
+        <button onClick={toggle}>
           <Sun />
         </button>
       </section>
@@ -81,8 +95,14 @@ const StyledContainer = styled.div`
   display: flex;
   align-items: center;
   justify-content: space-between;
-  background-color: #ffffff;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.2);
+  background-color: var(--colors-panel);
+  border-bottom: 1px solid var(--colors-border);
+
+  & svg {
+    height: 18px;
+    width: 18px;
+    stroke: var(--colors-text);
+  }
 
   & > section {
     display: flex;
@@ -98,12 +118,21 @@ const StyledContainer = styled.div`
     justify-content: center;
     cursor: pointer;
     outline: none;
-    &:hover {
-      background-color: rgba(0, 0, 0, 0.1);
+
+    &:hover:enabled {
+      & > svg {
+        stroke: var(--colors-selected);
+      }
+    }
+
+    &:disabled {
+      opacity: 0.3;
     }
 
     &[data-active="true"] {
-      background-color: rgba(0, 0, 0, 0.15);
+      & > svg {
+        stroke: var(--colors-selected);
+      }
     }
   }
 `

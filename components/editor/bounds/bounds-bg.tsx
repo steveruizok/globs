@@ -22,8 +22,7 @@ export default function BoundsBg() {
       height={height}
       onPointerDown={() => state.send("POINTED_BOUNDS")}
       fill="transparent"
-      stroke="#005aff"
-      className="strokewidth-ui"
+      className="strokewidth-ui stroke-bounds fill-bounds-bg"
     />
   )
 }

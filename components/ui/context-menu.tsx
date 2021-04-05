@@ -21,7 +21,8 @@ export default function ContextMenu() {
 const StyledContent = styled(_ContextMenu.Content)`
   font-size: 11px;
   min-width: 130px;
-  background-color: #fff;
+  color: var(--colors-text);
+  background-color: var(--colors-panel);
   border-radius: 4px;
   padding: 5px;
   box-shadow: 2px 2px 12px -4px rgba(0, 0, 0, 0.2);

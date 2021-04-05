@@ -3,7 +3,6 @@ import * as vec from "lib/vec"
 import state from "lib/state"
 import Anchor from "./anchor"
 import Handle from "./handle"
-import Dot from "../dot"
 import classNames from "classnames"
 import { IGlob } from "lib/types"
 
