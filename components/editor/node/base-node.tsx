@@ -7,13 +7,14 @@ interface Props {
   cx: number
   cy: number
   r: number
+  isGlobbed: boolean
   isFilled: boolean
   isSelected: boolean
   isLocked: boolean
 }
 
 const BaseNode = forwardRef<SVGCircleElement, Props>(
-  ({ id, cx, cy, r, isFilled, isSelected, isLocked }, ref) => {
+  ({ id, cx, cy, r, isGlobbed, isFilled, isSelected, isLocked }, ref) => {
     return (
       <>
         <circle
@@ -21,14 +22,15 @@ const BaseNode = forwardRef<SVGCircleElement, Props>(
           cx={cx}
           cy={cy}
           r={r}
+          fill="none"
           className={classNames([
             "strokewidth-m",
             {
-              "fill-flat": isFilled,
-              "fill-soft": !isFilled,
+              "fill-flat": !isGlobbed && isFilled,
+              "fill-soft": !isGlobbed && !isFilled,
               "stroke-none": isFilled,
-              "stroke-selected": !isFilled && isSelected,
-              "stroke-outline": !isFilled && !isSelected,
+              "stroke-selected": !isGlobbed && !isFilled && isSelected,
+              "stroke-outline": !isGlobbed && !isFilled && !isSelected,
             },
           ])}
           pointerEvents="none"
@@ -41,7 +43,10 @@ const BaseNode = forwardRef<SVGCircleElement, Props>(
           stroke="transparent"
           onPointerDown={() => state.send("SELECTED_NODE", { id })}
           onDoubleClick={() => state.send("TOGGLED_CAP", { id })}
-          onPointerOver={() => state.send("HOVERED_NODE", { id })}
+          onPointerEnter={(e) => {
+            e.stopPropagation()
+            state.send("HOVERED_NODE", { id })
+          }}
           onPointerOut={() => state.send("UNHOVERED_NODE", { id })}
         />
         {!isFilled &&

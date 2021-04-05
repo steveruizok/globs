@@ -49,6 +49,8 @@ svg text {
   --colors-border: rgba(231, 231, 231, 1);
   --colors-text: rgba(37, 37, 37, 1);
   --colors-soft: rgba(255, 255, 255, 0.62);
+  --colors-hint: rgba(0, 0, 0, 0.38);
+  --colors-muted: rgba(0, 0, 0, 0.16);
   --colors-outline: rgba(0, 0, 0, 1);
   --colors-fill: rgba(0, 0, 0, 1);
 }
@@ -60,8 +62,9 @@ svg text {
   --colors-border: rgba(0, 0, 0, 1);
   --colors-text: rgba(239, 239, 239, 1);
   --colors-soft: rgba(52, 52, 52, 0.72);
+  --colors-hint: rgba(255, 255, 255, 0.38);
   --colors-muted: rgba(255, 255, 255, 0.62);
-  --colors-outline: rgba(231, 231, 231, 1);
+  --colors-outline: rgba(184, 185, 187, 1);
   --colors-fill: rgba(255, 255, 255, 1);
 }
 
@@ -113,11 +116,19 @@ svg text {
   stroke: var(--colors-guide);
 }
 
+.stroke-hint {
+  stroke: var(--colors-hint);
+}
+
 .stroke-bounds {
   stroke: var(--colors-bounds);
 }
 
 /* Dash Array */
+
+.dash-array-s {
+  stroke-dasharray: calc(var(--zoomed) * 1px) calc(var(--zoomed) * 5px);
+}
 
 .dash-array-m {
   stroke-dasharray: calc(var(--zoomed) * 1px) calc(var(--zoomed) * 3px);

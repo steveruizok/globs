@@ -78,267 +78,263 @@ const state = createState({
     MOVED_POINTER: { secretlyDo: "updateMvPointer" },
     ZOOMED_TO_FIT: "zoomToFit",
   },
+  initial: "selecting",
   states: {
-    tool: {
-      initial: "selecting",
+    selecting: {
+      on: {
+        LOCKED_NODES: "lockSelectedNodes",
+      },
+      initial: "notPointing",
       states: {
-        selecting: {
+        notPointing: {
+          onEnter: "saveData",
           on: {
-            LOCKED_NODES: "lockSelectedNodes",
-          },
-          initial: "notPointing",
-          states: {
-            notPointing: {
-              onEnter: "saveData",
-              on: {
-                CANCELLED: "clearSelection",
-                DELETED: {
-                  do: [
-                    "deleteSelectedGlobs",
-                    "deleteSelectedNodes",
-                    "clearSelection",
-                    "saveData",
-                  ],
-                },
-                TOGGLED_CAP: "toggleNodeCap",
-                HIGHLIT_GLOB: "pushHighlightGlob",
-                HIGHLIT_NODE: "pushHighlightNode",
-                UNHIGHLIT_GLOB: "pullHighlightGlob",
-                UNHIGHLIT_NODE: "pullHighlightNode",
-                HOVERED_GLOB: "pushHoveredGlob",
-                UNHOVERED_GLOB: "pullHoveredGlob",
-                HOVERED_NODE: "pushHoveredNode",
-                UNHOVERED_NODE: "pullHoveredNode",
-                MOVED_NODE_ORDER: "moveNodeOrder",
-                MOVED_GLOB_ORDER: "moveGlobOrder",
-                SELECTED_NODE: [
-                  {
-                    if: "hasShift",
-                    then: {
-                      if: "nodeIsSelected",
-                      do: "pullSelectedNode",
-                      else: "pushSelectedNode",
-                    },
-                    else: {
-                      do: "setSelectedNode",
-                    },
-                  },
-
-                  { if: "nodeIsHovered", to: "pointingNodes" },
-                ],
-                SELECTED_GLOB: [
-                  {
-                    if: ["globIsSelected", "hasMeta"],
-                    to: "splittingGlob",
-                  },
-                  {
-                    if: "globIsSelected",
-                    then: {
-                      if: "hasShift",
-                      do: "pullSelectedGlob",
-                      else: "setSelectedGlob",
-                    },
-                    else: {
-                      if: "hasShift",
-                      do: "pushSelectedGlob",
-                      else: "setSelectedGlob",
-                    },
-                  },
-
-                  { if: "globIsHovered", to: "pointingBounds" },
-                ],
-                SELECTED_ANCHOR: {
-                  do: ["setSelectingAnchor"],
-                  to: "pointingAnchor",
-                },
-                POINTED_HANDLE: {
-                  do: ["setSelectingHandle"],
-                  to: "pointingHandle",
-                },
-                POINTED_CANVAS: [
-                  { if: "hasMeta", break: true },
-                  {
-                    if: "hasSelection",
-                    do: ["clearSelection"],
-                  },
-                  {
-                    wait: 0.01,
-                    ifAny: ["hasSpace", "isMultitouch"],
-                    to: "canvasPanning",
-                    else: {
-                      to: "brushSelecting",
-                    },
-                  },
-                ],
-                POINTED_BOUNDS: {
-                  to: "pointingBounds",
-                },
-                POINTED_BOUNDS_EDGE: {
-                  to: "edgeResizing",
-                },
-                POINTED_BOUNDS_CORNER: {
-                  to: "cornerResizing",
-                },
-                POINTED_ROTATE_CORNER: {
-                  to: "cornerRotating",
-                },
-              },
-            },
-            canvasPanning: {
-              on: {
-                MOVED_POINTER: {
-                  do: "panCamera",
-                },
-                STOPPED_POINTING: {
-                  to: "notPointing",
-                },
-              },
-            },
-            pointingBounds: {
-              onEnter: ["setInitialNodes", "setInitialGlobs"],
-              onExit: ["clearInitialNodes", "clearSnaps", "saveData"],
-              on: {
-                CANCELLED: { do: "returnSelected", to: "notPointing" },
-                WHEELED: ["moveSelected", "updateGlobPoints"],
-                MOVED_POINTER: ["moveSelected", "updateGlobPoints"],
-                STOPPED_POINTING: {
-                  to: "notPointing",
-                },
-              },
-            },
-            pointingNodes: {
-              onExit: ["clearInitialNodes", "clearSnaps", "saveData"],
-              onEnter: [
-                "setInitialNodes",
-                "setInitialGlobs",
-                "setInitialPoints",
-                "setSnapPoints",
+            CANCELLED: "clearSelection",
+            DELETED: {
+              do: [
+                "deleteSelectedGlobs",
+                "deleteSelectedNodes",
+                "clearSelection",
+                "saveData",
               ],
-              on: {
-                CANCELLED: { do: "returnSelected", to: "notPointing" },
-                WHEELED: ["moveSelected", "updateGlobPoints"],
-                MOVED_POINTER: [
-                  {
-                    if: "hasMeta",
-                    do: ["resizeNode", "updateGlobPoints"],
-                    else: ["moveSelected", "updateGlobPoints"],
-                  },
-                ],
-                STOPPED_POINTING: {
-                  to: "notPointing",
+            },
+            TOGGLED_CAP: "toggleNodeCap",
+            HIGHLIT_GLOB: "pushHighlightGlob",
+            HIGHLIT_NODE: "pushHighlightNode",
+            UNHIGHLIT_GLOB: "pullHighlightGlob",
+            UNHIGHLIT_NODE: "pullHighlightNode",
+            HOVERED_GLOB: "pushHoveredGlob",
+            UNHOVERED_GLOB: "pullHoveredGlob",
+            HOVERED_NODE: "pushHoveredNode",
+            UNHOVERED_NODE: "pullHoveredNode",
+            MOVED_NODE_ORDER: "moveNodeOrder",
+            MOVED_GLOB_ORDER: "moveGlobOrder",
+            SELECTED_NODE: [
+              {
+                if: "hasShift",
+                then: {
+                  if: "nodeIsSelected",
+                  do: "pullSelectedNode",
+                  else: "pushSelectedNode",
+                },
+                else: {
+                  do: "setSelectedNode",
                 },
               },
-            },
-            pointingHandle: {
-              onExit: ["clearSnaps", "saveData"],
-              onEnter: ["setInitialGlobs", "setSnapPoints"],
-              on: {
-                WHEELED: ["moveSelectedHandle"],
-                MOVED_POINTER: ["moveSelectedHandle"],
-                STOPPED_POINTING: {
-                  do: ["clearSelectedHandle"],
-                  to: "notPointing",
-                },
-              },
-            },
-            pointingAnchor: {
-              onExit: ["clearSnaps", "saveData"],
-              on: {
-                WHEELED: ["moveSelectedAnchor"],
-                MOVED_POINTER: ["moveSelectedAnchor"],
-                STOPPED_POINTING: {
-                  do: "clearSelectedAnchor",
-                  to: "notPointing",
-                },
-              },
-            },
-            brushSelecting: {
-              onEnter: "startBrush",
-              onExit: "clearBrush",
-              on: {
-                MOVED_POINTER: ["updateBrush", "updateBrushSelection"],
-                WHEELED: ["updateBrush", "updateBrushSelection"],
-                STOPPED_POINTING: { to: "notPointing" },
-                CANCELLED: { to: "notPointing" },
-              },
-            },
-            edgeResizing: {
-              onEnter: ["setBounds", "setResizingEdge"],
-              on: {
-                MOVED_POINTER: ["edgeResize", "updateGlobPoints"],
-                WHEELED: ["edgeResize", "updateGlobPoints"],
-                STOPPED_POINTING: { to: "notPointing" },
-                CANCELLED: { to: "notPointing" },
-              },
-            },
-            cornerResizing: {
-              onEnter: ["setBounds", "setResizingCorner"],
-              on: {
-                MOVED_POINTER: ["cornerResize", "updateGlobPoints"],
-                WHEELED: ["cornerResize", "updateGlobPoints"],
-                STOPPED_POINTING: { to: "notPointing" },
-                CANCELLED: { to: "notPointing" },
-              },
-            },
-            cornerRotating: {
-              onEnter: ["setBounds", "setRotatingCorner"],
-              on: {
-                MOVED_POINTER: ["cornerRotate", "updateGlobPoints"],
-                WHEELED: ["cornerRotate", "updateGlobPoints"],
-                STOPPED_POINTING: { to: "notPointing" },
-                CANCELLED: { to: "notPointing" },
-              },
-            },
-          },
-        },
-        cloningNodes: {
-          onEnter: "createClones",
-          onExit: "saveData",
-          on: {
-            CANCELLED: { to: "selecting" },
-            MOVED_POINTER: {},
-            STOPPED_POINTING: {
-              to: "selecting",
-            },
-          },
-        },
-        creatingNodes: {
-          onExit: "saveData",
-          on: {
-            CANCELLED: { to: "selecting" },
-            POINTED_CANVAS: {
-              do: "createNode",
-              to: "selecting",
-            },
-          },
-        },
-        linkingNodes: {
-          onExit: "saveData",
-          on: {
-            CANCELLED: { to: "selecting" },
-            POINTED_CANVAS: {
-              do: ["createNodeAndGlob", "saveData"],
-              to: "selecting",
-            },
-            SELECTED_NODE: {
-              do: ["createGlobBetweenNodes", "clearSelection"],
-              to: "selecting",
-            },
-            HOVERED_NODE: { do: "setHoveredNode" },
-            UNHOVERED_NODE: { do: "pullHoveredNode" },
-          },
-        },
 
-        splittingGlob: {
-          on: {
-            POINTED_CANVAS: { unless: "hasMeta", to: "selecting" },
-            CANCELLED: { to: "selecting" },
-            RELEASED_META: { to: "selecting" },
-            SPLIT_GLOB: {
-              do: ["splitGlob", "clearSelection", "saveData"],
-              to: "selecting",
+              { if: "nodeIsHovered", to: "pointingNodes" },
+            ],
+            SELECTED_GLOB: [
+              {
+                if: ["globIsSelected", "hasMeta"],
+                to: "splittingGlob",
+              },
+              {
+                if: "globIsSelected",
+                then: {
+                  if: "hasShift",
+                  do: "pullSelectedGlob",
+                  else: "setSelectedGlob",
+                },
+                else: {
+                  if: "hasShift",
+                  do: "pushSelectedGlob",
+                  else: "setSelectedGlob",
+                },
+              },
+
+              { if: "globIsHovered", to: "pointingBounds" },
+            ],
+            SELECTED_ANCHOR: {
+              do: ["setSelectingAnchor"],
+              to: "pointingAnchor",
+            },
+            POINTED_HANDLE: {
+              do: ["setSelectingHandle"],
+              to: "pointingHandle",
+            },
+            POINTED_CANVAS: [
+              { if: "hasMeta", break: true },
+              {
+                if: "hasSelection",
+                do: ["clearSelection"],
+              },
+              {
+                wait: 0.01,
+                ifAny: ["hasSpace", "isMultitouch"],
+                to: "canvasPanning",
+                else: {
+                  to: "brushSelecting",
+                },
+              },
+            ],
+            POINTED_BOUNDS: {
+              to: "pointingBounds",
+            },
+            POINTED_BOUNDS_EDGE: {
+              to: "edgeResizing",
+            },
+            POINTED_BOUNDS_CORNER: {
+              to: "cornerResizing",
+            },
+            POINTED_ROTATE_CORNER: {
+              to: "cornerRotating",
             },
           },
+        },
+        canvasPanning: {
+          on: {
+            MOVED_POINTER: {
+              do: "panCamera",
+            },
+            STOPPED_POINTING: {
+              to: "notPointing",
+            },
+          },
+        },
+        pointingBounds: {
+          onEnter: ["setInitialNodes", "setInitialGlobs"],
+          onExit: ["clearInitialNodes", "clearSnaps", "saveData"],
+          on: {
+            CANCELLED: { do: "returnSelected", to: "notPointing" },
+            WHEELED: ["moveSelected", "updateGlobPoints"],
+            MOVED_POINTER: ["moveSelected", "updateGlobPoints"],
+            STOPPED_POINTING: {
+              to: "notPointing",
+            },
+          },
+        },
+        pointingNodes: {
+          onExit: ["clearInitialNodes", "clearSnaps", "saveData"],
+          onEnter: [
+            "setInitialNodes",
+            "setInitialGlobs",
+            "setInitialPoints",
+            "setSnapPoints",
+          ],
+          on: {
+            CANCELLED: { do: "returnSelected", to: "notPointing" },
+            WHEELED: ["moveSelected", "updateGlobPoints"],
+            MOVED_POINTER: [
+              {
+                if: "hasMeta",
+                do: ["resizeNode", "updateGlobPoints"],
+                else: ["moveSelected", "updateGlobPoints"],
+              },
+            ],
+            STOPPED_POINTING: {
+              to: "notPointing",
+            },
+          },
+        },
+        pointingHandle: {
+          onExit: ["clearSnaps", "saveData"],
+          onEnter: ["setInitialGlobs", "setSnapPoints"],
+          on: {
+            WHEELED: ["moveSelectedHandle"],
+            MOVED_POINTER: ["moveSelectedHandle"],
+            STOPPED_POINTING: {
+              do: ["clearSelectedHandle"],
+              to: "notPointing",
+            },
+          },
+        },
+        pointingAnchor: {
+          onExit: ["clearSnaps", "saveData"],
+          on: {
+            WHEELED: ["moveSelectedAnchor"],
+            MOVED_POINTER: ["moveSelectedAnchor"],
+            STOPPED_POINTING: {
+              do: "clearSelectedAnchor",
+              to: "notPointing",
+            },
+          },
+        },
+        brushSelecting: {
+          onEnter: "startBrush",
+          onExit: "clearBrush",
+          on: {
+            MOVED_POINTER: ["updateBrush", "updateBrushSelection"],
+            WHEELED: ["updateBrush", "updateBrushSelection"],
+            STOPPED_POINTING: { to: "notPointing" },
+            CANCELLED: { to: "notPointing" },
+          },
+        },
+        edgeResizing: {
+          onEnter: ["setBounds", "setResizingEdge"],
+          on: {
+            MOVED_POINTER: ["edgeResize", "updateGlobPoints"],
+            WHEELED: ["edgeResize", "updateGlobPoints"],
+            STOPPED_POINTING: { to: "notPointing" },
+            CANCELLED: { to: "notPointing" },
+          },
+        },
+        cornerResizing: {
+          onEnter: ["setBounds", "setResizingCorner"],
+          on: {
+            MOVED_POINTER: ["cornerResize", "updateGlobPoints"],
+            WHEELED: ["cornerResize", "updateGlobPoints"],
+            STOPPED_POINTING: { to: "notPointing" },
+            CANCELLED: { to: "notPointing" },
+          },
+        },
+        cornerRotating: {
+          onEnter: ["setBounds", "setRotatingCorner"],
+          on: {
+            MOVED_POINTER: ["cornerRotate", "updateGlobPoints"],
+            WHEELED: ["cornerRotate", "updateGlobPoints"],
+            STOPPED_POINTING: { to: "notPointing" },
+            CANCELLED: { to: "notPointing" },
+          },
+        },
+      },
+    },
+    cloningNodes: {
+      onEnter: "createClones",
+      onExit: "saveData",
+      on: {
+        CANCELLED: { to: "selecting" },
+        MOVED_POINTER: {},
+        STOPPED_POINTING: {
+          to: "selecting",
+        },
+      },
+    },
+    creatingNodes: {
+      onExit: "saveData",
+      on: {
+        CANCELLED: { to: "selecting" },
+        POINTED_CANVAS: {
+          do: "createNode",
+          to: "selecting",
+        },
+      },
+    },
+    linkingNodes: {
+      onExit: "saveData",
+      on: {
+        CANCELLED: { to: "selecting" },
+        POINTED_CANVAS: {
+          do: ["createNodeAndGlob", "saveData"],
+          to: "selecting",
+        },
+        SELECTED_NODE: {
+          do: ["createGlobBetweenNodes", "clearSelection"],
+          to: "selecting",
+        },
+        HOVERED_NODE: { do: "setHoveredNode" },
+        UNHOVERED_NODE: { do: "pullHoveredNode" },
+      },
+    },
+
+    splittingGlob: {
+      on: {
+        POINTED_CANVAS: { unless: "hasMeta", to: "selecting" },
+        CANCELLED: { to: "selecting" },
+        RELEASED_META: { to: "selecting" },
+        SPLIT_GLOB: {
+          do: ["splitGlob", "clearSelection", "saveData"],
+          to: "selecting",
         },
       },
     },
@@ -1587,7 +1583,11 @@ const state = createState({
 
       snaps.active = []
 
-      let next = screenToWorld(pointer.point, camera.point, camera.zoom)
+      const pt = initialGlobs[glob.id].options[selectedHandle.handle]
+      const pOrigin = screenToWorld(pointer.origin, camera.point, camera.zoom)
+      const pPoint = screenToWorld(pointer.point, camera.point, camera.zoom)
+
+      let next = vec.round(vec.add(pt, vec.vec(pOrigin, pPoint)), 2)
 
       if (keys.Shift) {
         next = getSafeHandlePoint(nodes[start], nodes[end], next)
@@ -1625,11 +1625,6 @@ const state = createState({
         glob.options[selectedHandle.handle] = next
       } else {
         if (!keys.Alt) {
-          const originDelta = vec.div(
-            vec.sub(pointer.point, pointer.origin),
-            camera.zoom
-          )
-
           for (let id in snaps.globs) {
             if (id === selectedHandle.id) continue
 
@@ -1639,14 +1634,11 @@ const state = createState({
             for (let snap of pts) {
               const d = vec.dist(next, snap) * camera.zoom
 
-              if (vec.isEqual(next, snap) && d > 3) {
-                // unsnap from point, move to pointer
-                next = vec.add(glob.options[selectedHandle.handle], originDelta)
-                snapped = true
-              } else if (d < 3) {
+              if (d < 3) {
                 // Snap to point
                 next = snap
                 snapped = true
+                break
               }
             }
 
@@ -1660,7 +1652,7 @@ const state = createState({
               if (
                 isInView(a, document) &&
                 isInView(b, document) &&
-                Math.abs(vec.distanceToLine(a, b, next)) < 3
+                Math.abs(vec.distanceToLine(a, b, next) * camera.zoom) < 3
               ) {
                 next = vec.nearestPointOnLine(a, b, next, false)
                 snaps.active.push({
@@ -1672,7 +1664,7 @@ const state = createState({
               } else if (
                 isInView(b, document) &&
                 isInView(c, document) &&
-                Math.abs(vec.distanceToLine(b, c, next)) < 3
+                Math.abs(vec.distanceToLine(b, c, next) * camera.zoom) < 3
               ) {
                 next = vec.nearestPointOnLine(b, c, next, false)
                 snaps.active.push({
@@ -1684,7 +1676,7 @@ const state = createState({
               } else if (
                 isInView(ap, document) &&
                 isInView(bp, document) &&
-                Math.abs(vec.distanceToLine(ap, bp, next)) < 3
+                Math.abs(vec.distanceToLine(ap, bp, next) * camera.zoom) < 3
               ) {
                 next = vec.nearestPointOnLine(ap, bp, next, false)
                 snaps.active.push({
@@ -1696,7 +1688,7 @@ const state = createState({
               } else if (
                 isInView(bp, document) &&
                 isInView(cp, document) &&
-                Math.abs(vec.distanceToLine(bp, cp, next)) < 3
+                Math.abs(vec.distanceToLine(bp, cp, next) * camera.zoom) < 3
               ) {
                 next = vec.nearestPointOnLine(bp, cp, next, false)
                 snaps.active.push({

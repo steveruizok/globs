@@ -22,6 +22,7 @@ export default function Node({ id, fill, isSelected }: Props) {
       cx={node.point[0]}
       cy={node.point[1]}
       r={node.radius}
+      isGlobbed={false}
       isFilled={fill}
       isSelected={isSelected}
       isLocked={node.locked}

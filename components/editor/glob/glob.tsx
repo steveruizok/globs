@@ -6,6 +6,9 @@ import Handles from "./handles"
 import BrokenGlob from "./broken-glob"
 import BaseGlob from "./base-glob"
 import BaseNode from "../node/base-node"
+import GlobNodeHints from "./glob-node-hints"
+import * as svg from "lib/svg"
+import classNames from "classnames"
 
 interface Props {
   id: string
@@ -48,36 +51,38 @@ export default function Glob({ id, fill, isSelected }: Props) {
   rPrevPts.current = globPts
 
   return (
-    <g onPointerLeave={handleUnhoverGlob} onPointerEnter={handleHoverGlob}>
-      {safe ? (
-        <BaseGlob
-          id={glob.id}
-          points={globPts}
-          startCap={start.cap}
-          endCap={end.cap}
-          isFilled={fill}
-          isSelected={isSelected}
-        />
-      ) : (
-        <BrokenGlob start={start} end={end} />
-      )}
-      {!fill && safe && (
-        <>
-          <Handles
-            glob={glob}
-            isPrime={false}
+    <g>
+      <g onPointerLeave={handleUnhoverGlob} onPointerEnter={handleHoverGlob}>
+        {safe ? (
+          <BaseGlob
+            id={glob.id}
+            points={globPts}
+            startCap={start.cap}
+            endCap={end.cap}
+            isFilled={fill}
             isSelected={isSelected}
-            isDragging={isDraggingD}
           />
-          <Handles
-            glob={glob}
-            isPrime={true}
-            isSelected={isSelected}
-            isDragging={isDraggingDp}
-          />
-          {/* <Combs id={glob.id} points={glob.points} /> */}
-        </>
-      )}
+        ) : (
+          <BrokenGlob start={start} end={end} />
+        )}
+        {!fill && safe && (
+          <>
+            <Handles
+              glob={glob}
+              isPrime={false}
+              isSelected={isSelected}
+              isDragging={isDraggingD}
+            />
+            <Handles
+              glob={glob}
+              isPrime={true}
+              isSelected={isSelected}
+              isDragging={isDraggingDp}
+            />
+            {/* <Combs id={glob.id} points={glob.points} /> */}
+          </>
+        )}
+      </g>
       {!fill && (
         <>
           <BaseNode
@@ -85,8 +90,9 @@ export default function Glob({ id, fill, isSelected }: Props) {
             cx={start.point[0]}
             cy={start.point[1]}
             r={start.radius}
+            isGlobbed={true}
             isFilled={fill}
-            isSelected={isSelected}
+            isSelected={false}
             isLocked={start.locked}
           />
           <BaseNode
@@ -94,10 +100,12 @@ export default function Glob({ id, fill, isSelected }: Props) {
             cx={end.point[0]}
             cy={end.point[1]}
             r={end.radius}
+            isGlobbed={true}
             isFilled={fill}
-            isSelected={isSelected}
+            isSelected={false}
             isLocked={end.locked}
           />
+          <GlobNodeHints glob={glob} />
         </>
       )}
     </g>
