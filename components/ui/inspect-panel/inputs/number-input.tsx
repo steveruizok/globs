@@ -38,9 +38,9 @@ function NumberInput({ min, max, step = 1, value, label, onChange }: Props) {
   function handlePan(_: PointerEvent, info: PanInfo) {
     if (!isFocused && value !== "mixed") {
       rPanStart.current += info.delta.x
-      setVal(rPanStart.current)
 
       const next = Math.round(Number(rPanStart.current) * 100) / 100
+      setVal(next)
       onChange(min !== undefined ? clamp(next, min, max) : next)
     }
   }

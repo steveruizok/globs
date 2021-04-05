@@ -1000,9 +1000,15 @@ const state = createState({
           return
         }
 
-        next = vec.round(vec.add(nodes[node.id].point, delta), 2)
+        // Node center, plus + vector from origin to node center + vector from origin to current
+        const pt = initialNodes[node.id].point
+        const pOrigin = screenToWorld(pointer.origin, camera.point, camera.zoom)
+        const pPoint = screenToWorld(pointer.point, camera.point, camera.zoom)
 
-        if (!keys.Alt) {
+        // const distFromInitialCenter = vec.vec(pOrigin, pt)
+        next = vec.round(vec.add(pt, vec.vec(pOrigin, pPoint)), 2)
+
+        if (!keys.Alt && vec.len(delta) < 3) {
           let snappedX = false
           let snappedY = false
 
@@ -1014,13 +1020,7 @@ const state = createState({
             if (!isInView(snap.point, data.document)) continue
 
             const d = vec.dist(next, snap.point) * camera.zoom
-            if (vec.isEqual(node.point, snap.point) && d > 2) {
-              // unsnap from point, move to pointer
-              next = vec.round(
-                vec.add(data.initialPoints.nodes[node.id], originDelta)
-              )
-              break
-            } else if (d < 2) {
+            if (d < 3) {
               // Snap to point
               next = snap.point
               snaps.active.push({
@@ -1048,13 +1048,7 @@ const state = createState({
               dx = Math.abs(x0 - x1)
 
               // Check center X
-              if (x0 === x1 && dx > 2) {
-                // Unsnap from x
-                next = vec.round(
-                  vec.add(data.initialPoints.nodes[node.id], originDelta)
-                )
-                break
-              } else if (dx < 2) {
+              if (dx * camera.zoom < 3) {
                 // Snap to x
                 next[0] = x1
                 snaps.active.push({
@@ -1073,13 +1067,7 @@ const state = createState({
                 x1 = snap.point[0] - snap.radius
                 dx = Math.abs(x0 - x1)
 
-                if (x0 === x1 && dx > 2) {
-                  // Unsnap from x
-                  next = vec.round(
-                    vec.add(data.initialPoints.nodes[node.id], originDelta)
-                  )
-                  break
-                } else if (dx < 2) {
+                if (dx * camera.zoom < 2) {
                   // Snap to x
                   next[0] = x1 + node.radius
                   snaps.active.push({
@@ -1096,13 +1084,7 @@ const state = createState({
                 x1 = snap.point[0] + snap.radius
                 dx = Math.abs(x0 - x1)
 
-                if (x0 === x1 && dx > 2) {
-                  // Unsnap from x
-                  next = vec.round(
-                    vec.add(data.initialPoints.nodes[node.id], originDelta)
-                  )
-                  break
-                } else if (dx < 2) {
+                if (dx * camera.zoom < 3) {
                   // Snap to x
                   next[0] = x1 - node.radius
                   snaps.active.push({
@@ -1119,13 +1101,7 @@ const state = createState({
                 x1 = snap.point[0] + snap.radius
                 dx = Math.abs(x0 - x1)
 
-                if (x0 === x1 && dx > 2) {
-                  // Unsnap from x
-                  next = vec.round(
-                    vec.add(data.initialPoints.nodes[node.id], originDelta)
-                  )
-                  break
-                } else if (dx < 2) {
+                if (dx * camera.zoom < 3) {
                   // Snap to x
                   next[0] = x1 + node.radius
                   snaps.active.push({
@@ -1142,13 +1118,7 @@ const state = createState({
                 x1 = snap.point[0] - snap.radius
                 dx = Math.abs(x0 - x1)
 
-                if (x0 === x1 && dx > 2) {
-                  // Unsnap from x
-                  next = vec.round(
-                    vec.add(data.initialPoints.nodes[node.id], originDelta)
-                  )
-                  break
-                } else if (dx < 2) {
+                if (dx * camera.zoom < 3) {
                   // Snap to x
                   next[0] = x1 - node.radius
                   snaps.active.push({
@@ -1176,14 +1146,7 @@ const state = createState({
               y1 = snap.point[1]
               dy = Math.abs(y0 - y1)
 
-              // Check center Y
-              if (y0 === y1 && dy > 2) {
-                // Unsnap from y
-                next = vec.round(
-                  vec.add(data.initialPoints.nodes[node.id], originDelta)
-                )
-                break
-              } else if (dy < 2) {
+              if (dy * camera.zoom < 3) {
                 // Snap to y
                 next[1] = y1
                 snaps.active.push({
@@ -1202,12 +1165,7 @@ const state = createState({
                 y1 = snap.point[1] - snap.radius
                 dy = Math.abs(y0 - y1)
 
-                if (y0 === y1 && dy > 2) {
-                  next = vec.round(
-                    vec.add(data.initialPoints.nodes[node.id], originDelta)
-                  )
-                  break
-                } else if (dy < 2) {
+                if (dy * camera.zoom < 3) {
                   // Snap top to top
                   next[1] = y1 + node.radius
                   snaps.active.push({
@@ -1224,12 +1182,7 @@ const state = createState({
                 y1 = snap.point[1] + snap.radius
                 dy = Math.abs(y0 - y1)
 
-                if (y0 === y1 && dy > 2) {
-                  next = vec.round(
-                    vec.add(data.initialPoints.nodes[node.id], originDelta)
-                  )
-                  break
-                } else if (dy < 2) {
+                if (dy * camera.zoom < 3) {
                   next[1] = y1 - node.radius
                   snaps.active.push({
                     type: ISnapTypes.NodesY,
@@ -1245,12 +1198,7 @@ const state = createState({
                 y1 = snap.point[1] + snap.radius
                 dy = Math.abs(y0 - y1)
 
-                if (y0 === y1 && dy > 2) {
-                  next = vec.round(
-                    vec.add(data.initialPoints.nodes[node.id], originDelta)
-                  )
-                  break
-                } else if (dy < 2) {
+                if (dy * camera.zoom < 3) {
                   next[1] = y1 + node.radius
                   snaps.active.push({
                     type: ISnapTypes.NodesX,
@@ -1266,12 +1214,7 @@ const state = createState({
                 y1 = snap.point[1] - snap.radius
                 dy = Math.abs(y0 - y1)
 
-                if (y0 === y1 && dy > 2) {
-                  next = vec.round(
-                    vec.add(data.initialPoints.nodes[node.id], originDelta)
-                  )
-                  break
-                } else if (dy < 2) {
+                if (dy * camera.zoom < 3) {
                   next[1] = y1 - node.radius
                   snaps.active.push({
                     type: ISnapTypes.NodesX,

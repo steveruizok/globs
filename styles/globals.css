@@ -34,6 +34,12 @@ svg text {
   --fonts-ui: 500 12px/14px "Inter", -apple-system, sans-serif;
   --fonts-section: 600 12px/14px "Inter", monospace;
   --fonts-mono: 500 12px/14px "IBM Plex Mono", monospace;
+  --colors-left: rgba(29, 144, 255, 1);
+  --colors-right: rgba(255, 141, 30, 1);
+  --colors-selected: rgba(255, 0, 0, 1);
+  --colors-hovered: rgba(255, 0, 0, 0.1);
+  --colors-bounds: rgb(0, 106, 255);
+  --colors-bounds-bg: rgba(0, 106, 255, 0.05);
 }
 
 .light {
@@ -44,13 +50,7 @@ svg text {
   --colors-text: rgba(37, 37, 37, 1);
   --colors-soft: rgba(255, 255, 255, 0.62);
   --colors-outline: rgba(0, 0, 0, 1);
-  --colors-left: rgba(29, 144, 255, 1);
-  --colors-right: rgba(255, 141, 30, 1);
-  --colors-selected: rgba(255, 0, 0, 1);
-  --colors-hovered: rgba(255, 0, 0, 0.1);
   --colors-fill: rgba(0, 0, 0, 1);
-  --colors-bounds: rgb(0, 106, 255);
-  --colors-bounds-bg: rgba(0, 106, 255, 0.05);
 }
 
 .dark {
@@ -62,13 +62,7 @@ svg text {
   --colors-soft: rgba(52, 52, 52, 0.72);
   --colors-muted: rgba(255, 255, 255, 0.62);
   --colors-outline: rgba(231, 231, 231, 1);
-  --colors-left: rgba(29, 144, 255, 1);
-  --colors-right: rgba(255, 141, 30, 1);
-  --colors-selected: rgba(255, 0, 0, 1);
-  --colors-hovered: rgba(255, 0, 0, 0.1);
   --colors-fill: rgba(255, 255, 255, 1);
-  --colors-bounds: rgb(0, 106, 255);
-  --colors-bounds-bg: rgba(0, 106, 255, 0.05);
 }
 
 /* Strokes */

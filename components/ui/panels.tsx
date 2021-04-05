@@ -21,7 +21,7 @@ export const ResizeHandle = styled(motion.div)`
     content: "";
     display: block;
     position: absolute;
-    right: 0;
+    right: 2px;
     top: 0;
     width: 1px;
     height: 100%;
@@ -97,7 +97,7 @@ export const PanelInnerContainer = styled.div`
         align-items: center;
         gap: 0;
 
-        &[data-isDragging="true"] {
+        &[data-isdragging="true"] {
           background: var(--colors-hovered);
         }
 

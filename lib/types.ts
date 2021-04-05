@@ -110,7 +110,7 @@ interface HandleSnap extends IBaseSnap {
   to: number[]
 }
 
-type ISnap = NodeCentersSnap | NodeXSnap | NodeYSnap | HandleSnap
+export type ISnap = NodeCentersSnap | NodeXSnap | NodeYSnap | HandleSnap
 
 export interface IData {
   viewport: {

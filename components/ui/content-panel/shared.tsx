@@ -31,7 +31,7 @@ export function Draggable({
   return (
     <motion.li
       layout
-      data-isDragging={isDragging}
+      data-isdragging={isDragging}
       onPanStart={(_, info) => onDragStart([info.point.x, info.point.y])}
       onPanEnd={onDragEnd}
       onPan={(_, info) => isDragging && onDrag([info.point.x, info.point.y])}
