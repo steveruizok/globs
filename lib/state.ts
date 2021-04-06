@@ -662,7 +662,7 @@ const state = createState({
 
       const pt0 = vec.add(vec.div(point, camera.zoom), camera.point)
 
-      camera.zoom = Math.max(Math.min(camera.zoom + delta, 10), 0.001)
+      camera.zoom = Math.max(Math.min(camera.zoom + delta, 10), 0.01)
       camera.zoom = Math.round(camera.zoom * 100) / 100
 
       const pt1 = vec.add(vec.div(point, camera.zoom), camera.point)
