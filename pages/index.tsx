@@ -2,7 +2,7 @@ import Head from "next/head"
 import dynamic from "next/dynamic"
 import useTheme from "hooks/useTheme"
 
-const Editor = dynamic(() => import("components/editor/editor"), { ssr: false })
+const Editor = dynamic(() => import("components/editor"), { ssr: false })
 
 export default function Home() {
   useTheme()

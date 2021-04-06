@@ -12,9 +12,8 @@ export default function StatusBar() {
 
   return (
     <StatusBarContainer>
-      <Section>
-        {active.join(" | ")} | {log}
-      </Section>
+      <States>{active.join(" | ")} | </States>
+      <Section>{log}</Section>
       <Section title="Renders | Time">
         {count} | {time.toString().padStart(3, "0")}
       </Section>
@@ -22,18 +21,32 @@ export default function StatusBar() {
   )
 }
 
-const Section = styled('div', {})
+const Section = styled("div", {
+  whiteSpace: "nowrap",
+  overflow: "hidden",
+})
 
-const StatusBarContainer = styled('div', {
-  userSelect: 'none',
-  borderTop: '1px solid $border',
-  gridArea: 'status',
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'space-between',
-  backgroundColor: '$panel',
-  font: '$mono',
-  padding: '0 16px',
+const States = styled("div", {
+  "@media (max-width: 768px)": {
+    display: "none",
+  },
+})
+
+const StatusBarContainer = styled("div", {
+  userSelect: "none",
+  borderTop: "1px solid $border",
+  gridArea: "status",
+  display: "grid",
+  gridTemplateColumns: "auto 1fr auto",
+  alignItems: "center",
+  backgroundColor: "$panel",
+  font: "$mono",
+  gridGap: 8,
+  padding: "0 16px",
+
+  "@media (max-width: 768px)": {
+    gridTemplateColumns: "1fr auto",
+  },
 })
 
 function useRenderCount() {

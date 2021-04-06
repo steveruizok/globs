@@ -30,7 +30,7 @@ export const { styled, global, theme, getCssString } = createCss({
       fill: "rgba(0, 0, 0, 1)",
     },
   },
-})
+}) as any
 
 export const dark = theme("dark", {
   colors: {

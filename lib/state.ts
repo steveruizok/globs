@@ -181,6 +181,9 @@ const state = createState({
             POINTED_ROTATE_CORNER: {
               to: "cornerRotating",
             },
+            STARTED_MOVING_THUMBSTICK: {
+              to: "draggingThumbstick",
+            },
           },
         },
         canvasPanning: {
@@ -201,6 +204,24 @@ const state = createState({
             WHEELED: ["moveSelected", "updateGlobPoints"],
             MOVED_POINTER: ["moveSelected", "updateGlobPoints"],
             STOPPED_POINTING: {
+              to: "notPointing",
+            },
+          },
+        },
+        draggingThumbstick: {
+          onExit: ["clearInitialNodes", "clearSnaps", "saveData"],
+          onEnter: [
+            { if: "hasSelectedGlobs", do: "setNodeSnapper" },
+            "setInitialNodes",
+            "setInitialGlobs",
+            "setInitialPoints",
+            "setSnapPoints",
+          ],
+          on: {
+            MOVED_THUMBSTICK: {
+              do: "moveSelected",
+            },
+            STOPPED_MOVING_THUMBSTICK: {
               to: "notPointing",
             },
           },
@@ -354,6 +375,9 @@ const state = createState({
     },
     hasSelectedNodes(data) {
       return data.selectedNodes.length > 0
+    },
+    hasSelectedGlobs(data) {
+      return data.selectedGlobs.length > 0
     },
     globIsHovered(data, payload: { id: string }) {
       return data.hoveredGlobs.includes(payload.id)
@@ -961,27 +985,31 @@ const state = createState({
       data.initialGlobs = {}
     },
     setNodeSnapper(data) {
-      const { selectedNodes, nodes, selectedGlobs, globs, camera } = data
-      const point = screenToWorld(pointer.point, camera.point, camera.zoom)
+      try {
+        const { selectedNodes, nodes, selectedGlobs, globs, camera } = data
+        const point = screenToWorld(pointer.point, camera.point, camera.zoom)
 
-      // Find the closest selected node to the pointer
+        // Find the closest selected node to the pointer
 
-      let closestNodeToPointer = nodes[selectedNodes[0]]
-      let d = vec.dist(closestNodeToPointer.point, point)
+        let closestNodeToPointer = nodes[selectedNodes[0]]
+        let d = vec.dist(closestNodeToPointer.point, point)
 
-      for (let i = 1; i < selectedNodes.length; i++) {
-        const node = nodes[selectedNodes[i]]
-        const d1 = vec.dist(node.point, point)
-        if (d1 < d) closestNodeToPointer = node
+        for (let i = 1; i < selectedNodes.length; i++) {
+          const node = nodes[selectedNodes[i]]
+          const d1 = vec.dist(node.point, point)
+          if (d1 < d) closestNodeToPointer = node
+        }
+
+        // Create a snapper based on this node
+        snappingNode = closestNodeToPointer.id
+        nodeSnapper = getNodeSnapper(
+          closestNodeToPointer,
+          Object.values(nodes).filter((n) => !selectedNodes.includes(n.id)),
+          Object.values(globs).filter((n) => !selectedGlobs.includes(n.id))
+        )
+      } catch (e) {
+        console.log(e)
       }
-
-      // Create a snapper based on this node
-      snappingNode = closestNodeToPointer.id
-      nodeSnapper = getNodeSnapper(
-        closestNodeToPointer,
-        Object.values(nodes).filter((n) => !selectedNodes.includes(n.id)),
-        Object.values(globs).filter((n) => !selectedGlobs.includes(n.id))
-      )
     },
     setGlobSnapper(data) {},
     moveSelected(data) {

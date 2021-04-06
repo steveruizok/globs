@@ -8,21 +8,16 @@ import { motion, PanInfo, TapInfo } from "framer-motion"
 import ContextMenu, {
   ContextMenuRoot,
   ContextMenuTrigger,
-} from "../ui/context-menu"
+} from "./ui/context-menu"
 
-import Contents from "./contents"
-import HoveredGlobs from "./hovers/hovered-globs"
-import HoveredNodes from "./hovers/hovered-nodes"
-import InspectPanel from "components/ui/inspect-panel/inspect-panel"
-import ContentPanel from "components/ui/content-panel/content-panel"
-import Toolbar from "components/ui/toolbar"
-import StatusBar from "components/ui/statusbar"
-import Brush from "./brush"
-import Bounds from "./bounds/bounds"
-import BoundsBg from "./bounds/bounds-bg"
-import LearnPanel from "../ui/learn-panel"
-import ZoomPanel from "../ui/zoom-panel"
-import Snaps from "./snaps"
+import Canvas from "./canvas/canvas"
+import InspectPanel from "./ui/inspect-panel/inspect-panel"
+import ContentPanel from "./ui/content-panel/content-panel"
+import Toolbar from "./ui/toolbar"
+import StatusBar from "./ui/statusbar"
+import LearnPanel from "./ui/learn-panel"
+import ZoomPanel from "./ui/zoom-panel"
+import Thumbstick from "./ui/thumbstick"
 import { throttle } from "lib/utils"
 
 const DOT_RADIUS = 2,
@@ -35,7 +30,6 @@ const DOT_RADIUS = 2,
 export default function Editor() {
   const rContainer = useRef<HTMLDivElement>(null)
   const rSvg = useRef<SVGSVGElement>(null)
-  const rContent = useRef<SVGGElement>(null)
   const rDot = useRef<SVGCircleElement>(null)
   const rAnchor = useRef<SVGCircleElement>(null)
   const rHandle = useRef<SVGCircleElement>(null)
@@ -151,15 +145,14 @@ export default function Editor() {
     handleMove(x, y, e.pointerId, e.buttons)
   }, [])
 
-  // Prevent browser zoom and use our own instead
-  const { handleTouchStart, handleTouchMove } = usePinchZoom(rContainer)
-
   const handleWheel = useCallback((e: React.WheelEvent<HTMLDivElement>) => {
     state.send("WHEELED", {
       ctrlKey: e.ctrlKey,
       delta: [e.deltaX, e.deltaY],
     })
   }, [])
+
+  const { handleTouchStart, handleTouchMove } = usePinchZoom(rContainer)
 
   return (
     <OuterWrapper
@@ -229,15 +222,7 @@ export default function Editor() {
                     className="strokewidth-s stroke-selected"
                   />
                 </defs>
-                <g ref={rContent}>
-                  <BoundsBg />
-                  <Contents />
-                  <Snaps />
-                  <HoveredNodes />
-                  <HoveredGlobs />
-                  <Bounds />
-                  <Brush />
-                </g>
+                <Canvas />
               </svg>
               <ContextMenu />
             </SVGWrapper>
@@ -248,6 +233,7 @@ export default function Editor() {
             <Main ref={rMain}>
               <LearnPanel bounds={rMain} />
               <ZoomPanel />
+              <Thumbstick />
             </Main>
           </Layout>
         </EditorContainer>
@@ -335,6 +321,8 @@ const SVGWrapper = styled(ContextMenuTrigger, {
 
 const handleMove = throttle(
   (x: number, y: number, pointerId: number, buttons: number) => {
+    if (state.isIn("draggingThumbstick")) return
+
     if (pointer.id > -1 && pointerId !== pointer.id) return
 
     const ox = Math.abs(x - pointer.origin[0])
