@@ -45,7 +45,7 @@ export default function ContentPanel() {
 
 const PanelContainer = styled(_PanelContainer, {
   gridArea: 'content',
-  borderRight: '1px solid var(--colors-border)',
+  borderRight: '1px solid $border',
 })
 
 const ResizeHandle = styled(_ResizeHandle, {

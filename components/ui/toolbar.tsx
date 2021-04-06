@@ -95,13 +95,13 @@ const StyledContainer = styled('div', {
   display: 'flex',
   alignItems: 'center',
   justifyContent: 'space-between',
-  backgroundColor: 'var(--colors-panel)',
-  borderBottom: '1px solid var(--colors-border)',
+  backgroundColor: '$panel',
+  borderBottom: '1px solid $border',
 
   '& svg': {
     height: '18px',
     width: '18px',
-    stroke: 'var(--colors-text)',
+    stroke: '$text',
   },
 
   '& > section': {
@@ -121,7 +121,7 @@ const StyledContainer = styled('div', {
 
     '&:hover:enabled': {
       '& > svg': {
-        stroke: 'var(--colors-selected)',
+        stroke: '$selected',
       }
     },
 
@@ -131,7 +131,7 @@ const StyledContainer = styled('div', {
 
     '&[data-active="true"]': {
       '& > svg': {
-        stroke: 'var(--colors-selected)',
+        stroke: '$selected',
       }
     }
   }

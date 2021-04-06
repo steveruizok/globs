@@ -42,7 +42,7 @@ export default function InspectPanel() {
 
 const PanelContainer = styled(_PanelContainer, {
   gridArea: 'inspect',
-  borderLeft: '1px solid var(--colors-border)',
+  borderLeft: '1px solid $border',
 })
 
 const ResizeHandle = styled(_ResizeHandle, {

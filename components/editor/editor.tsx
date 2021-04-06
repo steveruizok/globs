@@ -255,7 +255,7 @@ const SVGWrapper = styled(ContextMenuTrigger, {
   position: 'relative',
   gridColumn: '1 / span 3',
   gridRow: '1 / span 3',
-  backgroundColor: 'var(--colors-canvas)',
+  backgroundColor: '$canvas',
 
   '& > svg': {
     position: 'absolute',

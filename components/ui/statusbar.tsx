@@ -26,13 +26,13 @@ const Section = styled('div', {})
 
 const StatusBarContainer = styled('div', {
   userSelect: 'none',
-  borderTop: '1px solid var(--colors-border)',
+  borderTop: '1px solid $border',
   gridArea: 'status',
   display: 'flex',
   alignItems: 'center',
   justifyContent: 'space-between',
-  backgroundColor: 'var(--colors-panel)',
-  font: 'var(--fonts-mono)',
+  backgroundColor: '$panel',
+  font: '$mono',
   padding: '0 16px',
 })
 

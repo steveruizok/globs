@@ -25,12 +25,12 @@ const Container = styled('div', {
   pointerEvents: 'all',
   userSelect: 'none',
   padding: '4px 8px',
-  font: 'var(--fonts-mono)',
-  color: 'var(--colors-muted)',
-  backgroundColor: 'var(--colors-panel)',
-  border: '1px solid var(--border)',
+  font: '$mono',
+  color: '$muted',
+  backgroundColor: '$panel',
+  border: '1px solid $border',
 
   '&:hover': {
-    color: 'var(--colors-text)',
+    color: '$text',
   }
 })

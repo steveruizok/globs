@@ -187,10 +187,10 @@ const PanelContainer = styled(motion.div, {
   position: 'absolute',
   top: '0',
   left: '0',
-  backgroundColor: 'var(--colors-panel)',
+  backgroundColor: '$panel',
   borderRadius: '4px',
   overflow: 'hidden',
-  border: '1px solid var(--colors-border)',
+  border: '1px solid $border',
   pointerEvents: 'all',
   userSelect: 'none',
 
@@ -202,9 +202,9 @@ const PanelContainer = styled(motion.div, {
 const IconButton = styled('button', {
   height: '40px',
   width: '40px',
-  backgroundColor: 'var(--colors-panel)',
+  backgroundColor: '$panel',
   borderRadius: '4px',
-  border: '1px solid var(--colors-border)',
+  border: '1px solid $border',
   padding: '0',
   margin: '0',
   display: 'flex',
@@ -215,7 +215,7 @@ const IconButton = styled('button', {
   cursor: 'pointer',
 
   '&:hover:not(:disabled)': {
-    backgroundColor: 'var(--colors-panel)',
+    backgroundColor: '$panel',
   },
 
   '&:disabled': {
@@ -226,7 +226,7 @@ const IconButton = styled('button', {
     height: '20px',
     width: '20px',
     strokeWidth: '2px',
-    stroke: 'var(--colors-text)',
+    stroke: '$text',
   }
 })
 
@@ -260,7 +260,7 @@ const Header = styled('div', {
   gridTemplateColumns: 'auto 1fr',
   alignItems: 'center',
   justifyContent: 'center',
-  borderBottom: '1px solid var(--colors-border)',
+  borderBottom: '1px solid $border',
 
   '& button': {
     gridColumn: '1',

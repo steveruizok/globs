@@ -21,8 +21,8 @@ export default function ContextMenu() {
 const StyledContent = styled(_ContextMenu.Content, {
   fontSize: '11px',
   minWidth: '130px',
-  color: 'var(--colors-text)',
-  backgroundColor: 'var(--colors-panel)',
+  color: '$text',
+  backgroundColor: '$panel',
   borderRadius: '4px',
   padding: '5px',
   boxShadow: '2px 2px 12px -4px rgba(0, 0, 0, 0.2)',
@@ -36,7 +36,7 @@ const StyledItem = styled(_ContextMenu.Item, {
   cursor: 'pointer',
 
   '&:hover': {
-    backgroundColor: 'var(--muted)',
+    backgroundColor: '$muted',
   }
 })
 

@@ -24,5 +24,5 @@ const DragWrapper = styled('div', {
 const CodePanelContainer = styled(motion.div, {
   width: '400px',
   maxHeight: '80%',
-  backgroundColor: 'var(--colors-panel)',
+  backgroundColor: '$panel',
 })

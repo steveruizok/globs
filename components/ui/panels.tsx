@@ -5,7 +5,7 @@ export const PanelContainer = styled(motion.div, {
   position: 'relative',
   overflow: 'hidden',
   userSelect: 'none',
-  backgroundColor: 'var(--colors-panel)',
+  backgroundColor: '$panel',
 })
 
 export const ResizeHandle = styled(motion.div, {
@@ -25,16 +25,16 @@ export const ResizeHandle = styled(motion.div, {
     top: '0',
     width: '1px',
     height: '100%',
-    backgroundColor: 'var(--colors-section)',
+    backgroundColor: '$section',
     transition: 'background-color 0.1s',
   },
 
   '&:hover, &:active': {
-    backgroundColor: 'var(--colors-section)',
+    backgroundColor: '$section',
   },
 
   '&:hover, &:active::after': {
-    backgroundColor: 'var(--colors-selected)',
+    backgroundColor: '$selected',
   }
 })
 
@@ -44,7 +44,7 @@ export const PanelInnerContainer = styled('div', {
   minWidth: '200px',
   overflow: 'hidden',
   maxHeight: '100%',
-  font: 'var(--fonts-ui)',
+  font: '$ui',
 
   '& > section': {
     margin: '0',
@@ -54,18 +54,18 @@ export const PanelInnerContainer = styled('div', {
     position: 'relative',
 
     '&:nth-of-type(2)': {
-      borderTop: '1px solid var(--colors-border)',
+      borderTop: '1px solid $border',
     },
 
     '& h2': {
-      font: 'var(--fonts-section)',
+      font: '$section',
       fontWeight: '600px',
       display: 'flex',
       alignItems: 'center',
       width: '100%',
       height: '28px',
-      backgroundColor: 'var(--colors-section)',
-      borderBottom: '1px solid var(--colors-border)',
+      backgroundColor: '$section',
+      borderBottom: '1px solid $border',
       padding: '0 16px',
       margin: '0',
       position: 'sticky',
@@ -96,12 +96,12 @@ export const PanelInnerContainer = styled('div', {
         gap: '0',
 
         '&[data-isdragging="true"]': {
-          background: 'var(--colors-hovered)',
+          background: '$hovered',
         },
 
         '&:hover': {
-          color: 'var(--colors-hovered)',
-          background: 'var(--colors-hovered)',
+          color: '$hovered',
+          background: '$hovered',
         },
 
         '&:hover *[data-hidey="true"]': {
@@ -124,11 +124,11 @@ export const PanelInnerContainer = styled('div', {
           fontWeight: '400',
           cursor: 'pointer',
           outline: 'none',
-          font: 'var(--fonts-ui)',
-          color: 'var(--colors-text)',
+          font: '$ui',
+          color: '$text',
 
           '&[data-selected="true"]': {
-            color: 'var(--colors-selected)',
+            color: '$selected',
           },
 
           '&:hover > svg': {

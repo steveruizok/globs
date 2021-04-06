@@ -30,9 +30,6 @@ export const globalStyles = global({
 	':root': {
 		'--zoomed': '2px',
 		'--zoom': '2px',
-		'--fonts-ui': '500 12px/14px "Inter", -apple-system, sans-serif',
-		'--fonts-section': '600 12px/14px "Inter", monospace',
-		'--fonts-mono': '500 12px/14px "IBM Plex Mono", monospace',
 	},
 
 	// Strokes
@@ -62,31 +59,31 @@ export const globalStyles = global({
 
 	// Stroke Colors
 	'.stroke-left': {
-		stroke: 'var(--colors-left)',
+		stroke: '$left',
 	},
 
 	'.stroke-right': {
-		stroke: 'var(--colors-right)',
+		stroke: '$right',
 	},
 
 	'.stroke-selected': {
-		stroke: 'var(--colors-selected)',
+		stroke: '$selected',
 	},
 
 	'.stroke-outline': {
-		stroke: 'var(--colors-outline)',
+		stroke: '$outline',
 	},
 
 	'.stroke-guide': {
-		stroke: 'var(--colors-guide)',
+		stroke: '$guide',
 	},
 
 	'.stroke-hint': {
-		stroke: 'var(--colors-hint)',
+		stroke: '$hint',
 	},
 
 	'.stroke-bounds': {
-		stroke: 'var(--colors-bounds)',
+		stroke: '$bounds',
 	},
 
 	// Dash Array
@@ -100,27 +97,27 @@ export const globalStyles = global({
 
 	// Nodes
 	'.fill-left': {
-		fill: 'var(--colors-left)',
+		fill: '$left',
 	},
 
 	'.fill-right': {
-		fill: 'var(--colors-right)',
+		fill: '$right',
 	},
 
 	'.fill-flat': {
-		fill: 'var(--colors-fill)',
+		fill: '$fill',
 	},
 
 	'.fill-soft': {
-		fill: 'var(--colors-soft)',
+		fill: '$soft',
 	},
 
 	'.fill-bounds-bg': {
-		fill: 'var(--colors-bounds-bg)',
+		fill: '$bounds_bg',
 	},
 
 	'.fill-corner': {
-		fill: 'var(--colors-panel)',
+		fill: '$panel',
 	},
 
 	'.fill-none': {
@@ -142,7 +139,7 @@ export const globalStyles = global({
 
 	// Globs
 	'.fill-hover': {
-		fill: 'var(--colors-hovered)',
+		fill: '$hovered',
 	},
 
 	// Events
