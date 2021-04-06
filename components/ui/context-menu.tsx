@@ -1,4 +1,4 @@
-import styled from "styled-components"
+import { styled } from "stitches.config"
 import * as _ContextMenu from "@radix-ui/react-context-menu"
 import { useSelector } from "lib/state"
 import { deepCompare } from "lib/utils"
@@ -18,27 +18,27 @@ export default function ContextMenu() {
   )
 }
 
-const StyledContent = styled(_ContextMenu.Content)`
-  font-size: 11px;
-  min-width: 130px;
-  color: var(--colors-text);
-  background-color: var(--colors-panel);
-  border-radius: 4px;
-  padding: 5px;
-  box-shadow: 2px 2px 12px -4px rgba(0, 0, 0, 0.2);
-`
+const StyledContent = styled(_ContextMenu.Content, {
+  fontSize: '11px',
+  minWidth: '130px',
+  color: '$text',
+  backgroundColor: '$panel',
+  borderRadius: '4px',
+  padding: '5px',
+  boxShadow: '2px 2px 12px -4px rgba(0, 0, 0, 0.2)',
+})
 
-const StyledItem = styled(_ContextMenu.Item)`
-  font-size: 13px;
-  padding: 5px 10px;
-  border-radius: 2px;
-  outline: none;
-  cursor: pointer;
+const StyledItem = styled(_ContextMenu.Item, {
+  fontSize: '13px',
+  padding: '5px 10px',
+  borderRadius: '2px',
+  outline: 'none',
+  cursor: 'pointer',
 
-  &:hover {
-    background-color: var(--muted);
+  '&:hover': {
+    backgroundColor: '$muted',
   }
-`
+})
 
 export const ContextMenuRoot = _ContextMenu.Root
 export const ContextMenuTrigger = _ContextMenu.Trigger

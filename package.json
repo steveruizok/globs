@@ -10,6 +10,7 @@
   "dependencies": {
     "@radix-ui/react-context-menu": "^0.0.10",
     "@state-designer/react": "^1.6.9",
+    "@stitches/react": "^0.1.4",
     "classnames": "^2.2.6",
     "framer-motion": "^4.0.3",
     "kld-intersections": "^0.7.0",
@@ -18,16 +19,14 @@
     "path-intersection": "^2.2.1",
     "react": "17.0.1",
     "react-dom": "17.0.1",
-    "react-feather": "^2.0.9",
-    "styled-components": "^5.2.1"
+    "react-feather": "^2.0.9"
   },
   "devDependencies": {
+    "@types/classnames": "^2.2.11",
     "@types/next": "^9.0.0",
     "@types/node": "^14.14.34",
     "@types/react": "^17.0.3",
     "@types/react-dom": "^17.0.2",
-    "@types/styled-components": "^5.1.9",
-    "@types/classnames": "^2.2.11",
     "typescript": "^4.2.3"
   }
 }

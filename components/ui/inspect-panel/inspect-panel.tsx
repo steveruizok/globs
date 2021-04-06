@@ -1,4 +1,4 @@
-import styled from "styled-components"
+import { styled } from "stitches.config"
 import { motion, useMotionValue, useTransform } from "framer-motion"
 import PropsList from "./props-list"
 import {
@@ -40,11 +40,11 @@ export default function InspectPanel() {
   )
 }
 
-const PanelContainer = styled(_PanelContainer)`
-  grid-area: inspect;
-  border-left: 1px solid var(--colors-border);
-`
+const PanelContainer = styled(_PanelContainer, {
+  gridArea: "inspect",
+  borderLeft: "1px solid $border",
+})
 
-const ResizeHandle = styled(_ResizeHandle)`
-  right: ${MIN - 5}px;
-`
+const ResizeHandle = styled(_ResizeHandle, {
+  right: `${MIN - 5}px`,
+})

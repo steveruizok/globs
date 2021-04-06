@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useRef } from "react"
-import styled from "styled-components"
+import { styled } from "stitches.config"
 import state from "lib/state"
 import usePinchZoom from "hooks/usePinchZoom"
 
@@ -194,79 +194,79 @@ export default function Editor() {
   )
 }
 
-const EditorContainer = styled.div`
-  position: fixed;
-  top: 0;
-  right: 0;
-  bottom: 0;
-  left: 0;
-  z-index: 0;
-  /* height: 100vh; */
+const EditorContainer = styled('div', {
+  position: 'fixed',
+  top: 0,
+  right: 0,
+  bottom: 0,
+  left: 0,
+  zIndex: 0,
+  // height: '100vh',
 
-  g > *.hover-hidey {
-    visibility: hidden;
+  'g > *.hover-hidey': {
+    visibility: 'hidden',
+  },
+
+  'g:hover > *.hover-hidey': {
+    visibility: 'visible',
   }
+});
 
-  g:hover > *.hover-hidey {
-    visibility: visible;
-  }
-`
-
-const Layout = styled.div`
-  pointer-events: none;
-  display: grid;
-  height: 100%;
-  grid-template-areas:
+const Layout = styled('div', {
+  pointerEvents: 'none',
+  display: 'grid',
+  height: '100%',
+  gridTemplateAreas: `
     "tool    tool    tool"
     "content main    inspect"
-    "status  status  status";
-  grid-template-columns: auto 1fr auto;
-  grid-template-rows: 40px 1fr 32px;
+    "status  status  status"`,
+  gridTemplateColumns: 'auto 1fr auto',
+  gridTemplateRows: '40px 1fr 32px',
 
-  @media (max-width: 768px) {
-    grid-template-columns: 0px 1fr auto;
+  '@media (max-width: 768px)': {
+    gridTemplateColumns: '0px 1fr auto',
 
-    & > *[data-bp-desktop="true"] {
-      display: none;
+    '& > *[data-bp-desktop="true"]': {
+      display: 'none',
     }
+  },
+
+  '& > *': {
+    pointerEvents: 'all',
+    zIndex: 2,
   }
+})
 
-  & > * {
-    pointer-events: all;
-    z-index: 2;
+const Main = styled('main', {
+  gridArea: 'main',
+  position: 'relative',
+  pointerEvents: 'none',
+  margin: '16px',
+  width: 'calc(100% - 32px)',
+  height: 'calc(100% - 32px)',
+})
+
+const OuterWrapper = styled('div',{
+  height: '100vh',
+  width: '100vw',
+})
+
+const SVGWrapper = styled(ContextMenuTrigger, {
+  position: 'relative',
+  gridColumn: '1 / span 3',
+  gridRow: '1 / span 3',
+  backgroundColor: '$canvas',
+
+  '& > svg': {
+    position: 'absolute',
+    top: '0',
+    right: '0',
+    bottom: '0',
+    left: '0',
+    zIndex: '1',
+    touchAction: 'none',
+    shapeRendering: 'optimizeSpeed',
+    textRendering: 'optimizeSpeed',
+    imageRendering: 'optimizeSpeed',
   }
-`
-
-const Main = styled.main`
-  grid-area: main;
-  position: relative;
-  pointer-events: none;
-  margin: 16px;
-  width: calc(100% - 32px);
-  height: calc(100% - 32px);
-`
-
-const OuterWrapper = styled.div`
-  height: 100vh;
-  width: 100vw;
-`
-
-const SVGWrapper = styled(ContextMenuTrigger)`
-  position: relative;
-  grid-column: 1 / span 3;
-  grid-row: 1 / span 3;
-  background-color: var(--colors-canvas);
-
-  & > svg {
-    position: absolute;
-    top: 0;
-    right: 0;
-    bottom: 0;
-    left: 0;
-    z-index: 1;
-    touch-action: none;
-    shape-rendering: optimizeSpeed;
-    text-rendering: optimizeSpeed;
-    image-rendering: optimizeSpeed;
-  }
-`
+})

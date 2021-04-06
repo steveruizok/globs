@@ -5,6 +5,7 @@ import Document, {
   Main,
   NextScript,
 } from "next/document"
+import { dark } from "stitches.config"
 
 class MyDocument extends Document {
   static async getInitialProps(ctx: DocumentContext) {
@@ -15,8 +16,10 @@ class MyDocument extends Document {
   render() {
     return (
       <Html>
-        <Head />
-        <body className="dark">
+        <Head>
+          <title>Glob Editor</title>
+        </Head>
+        <body className={dark}>
           <Main />
           <NextScript />
         </body>
