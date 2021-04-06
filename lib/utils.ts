@@ -1423,3 +1423,18 @@ export function getCircleInGlob(point: number[], glob: IGlob) {
 
   return { point: C, radius: r }
 }
+
+export function pointInRect(
+  point: number[],
+  minX: number,
+  minY: number,
+  maxX: number,
+  maxY: number
+) {
+  return !(
+    point[0] < minX ||
+    point[0] > maxX ||
+    point[1] < minY ||
+    point[1] > maxY
+  )
+}
