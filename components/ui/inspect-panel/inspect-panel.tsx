@@ -41,10 +41,10 @@ export default function InspectPanel() {
 }
 
 const PanelContainer = styled(_PanelContainer, {
-  gridArea: 'inspect',
-  borderLeft: '1px solid $border',
+  gridArea: "inspect",
+  borderLeft: "1px solid $border",
 })
 
 const ResizeHandle = styled(_ResizeHandle, {
-  right: '${MIN - 5}px',
+  right: `${MIN - 5}px`,
 })

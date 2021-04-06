@@ -44,15 +44,15 @@ export default function ContentPanel() {
 }
 
 const PanelContainer = styled(_PanelContainer, {
-  gridArea: 'content',
-  borderRight: '1px solid $border',
+  gridArea: "content",
+  borderRight: "1px solid $border",
 })
 
 const ResizeHandle = styled(_ResizeHandle, {
-  left: '${MIN - 5}px',
+  left: `${MIN - 5}px`,
 })
 
 const PanelInnerContainer = styled(_PanelInnerContainer, {
-  display: 'grid',
-  gridTemplateRows: '1fr 1fr',
+  display: "grid",
+  gridTemplateRows: "1fr 1fr",
 })
