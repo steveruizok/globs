@@ -10,7 +10,7 @@ import {
   X,
   Menu,
 } from "react-feather"
-import styled from "styled-components"
+import { styled } from "stitches.config"
 import useTheme from "hooks/useTheme"
 
 export default function Toolbar() {
@@ -89,54 +89,54 @@ export default function Toolbar() {
   )
 }
 
-const StyledContainer = styled.div`
-  user-select: none;
-  grid-area: tool;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  background-color: var(--colors-panel);
-  border-bottom: 1px solid var(--colors-border);
+const StyledContainer = styled('div', {
+	userSelect: 'none',
+  gridArea: 'tool',
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'space-between',
+  backgroundColor: 'var(--colors-panel)',
+  borderBottom: '1px solid var(--colors-border)',
 
-  & svg {
-    height: 18px;
-    width: 18px;
-    stroke: var(--colors-text);
-  }
+  '& svg': {
+    height: '18px',
+    width: '18px',
+    stroke: 'var(--colors-text)',
+  },
 
-  & > section {
-    display: flex;
-  }
+  '& > section': {
+    display: 'flex',
+  },
 
-  & section > button {
-    background: none;
-    border: none;
-    width: 40px;
-    height: 40px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    outline: none;
+  '& section > button': {
+    background: 'none',
+    border: 'none',
+    width: '40px',
+    height: '40px',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    cursor: 'pointer',
+    outline: 'none',
 
-    &:hover:enabled {
-      & > svg {
-        stroke: var(--colors-selected);
+    '&:hover:enabled': {
+      '& > svg': {
+        stroke: 'var(--colors-selected)',
+      }
+    },
+
+    '&:disabled': {
+      opacity: '0.3',
+    },
+
+    '&[data-active="true"]': {
+      '& > svg': {
+        stroke: 'var(--colors-selected)',
       }
     }
-
-    &:disabled {
-      opacity: 0.3;
-    }
-
-    &[data-active="true"] {
-      & > svg {
-        stroke: var(--colors-selected);
-      }
-    }
   }
-`
+})
 
-const Spacer = styled.div`
-  flex-grow: 2;
-`
+const Spacer = styled('div', {
+	flexGrow: 2,
+})

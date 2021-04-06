@@ -11,7 +11,7 @@ import {
   Disc,
   ArrowRight,
 } from "react-feather"
-import styled from "styled-components"
+import { styled } from "stitches.config"
 
 const state = createState({
   data: {
@@ -183,103 +183,102 @@ export default function LearnPanel({
   )
 }
 
-const PanelContainer = styled(motion.div)`
-  position: absolute;
-  top: 0;
-  left: 0;
-  background-color: var(--colors-panel);
-  border-radius: 4px;
-  overflow: hidden;
-  border: 1px solid var(--colors-border);
-  pointer-events: all;
-  user-select: none;
+const PanelContainer = styled(motion.div, {
+	position: 'absolute',
+  top: '0',
+  left: '0',
+  backgroundColor: 'var(--colors-panel)',
+  borderRadius: '4px',
+  overflow: 'hidden',
+  border: '1px solid var(--colors-border)',
+  pointerEvents: 'all',
+  userSelect: 'none',
 
-  button {
-    border: none;
+  'button': {
+    border: 'none',
   }
-`
+})
 
-const IconButton = styled.button`
-  height: 40px;
-  width: 40px;
-  background-color: var(--colors-panel);
-  border-radius: 4px;
-  border: 1px solid var(--colors-border);
-  padding: 0;
-  margin: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  outline: none;
-  pointer-events: all;
-  cursor: pointer;
+const IconButton = styled('button', {
+	height: '40px',
+  width: '40px',
+  backgroundColor: 'var(--colors-panel)',
+  borderRadius: '4px',
+  border: '1px solid var(--colors-border)',
+  padding: '0',
+  margin: '0',
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  outline: 'none',
+  pointerEvents: 'all',
+  cursor: 'pointer',
 
-  &:hover:not(:disabled) {
-    background-color: var(--colors-panel);
+  '&:hover:not(:disabled)': {
+    backgroundColor: 'var(--colors-panel)',
+  },
+
+  '&:disabled': {
+    opacity: '0.5',
+  },
+
+  'svg': {
+    height: '20px',
+    width: '20px',
+    strokeWidth: '2px',
+    stroke: 'var(--colors-text)',
   }
+})
 
-  &:disabled {
-    opacity: 0.5;
+const Content = styled('div', {
+	display: 'grid',
+  gridTemplateColumns: '1fr',
+  gridTemplateRows: 'auto auto 1fr',
+  width: '100%',
+  maxWidth: '400px',
+  height: '340px',
+  paddingBottom: '4px',
+  userSelect: 'none',
+  pointerEvents: 'all',
+
+  '& > div': {
+    pointerEvents: 'none',
+  },
+
+  'img': {},
+
+  'p': {
+    margin: '0',
+    padding: '16px',
+    fontSize: '13px',
   }
+})
 
-  svg {
-    height: 20px;
-    width: 20px;
-    stroke-width: 2px;
-    stroke: var(--colors-text);
+const Header = styled('div', {
+	pointerEvents: 'all',
+  display: 'grid',
+  gridTemplateColumns: 'auto 1fr',
+  alignItems: 'center',
+  justifyContent: 'center',
+  borderBottom: '1px solid var(--colors-border)',
+
+  '& button': {
+    gridColumn: '1',
+    gridRow: '1',
+  },
+
+  '& h3': {
+    gridColumn: '1 / span 3',
+    gridRow: '1',
+    textAlign: 'center',
+    margin: '0',
+    padding: '0',
+    fontSize: '16px',
   }
-`
+})
 
-const Content = styled.div`
-  display: grid;
-  grid-template-columns: 1fr;
-  grid-template-rows: auto auto 1fr;
-  width: 100%;
-  max-width: 400px;
-  height: 340px;
-  padding-bottom: 4px;
-  user-select: none;
-  pointer-events: all;
-
-  & > div {
-    pointer-events: none;
-  }
-
-  img {
-  }
-
-  p {
-    margin: 0;
-    padding: 16px;
-    font-size: 13px;
-  }
-`
-
-const Header = styled.div`
-  pointer-events: all;
-  display: grid;
-  grid-template-columns: auto 1fr;
-  align-items: center;
-  justify-content: center;
-  border-bottom: 1px solid var(--colors-border);
-
-  & button {
-    grid-column: 1;
-    grid-row: 1;
-  }
-
-  & h3 {
-    grid-column: 1 / span 3;
-    grid-row: 1;
-    text-align: center;
-    margin: 0;
-    padding: 0;
-    font-size: 16px;
-  }
-`
-
-const ButtonsGroup = styled.div`
-  grid-row: 1;
-  grid-column: 3;
-  display: flex;
-`
+const ButtonsGroup = styled('div', {
+	gridRow: '1',
+  gridColumn: '3',
+  display: 'flex',
+})

@@ -1,4 +1,4 @@
-import styled from "styled-components"
+import { styled } from "stitches.config"
 import { useMotionValue, useTransform } from "framer-motion"
 import GlobList from "./glob-list"
 import NodeList from "./node-list"
@@ -43,16 +43,16 @@ export default function ContentPanel() {
   )
 }
 
-const PanelContainer = styled(_PanelContainer)`
-  grid-area: content;
-  border-right: 1px solid var(--colors-border);
-`
+const PanelContainer = styled(_PanelContainer, {
+  gridArea: 'content',
+  borderRight: '1px solid var(--colors-border)',
+})
 
-const ResizeHandle = styled(_ResizeHandle)`
-  left: ${MIN - 5}px;
-`
+const ResizeHandle = styled(_ResizeHandle, {
+  left: '${MIN - 5}px',
+})
 
-const PanelInnerContainer = styled(_PanelInnerContainer)`
-  display: grid;
-  grid-template-rows: 1fr 1fr;
-`
+const PanelInnerContainer = styled(_PanelInnerContainer, {
+  display: 'grid',
+  gridTemplateRows: '1fr 1fr',
+})

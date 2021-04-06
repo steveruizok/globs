@@ -1,19 +1,19 @@
 import { ReactNode } from "react"
 import { motion } from "framer-motion"
-import styled from "styled-components"
+import { styled } from "stitches.config"
 
 const ITEM_HEIGHT = 28
 
-export const Handle = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: center;
+export const Handle = styled('div', {
+	display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
 
-  & svg {
-    height: 20px;
-    width: 10px;
+  '& svg': {
+    height: '20px',
+    width: '10px',
   }
-`
+})
 
 export function Draggable({
   isDragging,

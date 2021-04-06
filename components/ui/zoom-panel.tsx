@@ -1,4 +1,4 @@
-import styled from "styled-components"
+import { styled } from "stitches.config"
 import state, { useSelector } from "lib/state"
 import * as vec from "lib/vec"
 
@@ -17,20 +17,20 @@ export default function ZoomPanel() {
   )
 }
 
-const Container = styled.div`
-  position: absolute;
-  bottom: 0px;
-  left: 0px;
-  border-radius: 4px;
-  pointer-events: all;
-  user-select: none;
-  padding: 4px 8px;
-  font: var(--fonts-mono);
-  color: var(--colors-muted);
-  background-color: var(--colors-panel);
-  border: 1px solid var(--border);
+const Container = styled('div', {
+	position: 'absolute',
+  bottom: '0px',
+  left: '0px',
+  borderRadius: '4px',
+  pointerEvents: 'all',
+  userSelect: 'none',
+  padding: '4px 8px',
+  font: 'var(--fonts-mono)',
+  color: 'var(--colors-muted)',
+  backgroundColor: 'var(--colors-panel)',
+  border: '1px solid var(--border)',
 
-  &:hover {
-    color: var(--colors-text);
+  '&:hover': {
+    color: 'var(--colors-text)',
   }
-`
+})

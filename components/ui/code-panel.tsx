@@ -1,4 +1,4 @@
-import styled from "styled-components"
+import { styled } from "stitches.config"
 import { X } from "react-feather"
 import { motion } from "framer-motion"
 import { useRef } from "react"
@@ -17,12 +17,12 @@ export default function CodePanel() {
   )
 }
 
-const DragWrapper = styled.div`
-  grid-area: main;
-`
+const DragWrapper = styled('div', {
+	gridArea: 'main',
+})
 
-const CodePanelContainer = styled(motion.div)`
-  width: 400px;
-  max-height: 80%;
-  background-color: var(--colors-panel);
-`
+const CodePanelContainer = styled(motion.div, {
+	width: '400px',
+  maxHeight: '80%',
+  backgroundColor: 'var(--colors-panel)',
+})

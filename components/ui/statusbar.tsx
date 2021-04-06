@@ -1,6 +1,6 @@
 import state from "lib/state"
 import { useStateDesigner } from "@state-designer/react"
-import styled from "styled-components"
+import { styled } from "stitches.config"
 import { useRef } from "react"
 
 export default function StatusBar() {
@@ -22,19 +22,19 @@ export default function StatusBar() {
   )
 }
 
-const Section = styled.div``
+const Section = styled('div', {})
 
-const StatusBarContainer = styled.div`
-  user-select: none;
-  border-top: 1px solid var(--colors-border);
-  grid-area: status;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  background-color: var(--colors-panel);
-  font: var(--fonts-mono);
-  padding: 0 16px;
-`
+const StatusBarContainer = styled('div', {
+	userSelect: 'none',
+  borderTop: '1px solid var(--colors-border)',
+  gridArea: 'status',
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'space-between',
+  backgroundColor: 'var(--colors-panel)',
+  font: 'var(--fonts-mono)',
+  padding: '0 16px',
+})
 
 function useRenderCount() {
   const rTime = useRef(Date.now())
