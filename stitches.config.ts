@@ -1,16 +1,16 @@
 import { createCss, defaultThemeMap } from '@stitches/react'
 
 export const { styled, global, theme, getCssString } = createCss({
-	themeMap: {
-		...defaultThemeMap,
-		font: 'fonts'
-	},
+  themeMap: {
+    ...defaultThemeMap,
+    font: 'fonts'
+  },
   theme: {
-		fonts: {
-			'ui': '500 12px/14px "Inter", -apple-system, sans-serif',
-			'section': '600 12px/14px "Inter", monospace',
-			'mono': '500 12px/14px "IBM Plex Mono", monospace',
-		},
+    fonts: {
+      'ui': '500 12px/14px "Inter", -apple-system, sans-serif',
+      'section': '600 12px/14px "Inter", monospace',
+      'mono': '500 12px/14px "IBM Plex Mono", monospace',
+    },
     colors: {
       left: 'rgba(29, 144, 255, 1)',
       right: 'rgba(255, 141, 30, 1)',
