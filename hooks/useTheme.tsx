@@ -1,8 +1,6 @@
 import React from "react"
 import { dark } from "stitches.config"
 
-// This is a very simple theme. It is not yet reactive.
-
 let theme: "dark" | "light" = "dark"
 
 if (typeof window !== "undefined") {
