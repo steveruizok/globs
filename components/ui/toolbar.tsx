@@ -90,7 +90,7 @@ export default function Toolbar() {
 }
 
 const StyledContainer = styled('div', {
-	userSelect: 'none',
+  userSelect: 'none',
   gridArea: 'tool',
   display: 'flex',
   alignItems: 'center',
@@ -138,5 +138,5 @@ const StyledContainer = styled('div', {
 })
 
 const Spacer = styled('div', {
-	flexGrow: 2,
+  flexGrow: 2,
 })

@@ -184,7 +184,7 @@ export default function LearnPanel({
 }
 
 const PanelContainer = styled(motion.div, {
-	position: 'absolute',
+  position: 'absolute',
   top: '0',
   left: '0',
   backgroundColor: 'var(--colors-panel)',
@@ -200,7 +200,7 @@ const PanelContainer = styled(motion.div, {
 })
 
 const IconButton = styled('button', {
-	height: '40px',
+  height: '40px',
   width: '40px',
   backgroundColor: 'var(--colors-panel)',
   borderRadius: '4px',
@@ -231,7 +231,7 @@ const IconButton = styled('button', {
 })
 
 const Content = styled('div', {
-	display: 'grid',
+  display: 'grid',
   gridTemplateColumns: '1fr',
   gridTemplateRows: 'auto auto 1fr',
   width: '100%',
@@ -255,7 +255,7 @@ const Content = styled('div', {
 })
 
 const Header = styled('div', {
-	pointerEvents: 'all',
+  pointerEvents: 'all',
   display: 'grid',
   gridTemplateColumns: 'auto 1fr',
   alignItems: 'center',
@@ -278,7 +278,7 @@ const Header = styled('div', {
 })
 
 const ButtonsGroup = styled('div', {
-	gridRow: '1',
+  gridRow: '1',
   gridColumn: '3',
   display: 'flex',
 })

@@ -25,7 +25,7 @@ export default function StatusBar() {
 const Section = styled('div', {})
 
 const StatusBarContainer = styled('div', {
-	userSelect: 'none',
+  userSelect: 'none',
   borderTop: '1px solid var(--colors-border)',
   gridArea: 'status',
   display: 'flex',

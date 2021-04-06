@@ -2,7 +2,7 @@ import { styled } from "stitches.config"
 import { motion } from "framer-motion"
 
 export const PropContainer = styled(motion.div, {
-	display: 'flex',
+  display: 'flex',
   justifyContent: 'space-between',
   overflow: 'hidden',
   padding: '4px 8px',

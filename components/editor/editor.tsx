@@ -195,7 +195,7 @@ export default function Editor() {
 }
 
 const EditorContainer = styled('div', {
-	position: 'fixed',
+  position: 'fixed',
   top: 0,
   right: 0,
   bottom: 0,
@@ -213,11 +213,11 @@ const EditorContainer = styled('div', {
 });
 
 const Layout = styled('div', {
-	pointerEvents: 'none',
+  pointerEvents: 'none',
   display: 'grid',
   height: '100%',
   gridTemplateAreas: `
-		"tool    tool    tool"
+    "tool    tool    tool"
     "content main    inspect"
     "status  status  status"`,
   gridTemplateColumns: 'auto 1fr auto',
@@ -238,7 +238,7 @@ const Layout = styled('div', {
 })
 
 const Main = styled('main', {
-	gridArea: 'main',
+  gridArea: 'main',
   position: 'relative',
   pointerEvents: 'none',
   margin: '16px',
@@ -247,12 +247,12 @@ const Main = styled('main', {
 })
 
 const OuterWrapper = styled('div',{
-	height: '100vh',
+  height: '100vh',
   width: '100vw',
 })
 
 const SVGWrapper = styled(ContextMenuTrigger, {
-	position: 'relative',
+  position: 'relative',
   gridColumn: '1 / span 3',
   gridRow: '1 / span 3',
   backgroundColor: 'var(--colors-canvas)',

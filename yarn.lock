@@ -1254,11 +1254,6 @@
   dependencies:
     "@radix-ui/react-use-callback-ref" "0.0.1"
 
-"@radix-ui/react-icons@^1.0.2":
-  version "1.0.2"
-  resolved "https://registry.yarnpkg.com/@radix-ui/react-icons/-/react-icons-1.0.2.tgz#e3590564d408438e1531d6d9038d580dc34bb6f5"
-  integrity sha512-6AAdgmQG6PZX7zL/kD4RGwTxXEiM4W2yiXQNZsaLcjKQYwLyUaMzZGsXFe2I0H6jp1a65uFphxmvDwROficOrg==
-
 "@radix-ui/react-id@0.0.1":
   version "0.0.1"
   resolved "https://registry.yarnpkg.com/@radix-ui/react-id/-/react-id-0.0.1.tgz#f04627366a64c3ceab321258731dcb9515a31451"

@@ -9,7 +9,6 @@
   },
   "dependencies": {
     "@radix-ui/react-context-menu": "^0.0.10",
-    "@radix-ui/react-icons": "^1.0.2",
     "@state-designer/react": "^1.6.9",
     "@stitches/react": "^0.1.4",
     "classnames": "^2.2.6",

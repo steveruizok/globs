@@ -19,7 +19,7 @@ export default function ContextMenu() {
 }
 
 const StyledContent = styled(_ContextMenu.Content, {
-	fontSize: '11px',
+  fontSize: '11px',
   minWidth: '130px',
   color: 'var(--colors-text)',
   backgroundColor: 'var(--colors-panel)',
@@ -29,7 +29,7 @@ const StyledContent = styled(_ContextMenu.Content, {
 })
 
 const StyledItem = styled(_ContextMenu.Item, {
-	fontSize: '13px',
+  fontSize: '13px',
   padding: '5px 10px',
   borderRadius: '2px',
   outline: 'none',

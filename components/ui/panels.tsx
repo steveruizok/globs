@@ -2,14 +2,14 @@ import { styled } from "stitches.config"
 import { motion } from "framer-motion"
 
 export const PanelContainer = styled(motion.div, {
-	position: 'relative',
+  position: 'relative',
   overflow: 'hidden',
   userSelect: 'none',
   backgroundColor: 'var(--colors-panel)',
 })
 
 export const ResizeHandle = styled(motion.div, {
-	position: 'absolute',
+  position: 'absolute',
   top: '0px',
   width: '5px',
   height: '100%',
@@ -39,7 +39,7 @@ export const ResizeHandle = styled(motion.div, {
 })
 
 export const PanelInnerContainer = styled('div', {
-	width: '100%',
+  width: '100%',
   height: '100%',
   minWidth: '200px',
   overflow: 'hidden',

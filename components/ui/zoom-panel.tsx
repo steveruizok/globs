@@ -18,7 +18,7 @@ export default function ZoomPanel() {
 }
 
 const Container = styled('div', {
-	position: 'absolute',
+  position: 'absolute',
   bottom: '0px',
   left: '0px',
   borderRadius: '4px',

@@ -5,7 +5,7 @@ import { styled } from "stitches.config"
 const ITEM_HEIGHT = 28
 
 export const Handle = styled('div', {
-	display: 'flex',
+  display: 'flex',
   alignItems: 'center',
   justifyContent: 'center',
 

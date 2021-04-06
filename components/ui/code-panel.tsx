@@ -18,11 +18,11 @@ export default function CodePanel() {
 }
 
 const DragWrapper = styled('div', {
-	gridArea: 'main',
+  gridArea: 'main',
 })
 
 const CodePanelContainer = styled(motion.div, {
-	width: '400px',
+  width: '400px',
   maxHeight: '80%',
   backgroundColor: 'var(--colors-panel)',
 })
