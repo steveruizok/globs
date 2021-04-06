@@ -1,7 +1,9 @@
 import React, { useCallback, useEffect, useRef } from "react"
 import { styled } from "stitches.config"
-import state from "lib/state"
+import state, { keys, pointer } from "lib/state"
 import usePinchZoom from "hooks/usePinchZoom"
+import * as vec from "lib/vec"
+import { motion, PanInfo, TapInfo } from "framer-motion"
 
 import ContextMenu, {
   ContextMenuRoot,
@@ -21,6 +23,7 @@ import BoundsBg from "./bounds/bounds-bg"
 import LearnPanel from "../ui/learn-panel"
 import ZoomPanel from "../ui/zoom-panel"
 import Snaps from "./snaps"
+import { throttle } from "lib/utils"
 
 const DOT_RADIUS = 2,
   ANCHOR_RADIUS = 4,
@@ -96,6 +99,58 @@ export default function Editor() {
     return () => void state.send("UNMOUNTED")
   }, [])
 
+  const handlePointerCancel = useCallback(() => {
+    for (let id in keys) {
+      keys[id] = false
+    }
+  }, [])
+
+  const handlePointerDown = useCallback((e: PointerEvent, info: TapInfo) => {
+    pointer.points.add(e.pointerId)
+
+    Object.assign(pointer, {
+      id: e.pointerId,
+      type: e.pointerType,
+      buttons: e.buttons,
+      direction: "any",
+    })
+
+    const { x, y } = info.point
+
+    pointer.origin = [x, y]
+    pointer.point = [x, y]
+    pointer.delta = [0, 0]
+
+    state.send("STARTED_POINTING")
+  }, [])
+
+  const handlePointerUp = useCallback((e: PointerEvent, info: TapInfo) => {
+    pointer.points.delete(e.pointerId)
+
+    if (e.pointerId !== pointer.id) return
+    const { x, y } = info.point
+
+    pointer.id = -1
+    pointer.buttons = e.buttons
+    pointer.delta = vec.sub([x, y], pointer.point)
+    pointer.point = [x, y]
+    pointer.axis = "any"
+
+    document.body.style.cursor = "default"
+
+    state.send("STOPPED_POINTING")
+  }, [])
+
+  const handlePointerMove = useCallback((e: React.PointerEvent) => {
+    const { clientX: x, clientY: y } = e
+    handleMove(x, y, e.pointerId, e.buttons)
+  }, [])
+
+  const handlePan = useCallback((e: PointerEvent, info: PanInfo) => {
+    const { x, y } = info.point
+    handleMove(x, y, e.pointerId, e.buttons)
+  }, [])
+
   // Prevent browser zoom and use our own instead
   const { handleTouchStart, handleTouchMove } = usePinchZoom(rContainer)
 
@@ -107,7 +162,14 @@ export default function Editor() {
   }, [])
 
   return (
-    <OuterWrapper>
+    <OuterWrapper
+      onTapStart={handlePointerDown}
+      onPan={handlePan}
+      onPointerCancel={handlePointerCancel}
+      onPointerLeave={handlePointerCancel}
+      onPointerMove={handlePointerMove}
+      onTap={handlePointerUp}
+    >
       <ContextMenuRoot>
         <EditorContainer ref={rContainer}>
           <Layout>
@@ -194,8 +256,8 @@ export default function Editor() {
   )
 }
 
-const EditorContainer = styled('div', {
-  position: 'fixed',
+const EditorContainer = styled("div", {
+  position: "fixed",
   top: 0,
   right: 0,
   bottom: 0,
@@ -203,70 +265,86 @@ const EditorContainer = styled('div', {
   zIndex: 0,
   // height: '100vh',
 
-  'g > *.hover-hidey': {
-    visibility: 'hidden',
+  "g > *.hover-hidey": {
+    visibility: "hidden",
   },
 
-  'g:hover > *.hover-hidey': {
-    visibility: 'visible',
-  }
-});
+  "g:hover > *.hover-hidey": {
+    visibility: "visible",
+  },
+})
 
-const Layout = styled('div', {
-  pointerEvents: 'none',
-  display: 'grid',
-  height: '100%',
+const Layout = styled("div", {
+  pointerEvents: "none",
+  display: "grid",
+  height: "100%",
   gridTemplateAreas: `
     "tool    tool    tool"
     "content main    inspect"
     "status  status  status"`,
-  gridTemplateColumns: 'auto 1fr auto',
-  gridTemplateRows: '40px 1fr 32px',
+  gridTemplateColumns: "auto 1fr auto",
+  gridTemplateRows: "40px 1fr 32px",
 
-  '@media (max-width: 768px)': {
-    gridTemplateColumns: '0px 1fr auto',
+  "@media (max-width: 768px)": {
+    gridTemplateColumns: "0px 1fr auto",
 
     '& > *[data-bp-desktop="true"]': {
-      display: 'none',
-    }
+      display: "none",
+    },
   },
 
-  '& > *': {
-    pointerEvents: 'all',
+  "& > *": {
+    pointerEvents: "all",
     zIndex: 2,
-  }
+  },
 })
 
-const Main = styled('main', {
-  gridArea: 'main',
-  position: 'relative',
-  pointerEvents: 'none',
-  margin: '16px',
-  width: 'calc(100% - 32px)',
-  height: 'calc(100% - 32px)',
+const Main = styled("main", {
+  gridArea: "main",
+  position: "relative",
+  pointerEvents: "none",
+  margin: "16px",
+  width: "calc(100% - 32px)",
+  height: "calc(100% - 32px)",
 })
 
-const OuterWrapper = styled('div',{
-  height: '100vh',
-  width: '100vw',
+const OuterWrapper = styled(motion.div, {
+  height: "100vh",
+  width: "100vw",
 })
 
 const SVGWrapper = styled(ContextMenuTrigger, {
-  position: 'relative',
-  gridColumn: '1 / span 3',
-  gridRow: '1 / span 3',
-  backgroundColor: '$canvas',
+  position: "relative",
+  gridColumn: "1 / span 3",
+  gridRow: "1 / span 3",
+  backgroundColor: "$canvas",
 
-  '& > svg': {
-    position: 'absolute',
-    top: '0',
-    right: '0',
-    bottom: '0',
-    left: '0',
-    zIndex: '1',
-    touchAction: 'none',
-    shapeRendering: 'optimizeSpeed',
-    textRendering: 'optimizeSpeed',
-    imageRendering: 'optimizeSpeed',
-  }
+  "& > svg": {
+    position: "absolute",
+    top: "0",
+    right: "0",
+    bottom: "0",
+    left: "0",
+    zIndex: "1",
+    touchAction: "none",
+    shapeRendering: "optimizeSpeed",
+    textRendering: "optimizeSpeed",
+    imageRendering: "optimizeSpeed",
+  },
 })
+
+const handleMove = throttle(
+  (x: number, y: number, pointerId: number, buttons: number) => {
+    if (pointer.id > -1 && pointerId !== pointer.id) return
+
+    const ox = Math.abs(x - pointer.origin[0])
+    const oy = Math.abs(y - pointer.origin[1])
+
+    pointer.axis = ox > oy ? "x" : "y"
+    pointer.buttons = buttons
+    pointer.delta = vec.sub([x, y], pointer.point)
+    pointer.point = [x, y]
+    state.send("MOVED_POINTER")
+  },
+  16
+)

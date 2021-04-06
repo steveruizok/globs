@@ -12,7 +12,7 @@ export const initialData: IData = {
     size: [0, 0],
   },
   camera: {
-    point: [200, 200],
+    point: [300, 300],
     zoom: 1,
   },
   fill: false,

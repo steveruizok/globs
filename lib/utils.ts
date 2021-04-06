@@ -838,14 +838,13 @@ export function circleFromThreePoints(A: number[], B: number[], C: number[]) {
   ]
 }
 
-export function throttle<T extends (...args: any[]) => any>(
+export function throttle<P extends any[], T extends (...args: P) => any>(
   fn: T,
   wait: number
 ) {
   let inThrottle: boolean, lastFn: any, lastTime: number
-  return function() {
-    const context = this,
-      args = arguments
+  return function(...args: P) {
+    const context = this
     if (!inThrottle) {
       fn.apply(context, args)
       lastTime = Date.now()

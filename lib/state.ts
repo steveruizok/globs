@@ -1707,10 +1707,6 @@ const state = createState({
       data.fill = false
 
       if (typeof window !== "undefined") {
-        document.body.addEventListener("pointerleave", handlePointerLeave)
-        window.addEventListener("pointermove", handlePointerMove)
-        window.addEventListener("pointerdown", handlePointerDown)
-        window.addEventListener("pointerup", handlePointerUp)
         window.addEventListener("keydown", handleKeyDown)
         window.addEventListener("keyup", handleKeyUp)
         window.addEventListener("resize", handleResize)
@@ -1718,10 +1714,6 @@ const state = createState({
     },
     teardown() {
       if (typeof window !== "undefined") {
-        document.body.removeEventListener("pointerleave", handlePointerLeave)
-        window.removeEventListener("pointermove", handlePointerMove)
-        window.removeEventListener("pointerdown", handlePointerDown)
-        window.removeEventListener("pointerup", handlePointerUp)
         window.removeEventListener("keydown", handleKeyDown)
         window.removeEventListener("keyup", handleKeyUp)
         window.removeEventListener("resize", handleResize)
@@ -1770,72 +1762,11 @@ export const keys: Record<string, boolean> = {}
 
 /* ------------------ INPUT EVENTS ------------------ */
 
-function handlePointerLeave() {
-  for (let id in keys) {
-    keys[id] = false
-  }
-}
-
 const handleResize = throttle(() => {
   if (typeof window !== "undefined") {
     state.send("RESIZED", { size: [window.innerWidth, window.innerHeight] })
   }
 }, 16)
-
-function handlePointerDown(e: PointerEvent) {
-  pointer.points.add(e.pointerId)
-
-  Object.assign(pointer, {
-    id: e.pointerId,
-    type: e.pointerType,
-    buttons: e.buttons,
-    direction: "any",
-  })
-
-  const x = e.clientX
-  const y = e.clientY
-
-  pointer.origin = [x, y]
-  pointer.point = [x, y]
-  pointer.delta = [0, 0]
-
-  state.send("STARTED_POINTING")
-}
-
-function handlePointerUp(e: PointerEvent) {
-  pointer.points.delete(e.pointerId)
-
-  if (e.pointerId !== pointer.id) return
-  const x = e.clientX
-  const y = e.clientY
-
-  pointer.id = -1
-  pointer.buttons = e.buttons
-  pointer.delta = vec.sub([x, y], pointer.point)
-  pointer.point = [x, y]
-  pointer.axis = "any"
-
-  document.body.style.cursor = "default"
-
-  state.send("STOPPED_POINTING")
-}
-
-const handlePointerMove = throttle((e: PointerEvent) => {
-  if (pointer.id > -1 && e.pointerId !== pointer.id) return
-  const x = e.clientX
-  const y = e.clientY
-
-  const ox = Math.abs(x - pointer.origin[0])
-  const oy = Math.abs(y - pointer.origin[1])
-
-  pointer.axis = ox > oy ? "x" : "y"
-  pointer.buttons = e.buttons
-  pointer.delta = vec.sub([x, y], pointer.point)
-  pointer.point = [x, y]
-  state.send("MOVED_POINTER")
-}, 16)
-
-// Keyboard commands
 
 const downCommands: Record<string, KeyCommand[]> = {
   z: [
