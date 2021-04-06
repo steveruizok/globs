@@ -16,9 +16,7 @@ class MyDocument extends Document {
   render() {
     return (
       <Html>
-        <Head>
-          <title>Glob Editor</title>
-        </Head>
+        <Head></Head>
         <body className={dark}>
           <Main />
           <NextScript />
