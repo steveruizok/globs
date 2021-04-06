@@ -80,37 +80,42 @@ export enum ISnapTypes {
   NodesX = "NodesX",
   NodesY = "NodesY",
   Handle = "Handle",
+  HandleStraight = "HandleStraight",
 }
 
 export interface IBaseSnap {
   type: ISnapTypes
+  from: number[]
+  to: number[]
 }
 
 interface NodeCentersSnap extends IBaseSnap {
   type: ISnapTypes.NodesCenter
-  from: number[]
-  to: number[]
 }
 
 interface NodeXSnap extends IBaseSnap {
   type: ISnapTypes.NodesX
-  from: number[]
-  to: number[]
 }
 
 interface NodeYSnap extends IBaseSnap {
   type: ISnapTypes.NodesY
-  from: number[]
-  to: number[]
 }
 
 interface HandleSnap extends IBaseSnap {
   type: ISnapTypes.Handle
-  from: number[]
-  to: number[]
 }
 
-export type ISnap = NodeCentersSnap | NodeXSnap | NodeYSnap | HandleSnap
+interface HandleStraightSnap extends IBaseSnap {
+  type: ISnapTypes.HandleStraight
+  n: number[]
+}
+
+export type ISnap =
+  | NodeCentersSnap
+  | NodeXSnap
+  | NodeYSnap
+  | HandleSnap
+  | HandleStraightSnap
 
 export interface IData {
   viewport: {

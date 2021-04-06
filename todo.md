@@ -1,5 +1,6 @@
 # Todo
 
+- [ ] Fix zooming
 - [x] Keep camera centered when resizing
 - [x] Reorder nodes
 - [x] Reorder globs
