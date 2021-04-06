@@ -1,5 +1,5 @@
-import React from 'react'
-import { dark } from 'stitches.config'
+import React from "react"
+import { dark } from "stitches.config"
 
 // This is a very simple theme. It is not yet reactive.
 
@@ -15,10 +15,10 @@ if (typeof window !== "undefined") {
 }
 
 export default function useTheme() {
-	// Set dark theme by default
-	React.useEffect(() => {
-		document.body.classList.add(dark)
-	},[])
+  // Set dark theme by default
+  React.useEffect(() => {
+    theme === "dark" && document.body.classList.add(dark)
+  }, [])
 
   function toggle() {
     theme = theme === "dark" ? "light" : "dark"
