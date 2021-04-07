@@ -52,12 +52,6 @@ const state = createState({
     MOUNTED: { do: ["setup", "setViewport"], to: "selecting" },
     UNMOUNTED: "teardown",
     RESIZED: "setViewport",
-    STARTED_CREATING_NODES: { to: "creatingNodes" },
-
-    STARTED_LINKING_NODES: {
-      if: "hasSelectedNodes",
-      to: "linkingNodes",
-    },
     SET_NODES_X: ["setSelectedNodesPointX", "updateGlobPoints"],
     SET_NODES_Y: ["setSelectedNodesPointY", "updateGlobPoints"],
     SET_NODES_RADIUS: ["setSelectedNodesRadius", "updateGlobPoints"],
@@ -84,6 +78,13 @@ const state = createState({
     selecting: {
       on: {
         LOCKED_NODES: "lockSelectedNodes",
+        STARTED_CREATING_NODES: {
+          to: "creatingNodes",
+        },
+        STARTED_LINKING_NODES: {
+          if: "hasSelectedNodes",
+          to: "linkingNodes",
+        },
       },
       initial: "notPointing",
       states: {
@@ -326,6 +327,9 @@ const state = createState({
     creatingNodes: {
       onExit: "saveData",
       on: {
+        STARTED_CREATING_NODES: {
+          to: "selecting",
+        },
         CANCELLED: { to: "selecting" },
         POINTED_CANVAS: {
           do: "createNode",
@@ -337,6 +341,7 @@ const state = createState({
       onExit: "saveData",
       on: {
         CANCELLED: { to: "selecting" },
+        STARTED_LINKING_NODES: { to: "selecting" },
         POINTED_CANVAS: {
           do: ["createNodeAndGlob", "saveData"],
           to: "selecting",

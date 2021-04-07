@@ -19,7 +19,7 @@ const state = createState({
     pages: [
       {
         title: "Creating Nodes",
-        image: "learn/nodes.gif",
+        image: "learn/intro_nodes.mp4",
         description: (
           <p>
             To <b>create</b> a node: click the{" "}
@@ -30,7 +30,7 @@ const state = createState({
       },
       {
         title: "Creating Globs",
-        image: "learn/globs.gif",
+        image: "learn/intro_globs.mp4",
         description: (
           <p>
             To <b>link</b> two nodes with a glob: select a node, click the{" "}
@@ -45,20 +45,71 @@ const state = createState({
       },
       {
         title: "Setting Handles",
-        image: "learn/handles.gif",
+        image: "learn/intro_handles.mp4",
         description: (
           <p>
-            To <b>change</b> a glob, drag its handles. Hold <b>Command</b> to
-            move both handles at once.
+            To <b>change</b> a glob: drag its handles. Hold <b>Command</b> to
+            move both handles at once. Hold <b>Shift</b> to move along only one
+            axis. Hold <b>Option</b> to turn off auto-snapping.
+          </p>
+        ),
+      },
+      {
+        title: "Preview",
+        image: "learn/intro_preview.mp4",
+        description: (
+          <p>
+            To <b>preview</b> a glob: hold the spacebar.
           </p>
         ),
       },
       {
         title: "Resizing Nodes",
-        image: "learn/resizing.gif",
+        image: "learn/intro_resizing.mp4",
         description: (
           <p>
             To <b>resize</b> a node: hold <b>Command</b> and drag the node.
+          </p>
+        ),
+      },
+      {
+        title: "Caps",
+        image: "learn/intro_caps.mp4",
+        description: (
+          <p>
+            To change a node's <b>cap</b>: double click it.
+          </p>
+        ),
+      },
+      {
+        title: "Anchors",
+        image: "learn/intro_anchors.mp4",
+        description: (
+          <p>
+            For <b>fine adjustment</b>: drag a glob's anchor points.
+          </p>
+        ),
+      },
+      {
+        title: "Splitting",
+        image: "learn/intro_splitting.mp4",
+        description: (
+          <p>
+            To <b>split</b> a glob: hold <b>Command</b>, click on the glob, and
+            then click again to split.
+          </p>
+        ),
+      },
+      {
+        title: "Selecting",
+        image: "learn/intro_selecting.mp4",
+        description: (
+          <p>
+            To <b>select</b> things: click on the canvas and draw a box. To{" "}
+            <b>move</b>
+            the items, click and drag the box. To <b>resize</b> the items: click
+            and drag the box's edges or corners. To <b>rotate</b>: click and
+            drag at a point just past the corners.
           </p>
         ),
       },
@@ -137,6 +188,21 @@ export default function LearnPanel({
     }
   }
 
+  useEffect(() => {
+    const wrapper = bounds.current!
+    const container = rContainer.current!
+    const maxY = wrapper.offsetHeight - container.offsetHeight
+
+    animate(
+      mvY,
+      mvY.get() + container.offsetHeight > wrapper.offsetHeight
+        ? maxY
+        : mvY.get() > maxY / 2
+        ? maxY
+        : 0
+    )
+  }, [page])
+
   return (
     <PanelContainer
       ref={rContainer}
@@ -174,7 +240,15 @@ export default function LearnPanel({
             </ButtonsGroup>
           </Header>
           <div>
-            <img src={page.image} height="auto" width="100%" />
+            <video
+              src={page.image}
+              height="auto"
+              width="100%"
+              autoPlay
+              muted
+              playsInline
+              loop
+            />
           </div>
           {page.description}
         </Content>
@@ -184,101 +258,101 @@ export default function LearnPanel({
 }
 
 const PanelContainer = styled(motion.div, {
-  position: 'absolute',
-  top: '0',
-  left: '0',
-  backgroundColor: '$panel',
-  borderRadius: '4px',
-  overflow: 'hidden',
-  border: '1px solid $border',
-  pointerEvents: 'all',
-  userSelect: 'none',
+  position: "absolute",
+  top: "0",
+  left: "0",
+  backgroundColor: "$panel",
+  borderRadius: "4px",
+  overflow: "hidden",
+  border: "1px solid $border",
+  pointerEvents: "all",
+  userSelect: "none",
 
-  'button': {
-    border: 'none',
-  }
+  button: {
+    border: "none",
+  },
 })
 
-const IconButton = styled('button', {
-  height: '40px',
-  width: '40px',
-  backgroundColor: '$panel',
-  borderRadius: '4px',
-  border: '1px solid $border',
-  padding: '0',
-  margin: '0',
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-  outline: 'none',
-  pointerEvents: 'all',
-  cursor: 'pointer',
+const IconButton = styled("button", {
+  height: "40px",
+  width: "40px",
+  backgroundColor: "$panel",
+  borderRadius: "4px",
+  border: "1px solid $border",
+  padding: "0",
+  margin: "0",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  outline: "none",
+  pointerEvents: "all",
+  cursor: "pointer",
 
-  '&:hover:not(:disabled)': {
-    backgroundColor: '$panel',
+  "&:hover:not(:disabled)": {
+    backgroundColor: "$panel",
   },
 
-  '&:disabled': {
-    opacity: '0.5',
+  "&:disabled": {
+    opacity: "0.5",
   },
 
-  'svg': {
-    height: '20px',
-    width: '20px',
-    strokeWidth: '2px',
-    stroke: '$text',
-  }
+  svg: {
+    height: "20px",
+    width: "20px",
+    strokeWidth: "2px",
+    stroke: "$text",
+  },
 })
 
-const Content = styled('div', {
-  display: 'grid',
-  gridTemplateColumns: '1fr',
-  gridTemplateRows: 'auto auto 1fr',
-  width: '100%',
-  maxWidth: '400px',
-  height: '340px',
-  paddingBottom: '4px',
-  userSelect: 'none',
-  pointerEvents: 'all',
+const Content = styled("div", {
+  display: "grid",
+  gridTemplateColumns: "1fr",
+  gridTemplateRows: "auto minmax(230px, auto) 1fr",
+  width: "100%",
+  maxWidth: "400px",
+  minHeight: "260px",
+  paddingBottom: "4px",
+  userSelect: "none",
+  pointerEvents: "all",
 
-  '& > div': {
-    pointerEvents: 'none',
+  "& > div": {
+    pointerEvents: "none",
   },
 
-  'img': {},
+  img: {},
 
-  'p': {
-    margin: '0',
-    padding: '16px',
-    fontSize: '13px',
-  }
+  p: {
+    margin: "0",
+    padding: "16px",
+    fontSize: "13px",
+  },
 })
 
-const Header = styled('div', {
-  pointerEvents: 'all',
-  display: 'grid',
-  gridTemplateColumns: 'auto 1fr',
-  alignItems: 'center',
-  justifyContent: 'center',
-  borderBottom: '1px solid $border',
+const Header = styled("div", {
+  pointerEvents: "all",
+  display: "grid",
+  gridTemplateColumns: "auto 1fr",
+  alignItems: "center",
+  justifyContent: "center",
+  borderBottom: "1px solid $border",
 
-  '& button': {
-    gridColumn: '1',
-    gridRow: '1',
+  "& button": {
+    gridColumn: "1",
+    gridRow: "1",
   },
 
-  '& h3': {
-    gridColumn: '1 / span 3',
-    gridRow: '1',
-    textAlign: 'center',
-    margin: '0',
-    padding: '0',
-    fontSize: '16px',
-  }
+  "& h3": {
+    gridColumn: "1 / span 3",
+    gridRow: "1",
+    textAlign: "center",
+    margin: "0",
+    padding: "0",
+    fontSize: "16px",
+  },
 })
 
-const ButtonsGroup = styled('div', {
-  gridRow: '1',
-  gridColumn: '3',
-  display: 'flex',
+const ButtonsGroup = styled("div", {
+  gridRow: "1",
+  gridColumn: "3",
+  display: "flex",
 })

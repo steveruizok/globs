@@ -54,7 +54,9 @@ export default function Toolbar() {
         <button
           title="Create Node (N)"
           data-active={isCreating}
-          onClick={() => state.send("STARTED_CREATING_NODES")}
+          onClick={() => {
+            state.send("STARTED_CREATING_NODES")
+          }}
         >
           <Disc />
         </button>
@@ -89,54 +91,56 @@ export default function Toolbar() {
   )
 }
 
-const StyledContainer = styled('div', {
-  userSelect: 'none',
-  gridArea: 'tool',
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'space-between',
-  backgroundColor: '$panel',
-  borderBottom: '1px solid $border',
+const StyledContainer = styled("div", {
+  userSelect: "none",
+  gridArea: "tool",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "space-between",
+  backgroundColor: "$panel",
+  borderBottom: "1px solid $border",
 
-  '& svg': {
-    height: '18px',
-    width: '18px',
-    stroke: '$text',
+  "& svg": {
+    height: "18px",
+    width: "18px",
+    stroke: "$text",
   },
 
-  '& > section': {
-    display: 'flex',
+  "& > section": {
+    display: "flex",
   },
 
-  '& section > button': {
-    background: 'none',
-    border: 'none',
-    width: '40px',
-    height: '40px',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    cursor: 'pointer',
-    outline: 'none',
+  "& section > button": {
+    background: "none",
+    border: "none",
+    width: "40px",
+    height: "40px",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    cursor: "pointer",
+    outline: "none",
 
-    '&:hover:enabled': {
-      '& > svg': {
-        stroke: '$selected',
-      }
+    "@media (min-width: 768px)": {
+      "&:hover:enabled": {
+        "& > svg": {
+          stroke: "$selected",
+        },
+      },
     },
 
-    '&:disabled': {
-      opacity: '0.3',
+    "&:disabled": {
+      opacity: "0.3",
     },
 
     '&[data-active="true"]': {
-      '& > svg': {
-        stroke: '$selected',
-      }
-    }
-  }
+      "& > svg": {
+        stroke: "$selected",
+      },
+    },
+  },
 })
 
-const Spacer = styled('div', {
+const Spacer = styled("div", {
   flexGrow: 2,
 })
