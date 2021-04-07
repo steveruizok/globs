@@ -1437,3 +1437,17 @@ export function pointInRect(
     point[1] > maxY
   )
 }
+
+// Point should be in world space
+export function getNodeResizer(node: INode, point: number[]) {
+  let iPoint = [...node.point]
+  const iRadius = node.radius
+  const iDist = vec.dist(node.point, point)
+
+  return function resize(point: number[], absolute: boolean) {
+    const dist = vec.dist(iPoint, point)
+    return absolute ? dist : iRadius + (dist - iDist)
+  }
+}
+
+export type NodeResizer = ReturnType<typeof getNodeResizer>

@@ -29,6 +29,8 @@ import {
   throttle,
   getLineLineIntersection,
   resizeBounds,
+  getNodeResizer,
+  NodeResizer,
 } from "utils"
 import { getClosestPointOnCurve, getNormalOnCurve } from "lib/bez"
 import { initialData } from "./data"
@@ -237,17 +239,37 @@ const state = createState({
             "setSnapPoints",
           ],
           on: {
-            CANCELLED: { do: "returnSelected", to: "notPointing" },
-            WHEELED: ["moveSelected", "updateGlobPoints"],
-            MOVED_POINTER: [
-              {
-                if: "hasMeta",
-                do: ["resizeNode", "updateGlobPoints"],
-                else: ["moveSelected", "updateGlobPoints"],
-              },
-            ],
             STOPPED_POINTING: {
               to: "notPointing",
+            },
+          },
+          initial: "idle",
+          states: {
+            idle: {
+              onEnter: {
+                if: "hasMeta",
+                to: "resizing",
+              },
+              on: {
+                PRESSED_META: { to: "resizing" },
+                CANCELLED: { do: "returnSelected", to: "notPointing" },
+                WHEELED: ["moveSelected", "updateGlobPoints"],
+                MOVED_POINTER: ["moveSelected", "updateGlobPoints"],
+              },
+            },
+            resizing: {
+              onEnter: { do: "setNodeResizer" },
+              on: {
+                RELEASED_META: {
+                  to: "idle",
+                },
+                MOVED_POINTER: [
+                  {
+                    do: ["resizeNode", "updateGlobPoints"],
+                    else: ["moveSelected", "updateGlobPoints"],
+                  },
+                ],
+              },
             },
           },
         },
@@ -812,12 +834,23 @@ const state = createState({
       data.hoveredNodes = [node.id]
       data.selectedNodes = [node.id]
     },
+    setNodeResizer(data) {
+      const { nodes, hoveredNodes, camera, selectedNodes } = data
+      if (selectedNodes[0] !== hoveredNodes[0]) return
+      const node = nodes[selectedNodes[0]]
+      nodeResizer = getNodeResizer(
+        node,
+        screenToWorld(pointer.point, camera.point, camera.zoom)
+      )
+    },
     resizeNode(data) {
       const { nodes, hoveredNodes, camera, selectedNodes } = data
       if (selectedNodes[0] !== hoveredNodes[0]) return
       const node = nodes[selectedNodes[0]]
-      const point = screenToWorld(pointer.point, camera.point, camera.zoom)
-      node.radius = round(vec.dist(point, node.point))
+      node.radius = nodeResizer(
+        screenToWorld(pointer.point, camera.point, camera.zoom),
+        keys.Shift
+      )
     },
     setSelectedNode(data, payload: { id: string }) {
       data.bounds = undefined
@@ -1762,6 +1795,7 @@ const state = createState({
 let edgeResizer: EdgeResizer = undefined
 let cornerResizer: CornerResizer = undefined
 let cornerRotater: CornerRotater = undefined
+let nodeResizer: NodeResizer = undefined
 let snappingNode: string = undefined
 let nodeSnapper: NodeSnapper = undefined
 

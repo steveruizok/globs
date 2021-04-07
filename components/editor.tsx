@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useRef } from "react"
 import { styled } from "stitches.config"
-import state, { keys, pointer } from "lib/state"
+import state, { keys, pointer, useSelector } from "lib/state"
 import usePinchZoom from "hooks/usePinchZoom"
 import * as vec from "lib/vec"
 import { motion, PanInfo, TapInfo } from "framer-motion"
@@ -38,6 +38,8 @@ export default function Editor() {
   const rCorner = useRef<SVGRectElement>(null)
   const rSnap = useRef<SVGPathElement>(null)
   const rMain = useRef<HTMLDivElement>(null)
+
+  const isFilled = useSelector((state) => state.data.fill)
 
   // When we zoom or pan, manually update the svg's viewbox
   // This is expensive, so we want to set this property
@@ -169,11 +171,13 @@ export default function Editor() {
             <SVGWrapper
               onPointerDown={(e) => {
                 if (e.target.constructor.name !== "SVGSVGElement") return
+                if (e.buttons !== 1) return
                 state.send("POINTED_CANVAS")
               }}
               onTouchStart={handleTouchStart}
               onTouchEnd={handleTouchMove}
               onWheel={handleWheel}
+              quality={isFilled ? "high" : "low"}
             >
               <svg ref={rSvg} width="100%" height="100%" strokeLinecap="round">
                 <defs>
@@ -249,7 +253,6 @@ const EditorContainer = styled("div", {
   bottom: 0,
   left: 0,
   zIndex: 0,
-  // height: '100vh',
 
   "g > *.hover-hidey": {
     visibility: "hidden",
@@ -313,9 +316,21 @@ const SVGWrapper = styled(ContextMenuTrigger, {
     left: "0",
     zIndex: "1",
     touchAction: "none",
-    shapeRendering: "optimizeSpeed",
-    textRendering: "optimizeSpeed",
-    imageRendering: "optimizeSpeed",
+  },
+
+  variants: {
+    quality: {
+      low: {
+        "& svg": {
+          shapeRendering: "optimizeSpeed",
+        },
+      },
+      high: {
+        "& svg": {
+          shapeRendering: "geometricPrecision",
+        },
+      },
+    },
   },
 })
 
