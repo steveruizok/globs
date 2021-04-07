@@ -393,9 +393,6 @@ const state = createState({
     isTrackpadZoom(data, payload: { ctrlKey: boolean }) {
       return keys.Alt || payload.ctrlKey
     },
-    hasControl() {
-      return keys.Control
-    },
     hasMeta() {
       return keys.Meta
     },
@@ -1835,9 +1832,12 @@ const upCommands = {
 }
 
 function handleKeyDown(e: KeyboardEvent) {
-  keys[e.key] = true
-  if (e.key in downCommands) {
-    for (let { modifiers, eventName } of downCommands[e.key]) {
+  let { key } = e
+  if (key === "Control" && !isMacintosh()) key = "Meta"
+  keys[key] = true
+
+  if (key in downCommands) {
+    for (let { modifiers, eventName } of downCommands[key]) {
       if (modifiers.every((command) => keys[command])) {
         e.preventDefault()
         state.send(eventName)
@@ -1846,13 +1846,16 @@ function handleKeyDown(e: KeyboardEvent) {
     }
   }
 
-  state.send("PRESSED_KEY", { key: e.key })
+  state.send("PRESSED_KEY", { key })
 }
 
 function handleKeyUp(e: KeyboardEvent) {
-  keys[e.key] = false
-  if (e.key in upCommands) {
-    for (let { modifiers, eventName } of upCommands[e.key]) {
+  let { key } = e
+  if (key === "Control" && !isMacintosh()) key = "Meta"
+  keys[key] = false
+
+  if (key in upCommands) {
+    for (let { modifiers, eventName } of upCommands[key]) {
       if (modifiers.every((command) => keys[command])) {
         e.preventDefault()
         state.send(eventName)
@@ -1861,7 +1864,7 @@ function handleKeyUp(e: KeyboardEvent) {
     }
   }
 
-  state.send("RELEASED_KEY", { key: e.key })
+  state.send("RELEASED_KEY", { key })
 }
 
 function screenToWorld(point: number[], offset: number[], zoom: number) {
@@ -1955,4 +1958,12 @@ function isInView(point: number[], document: IData["document"]) {
     point[1] < document.point[1] ||
     point[1] > document.point[1] + document.size[1]
   )
+}
+
+function isMacintosh() {
+  return navigator.platform.indexOf("Mac") > -1
+}
+
+function isWindows() {
+  return navigator.platform.indexOf("Win") > -1
 }
