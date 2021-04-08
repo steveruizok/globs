@@ -628,32 +628,7 @@ const state = createState({
 
     // NODES
     createNode(data) {
-      const { camera } = data
-      commands.createNode(
-        data,
-        screenToWorld(pointer.point, camera.point, camera.zoom)
-      )
-    },
-    setNodeResizer(data) {
-      const { nodes, hoveredNodes, camera, selectedNodes } = data
-      if (selectedNodes[0] !== hoveredNodes[0]) return
-      const node = nodes[selectedNodes[0]]
-      nodeResizer = getNodeResizer(
-        node,
-        screenToWorld(pointer.point, camera.point, camera.zoom)
-      )
-    },
-    resizeNode(data) {
-      const { nodes, hoveredNodes, camera, selectedNodes } = data
-      if (selectedNodes[0] !== hoveredNodes[0]) return
-      const node = nodes[selectedNodes[0]]
-      node.radius = nodeResizer(
-        screenToWorld(pointer.point, camera.point, camera.zoom),
-        keys.Shift
-      )
-    },
-    toggleNodeLocked(data, payload: { id: string }) {
-      data.nodes[payload.id].locked = !data.nodes[payload.id].locked
+      commands.createNode(data)
     },
     lockSelectedNodes(data) {
       commands.toggleSelectionLocked(data)
@@ -691,8 +666,13 @@ const state = createState({
     completeRadiusMove(data) {
       radiusMover.complete(data)
     },
+    // TODO: Make a command
+    toggleNodeLocked(data, payload: { id: string }) {
+      data.nodes[payload.id].locked = !data.nodes[payload.id].locked
+    },
 
     // GLOBS
+    // TODO: Make a command
     setSelectedGlobOptions(data, payload: Partial<IGlob["options"]>) {
       const { globs, selectedGlobs } = data
       for (let id of selectedGlobs) {
@@ -700,6 +680,7 @@ const state = createState({
         Object.assign(glob.options, payload)
       }
     },
+    // TODO: Remove once other commands are in
     updateGlobPoints(data) {
       const { globs, globIds, nodes, selectedNodes, selectedGlobs } = data
 
@@ -788,6 +769,7 @@ const state = createState({
     setBounds(data, payload: { bounds: IBounds }) {
       data.bounds = payload.bounds
     },
+    // TODO: Make a command
     changeBoundsX(data, payload: { value: number }) {
       const { selectedNodes, selectedGlobs, nodes, globs } = data
       const bounds = getSelectedBoundingBox(data)
@@ -812,6 +794,7 @@ const state = createState({
         glob.options.Dp[0] += dx
       }
     },
+    // TODO: Make a command
     changeBoundsY(data, payload: { value: number }) {
       const { selectedNodes, selectedGlobs, nodes, globs } = data
       const bounds = getSelectedBoundingBox(data)
@@ -866,67 +849,7 @@ const state = createState({
     completeCornerResize(data) {
       resizeMover.complete(data)
     },
-    // setResizingCorner(data, payload: { corner: number }) {
-    //   const { selectedNodes, selectedGlobs, globs, nodes } = data
-
-    //   cornerResizer = getCornerResizer(
-    //     selectedNodes.map((id) => nodes[id]),
-    //     selectedGlobs.map((id) => globs[id]),
-    //     getSelectedBoundingBox(data),
-    //     payload.corner
-    //   )
-    // },
-    // cornerResize(data) {
-    //   const { selectedNodes, selectedGlobs, globs, nodes, camera } = data
-
-    //   cornerResizer(
-    //     screenToWorld(pointer.point, camera.point, camera.zoom),
-    //     selectedNodes.map((id) => nodes[id]),
-    //     selectedGlobs.map((id) => globs[id]),
-    //     keys.Meta
-    //   )
-    // },
-    // setResizingEdge(data, payload: { edge: number }) {
-    //   const { selectedNodes, selectedGlobs, globs, nodes } = data
-
-    //   edgeResizer = getEdgeResizer(
-    //     selectedNodes.map((id) => nodes[id]),
-    //     selectedGlobs.map((id) => globs[id]),
-    //     getSelectedBoundingBox(data),
-    //     payload.edge
-    //   )
-    // },
-    // edgeResize(data) {
-    //   const { selectedNodes, selectedGlobs, nodes, globs, camera } = data
-
-    //   edgeResizer(
-    //     screenToWorld(pointer.point, camera.point, camera.zoom),
-    //     selectedNodes.map((id) => nodes[id]),
-    //     selectedGlobs.map((id) => globs[id]),
-    //     keys.Meta
-    //   )
-    // },
-    // setRotatingCorner(data) {
-    //   const { selectedNodes, selectedGlobs, globs, nodes, camera } = data
-
-    //   cornerRotater = getCornerRotater(
-    //     selectedNodes.map((id) => nodes[id]),
-    //     selectedGlobs.map((id) => globs[id]),
-    //     screenToWorld(pointer.point, camera.point, camera.zoom),
-    //     getSelectedBoundingBox(data)
-    //   )
-    // },
-    // cornerRotate(data) {
-    //   const { selectedNodes, selectedGlobs, globs, nodes, camera } = data
-
-    //   cornerRotater(
-    //     screenToWorld(pointer.point, camera.point, camera.zoom),
-    //     selectedNodes.map((id) => nodes[id]),
-    //     selectedGlobs.map((id) => globs[id])
-    //   )
-    // },
     beginRotate(data) {
-      console.log("beginning rotate")
       rotateMover = new RotateMover(data)
     },
     updateRotate(data) {
@@ -1039,7 +962,7 @@ const state = createState({
       if (typeof localStorage === "undefined") return
       const saved = localStorage.getItem("glob_aldata_v6")
       if (saved) {
-        // Object.assign(data, JSON.parse(saved))
+        Object.assign(data, JSON.parse(saved))
       }
 
       data.selectedNodes = []

@@ -81,11 +81,17 @@ class BaseCommand<T extends any> {
 class BaseHistory<T> {
   private stack: BaseCommand<T>[] = []
   private pointer = -1
+  private maxLength = 100
 
   execute = (data: T, command: BaseCommand<T>) => {
     this.stack = this.stack.slice(0, this.pointer + 1)
     this.stack.push(command)
     this.pointer++
+
+    if (this.stack.length > this.maxLength) {
+      this.stack = this.stack.slice(this.stack.length - this.maxLength)
+      this.pointer = this.maxLength - 1
+    }
 
     command.redo(data, true)
   }
@@ -148,7 +154,8 @@ export class Command extends BaseCommand<IData> {
 // For every command that changes the data, create an action that also undoes it.
 
 export const commands = {
-  createNode(data: IData, point: number[]) {
+  createNode(data: IData) {
+    const point = screenToWorld(pointer.point, data.camera)
     const restoreSelectionState = saveSelectionState(data)
     const node = createNode(point)
 
@@ -899,6 +906,7 @@ export const commands = {
       })
     )
   },
+  // TODO: Turn this into a mover, so that it doesn't blow undo stack
   resizeBounds(data: IData, size: number[]) {
     const restoreSelectionState = saveSelectionState(data)
     const sNodeIds = [...data.selectedNodes]
@@ -944,7 +952,6 @@ export const commands = {
   resizeNode(data: IData, id: string, initial: RadiusMoverSnapshot) {
     const restoreSelectionState = saveSelectionState(data)
     const current = RadiusMover.getSnapshot(data, id)
-    // We need a way to restore the nodes from when the drag began and ended
     history.execute(
       data,
       new Command({
