@@ -23,10 +23,10 @@ export default function usePinchZoom(ref: RefObject<HTMLDivElement>) {
       const { clientX: x1, clientY: y1 } = e.touches[1]
 
       const dist = Vec.dist([x0, y0], [x1, y1])
-      state.send("WHEELED", { delta: [0, dist - rTouchDist.current] })
+      // state.send("WHEELED", { delta: [0, dist - rTouchDist.current] })
       rTouchDist.current = dist
     }
   }, [])
 
-  return { handleTouchStart, handleTouchMove }
+  return { onTouchStart: handleTouchStart, onTouchMove: handleTouchMove }
 }

@@ -102,7 +102,7 @@ export default function Editor() {
   }, [])
 
   const handlePointerDown = useCallback((e: PointerEvent, info: TapInfo) => {
-    pointer.points.add(e.pointerId)
+    // pointer.points.add(e.pointerId)
 
     Object.assign(pointer, {
       id: e.pointerId,
@@ -121,13 +121,11 @@ export default function Editor() {
   }, [])
 
   const handlePointerUp = useCallback((e: PointerEvent, info: TapInfo) => {
-    pointer.points.delete(e.pointerId)
+    // pointer.points.clear()
 
-    if (e.pointerId !== pointer.id) return
     const { x, y } = info.point
 
     pointer.id = -1
-    pointer.buttons = e.buttons
     pointer.delta = vec.sub([x, y], pointer.point)
     pointer.point = [x, y]
     pointer.axis = "any"
@@ -138,11 +136,13 @@ export default function Editor() {
   }, [])
 
   const handlePointerMove = useCallback((e: React.PointerEvent) => {
+    // if (!pointer.points.has(e.pointerId)) return
     const { clientX: x, clientY: y } = e
     handleMove(x, y, e.pointerId, e.buttons)
   }, [])
 
   const handlePan = useCallback((e: PointerEvent, info: PanInfo) => {
+    // if (!pointer.points.has(e.pointerId)) return
     const { x, y } = info.point
     handleMove(x, y, e.pointerId, e.buttons)
   }, [])
@@ -157,13 +157,12 @@ export default function Editor() {
   const handleWrapperPointerDown = useCallback(
     (e: React.PointerEvent<HTMLDivElement>) => {
       if (e.target.constructor.name !== "SVGSVGElement") return
-      if (e.buttons !== 1) return
       state.send("POINTED_CANVAS")
     },
     []
   )
 
-  const { handleTouchStart, handleTouchMove } = usePinchZoom(rContainer)
+  const zoomEvents = usePinchZoom(rContainer)
 
   return (
     <OuterWrapper
@@ -178,11 +177,10 @@ export default function Editor() {
         <EditorContainer ref={rContainer}>
           <Layout>
             <SVGWrapper
-              onPointerDown={handleWrapperPointerDown}
-              onTouchStart={handleTouchStart}
-              onTouchEnd={handleTouchMove}
-              onWheel={handleWheel}
               quality={isFilled ? "high" : "low"}
+              onPointerDown={handleWrapperPointerDown}
+              onWheel={handleWheel}
+              {...zoomEvents}
             >
               <svg ref={rSvg} width="100%" height="100%" strokeLinecap="round">
                 <defs>
@@ -349,7 +347,7 @@ const handleMove = throttle(
   (x: number, y: number, pointerId: number, buttons: number) => {
     if (state.isIn("draggingThumbstick")) return
 
-    if (pointer.id > -1 && pointerId !== pointer.id) return
+    // if (pointer.id > -1 && pointerId !== pointer.id) return
 
     const ox = Math.abs(x - pointer.origin[0])
     const oy = Math.abs(y - pointer.origin[1])

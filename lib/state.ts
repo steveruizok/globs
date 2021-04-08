@@ -162,14 +162,15 @@ const state = createState({
                 if: ["isLeftClick", "hasSelection"],
                 do: ["clearSelection"],
               },
-              {
-                wait: 0.01,
-                ifAny: ["hasSpace", "isMultitouch"],
-                to: "canvasPanning",
-                else: {
-                  to: "brushSelecting",
-                },
-              },
+              { to: "brushSelecting" },
+              // {
+              //   wait: 0.01,
+              //   ifAny: ["hasSpace", "isMultitouch"],
+              //   to: "canvasPanning",
+              //   else: {
+              //     to: "brushSelecting",
+              //   },
+              // },
             ],
             POINTED_BOUNDS: {
               if: "isLeftClick",
@@ -217,7 +218,9 @@ const state = createState({
           onEnter: ["beginMove"],
           on: {
             MOVED_THUMBSTICK: {
+              if: "hasSelection",
               do: "updateMove",
+              else: "panCamera",
             },
             STOPPED_MOVING_THUMBSTICK: {
               to: "notPointing",
@@ -302,6 +305,7 @@ const state = createState({
             MOVED_POINTER: ["updateBrush", "updateBrushSelection"],
             WHEELED: ["updateBrush", "updateBrushSelection"],
             STOPPED_POINTING: { to: "notPointing" },
+            POINTED_CANVAS: { to: "notPointing" },
             CANCELLED: { to: "notPointing" },
           },
         },
