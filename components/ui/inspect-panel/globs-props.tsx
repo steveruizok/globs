@@ -1,7 +1,6 @@
 import state, { useSelector } from "lib/state"
 import { clamp, deepCompareArrays } from "lib/utils"
 
-import AnchorInput from "./inputs/anchor-input"
 import NumberInput from "./inputs/number-input"
 import { useCallback } from "react"
 
@@ -90,10 +89,34 @@ export default function GlobsProps() {
 
   return (
     <>
-      <AnchorInput value={a} label="a" onChange={handleAChange} />
-      <AnchorInput value={b} label="b" onChange={handleApChange} />
-      <AnchorInput value={ap} label="ap" onChange={handleBChange} />
-      <AnchorInput value={bp} label="bp" onChange={handleBpChange} />
+      <NumberInput
+        value={a}
+        label="a"
+        min={0}
+        max={1}
+        onChange={handleAChange}
+      />
+      <NumberInput
+        value={b}
+        label="b"
+        min={0}
+        max={1}
+        onChange={handleApChange}
+      />
+      <NumberInput
+        value={ap}
+        label="ap"
+        min={0}
+        max={1}
+        onChange={handleBChange}
+      />
+      <NumberInput
+        value={bp}
+        label="bp"
+        min={0}
+        max={1}
+        onChange={handleBpChange}
+      />
       {selectedGlobs.length === 1 && (
         <>
           <NumberInput

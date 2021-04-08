@@ -1,6 +1,16 @@
+import intersect from "path-intersection"
+import { motionValue } from "framer-motion"
+import { createState, createSelectorHook } from "@state-designer/react"
 import * as vec from "lib/vec"
 import * as svg from "lib/svg"
-import { createState, createSelectorHook } from "@state-designer/react"
+
+import { initialData } from "./data"
+import { commands, history } from "./history"
+import AnchorMover from "./movers/AnchorMover"
+import HandleMover from "./movers/HandleMover"
+import RadiusMover from "./movers/RadiusMover"
+import ResizeMover from "./movers/ResizeMover"
+import Mover from "./movers/Mover"
 import {
   ICanvasItems,
   INode,
@@ -8,11 +18,10 @@ import {
   IData,
   IBounds,
   KeyCommand,
-  ISnapTypes,
+  IHandle,
+  IAnchor,
 } from "lib/types"
-import intersect from "path-intersection"
 import {
-  arrsIntersect,
   getCornerRotater,
   CornerRotater,
   CornerResizer,
@@ -23,25 +32,19 @@ import {
   getGlob,
   getGlobPath,
   getOuterTangents,
-  projectPoint,
   rectContainsRect,
-  round,
   throttle,
-  getLineLineIntersection,
-  resizeBounds,
   getNodeResizer,
   NodeResizer,
 } from "utils"
-import { getClosestPointOnCurve, getNormalOnCurve } from "lib/bez"
-import { initialData } from "./data"
-import { motionValue } from "framer-motion"
 import {
   getCommonBounds,
   getGlobBounds,
   getGlobInnerBounds,
   getNodeBounds,
 } from "./bounds-utils"
-import getNodeSnapper, { NodeSnapper } from "./snaps"
+import ResizerMover from "./movers/ResizeMover"
+import RotateMover from "./movers/RotateMover"
 
 export const elms: Record<string, SVGPathElement> = {}
 
@@ -54,16 +57,16 @@ const state = createState({
     MOUNTED: { do: ["setup", "setViewport"], to: "selecting" },
     UNMOUNTED: "teardown",
     RESIZED: "setViewport",
-    SET_NODES_X: ["setSelectedNodesPointX", "updateGlobPoints"],
-    SET_NODES_Y: ["setSelectedNodesPointY", "updateGlobPoints"],
-    SET_NODES_RADIUS: ["setSelectedNodesRadius", "updateGlobPoints"],
-    SET_NODES_CAP: ["setSelectedNodesCap", "updateGlobPoints"],
+    SET_NODES_X: ["setSelectedNodesPointX"],
+    SET_NODES_Y: ["setSelectedNodesPointY"],
+    SET_NODES_RADIUS: ["setSelectedNodesRadius"],
+    SET_NODES_CAP: ["setSelectedNodesCap"],
     SET_NODES_LOCKED: "setSelectedNodesLocked",
     SET_GLOB_OPTIONS: ["setSelectedGlobOptions", "updateGlobPoints"],
     CHANGED_BOUNDS_X: ["changeBoundsX", "updateGlobPoints"],
     CHANGED_BOUNDS_Y: ["changeBoundsY", "updateGlobPoints"],
-    CHANGED_BOUNDS_WIDTH: ["changeBoundsWidth", "updateGlobPoints"],
-    CHANGED_BOUNDS_HEIGHT: ["changeBoundsHeight", "updateGlobPoints"],
+    CHANGED_BOUNDS_WIDTH: ["changeBoundsWidth"],
+    CHANGED_BOUNDS_HEIGHT: ["changeBoundsHeight"],
     PRESSED_SPACE: "enableFill",
     RELEASED_SPACE: "disableFill",
     TOGGLED_NODE_LOCKED: "toggleNodeLocked",
@@ -74,6 +77,9 @@ const state = createState({
     },
     MOVED_POINTER: { secretlyDo: "updateMvPointer" },
     ZOOMED_TO_FIT: "zoomToFit",
+    STARTED_MOVING_THUMBSTICK: {
+      to: "draggingThumbstick",
+    },
   },
   initial: "selecting",
   states: {
@@ -93,15 +99,10 @@ const state = createState({
         notPointing: {
           onEnter: "saveData",
           on: {
+            UNDO: "undo",
+            REDO: "redo",
             CANCELLED: "clearSelection",
-            DELETED: {
-              do: [
-                "deleteSelectedGlobs",
-                "deleteSelectedNodes",
-                "clearSelection",
-                "saveData",
-              ],
-            },
+            DELETED: ["deleteSelection", "clearSelection", "saveData"],
             TOGGLED_CAP: "toggleNodeCap",
             HIGHLIT_GLOB: "pushHighlightGlob",
             HIGHLIT_NODE: "pushHighlightNode",
@@ -113,6 +114,7 @@ const state = createState({
             UNHOVERED_NODE: "pullHoveredNode",
             MOVED_NODE_ORDER: "moveNodeOrder",
             MOVED_GLOB_ORDER: "moveGlobOrder",
+            SELECTED_ALL: "selectAll",
             SELECTED_NODE: [
               {
                 if: "hasShift",
@@ -146,15 +148,12 @@ const state = createState({
                   else: "setSelectedGlob",
                 },
               },
-
               { if: "globIsHovered", to: "pointingBounds" },
             ],
             SELECTED_ANCHOR: {
-              do: ["setSelectingAnchor"],
               to: "pointingAnchor",
             },
             POINTED_HANDLE: {
-              do: ["setSelectingHandle"],
               to: "pointingHandle",
             },
             POINTED_CANVAS: [
@@ -184,9 +183,6 @@ const state = createState({
             POINTED_ROTATE_CORNER: {
               to: "cornerRotating",
             },
-            STARTED_MOVING_THUMBSTICK: {
-              to: "draggingThumbstick",
-            },
           },
         },
         canvasPanning: {
@@ -200,29 +196,24 @@ const state = createState({
           },
         },
         pointingBounds: {
-          onEnter: ["setInitialNodes", "setInitialGlobs"],
-          onExit: ["clearInitialNodes", "clearSnaps", "saveData"],
+          onEnter: ["beginMove"],
+          onExit: "saveData",
           on: {
-            CANCELLED: { do: "returnSelected", to: "notPointing" },
-            WHEELED: ["moveSelected", "updateGlobPoints"],
-            MOVED_POINTER: ["moveSelected", "updateGlobPoints"],
+            CANCELLED: { do: "cancelMove", to: "notPointing" },
+            WHEELED: ["updateMove"],
+            MOVED_POINTER: ["updateMove"],
             STOPPED_POINTING: {
+              do: "completeMove",
               to: "notPointing",
             },
           },
         },
         draggingThumbstick: {
-          onExit: ["clearInitialNodes", "clearSnaps", "saveData"],
-          onEnter: [
-            { if: "hasSelectedGlobs", do: "setNodeSnapper" },
-            "setInitialNodes",
-            "setInitialGlobs",
-            "setInitialPoints",
-            "setSnapPoints",
-          ],
+          onExit: ["completeMove", "saveData"],
+          onEnter: ["beginMove"],
           on: {
             MOVED_THUMBSTICK: {
-              do: "moveSelected",
+              do: "updateMove",
             },
             STOPPED_MOVING_THUMBSTICK: {
               to: "notPointing",
@@ -230,68 +221,72 @@ const state = createState({
           },
         },
         pointingNodes: {
-          onExit: ["clearInitialNodes", "clearSnaps", "saveData"],
-          onEnter: [
-            "setNodeSnapper",
-            "setInitialNodes",
-            "setInitialGlobs",
-            "setInitialPoints",
-            "setSnapPoints",
-          ],
-          on: {
-            STOPPED_POINTING: {
-              to: "notPointing",
-            },
-          },
+          onExit: ["clearSnaps", "saveData"],
           initial: "idle",
           states: {
             idle: {
-              onEnter: {
-                if: "hasMeta",
-                to: "resizing",
-              },
+              onEnter: [
+                {
+                  if: ["hasMeta", "hasOneSelectedNode"],
+                  to: "changingRadius",
+                },
+                "beginMove",
+              ],
               on: {
-                PRESSED_META: { to: "resizing" },
-                CANCELLED: { do: "returnSelected", to: "notPointing" },
-                WHEELED: ["moveSelected", "updateGlobPoints"],
-                MOVED_POINTER: ["moveSelected", "updateGlobPoints"],
+                PRESSED_META: {
+                  if: "hasOneSelectedNode",
+                  to: "changingRadius",
+                },
+                CANCELLED: {
+                  do: "cancelMove",
+                  to: "notPointing",
+                },
+                WHEELED: ["updateMove"],
+                MOVED_POINTER: ["updateMove"],
+                STOPPED_POINTING: {
+                  do: "completeMove",
+                  to: "notPointing",
+                },
               },
             },
-            resizing: {
-              onEnter: { do: "setNodeResizer" },
+            changingRadius: {
+              onEnter: { do: "beginRadiusMove" },
               on: {
                 RELEASED_META: {
+                  do: "completeRadiusMove",
                   to: "idle",
                 },
-                MOVED_POINTER: [
-                  {
-                    do: ["resizeNode", "updateGlobPoints"],
-                    else: ["moveSelected", "updateGlobPoints"],
-                  },
-                ],
+                MOVED_POINTER: ["updateRadiusMove"],
+                STOPPED_POINTING: {
+                  do: "completeRadiusMove",
+                  to: "notPointing",
+                },
               },
             },
           },
         },
         pointingHandle: {
-          onExit: ["clearSnaps", "saveData"],
-          onEnter: ["setInitialGlobs", "setSnapPoints"],
+          onEnter: ["beginHandleMove", "setSelectedGlob"],
+          onExit: ["clearSnaps"],
           on: {
-            WHEELED: ["moveSelectedHandle"],
-            MOVED_POINTER: ["moveSelectedHandle"],
+            WHEELED: ["updateHandleMove"],
+            MOVED_POINTER: "updateHandleMove",
+            CANCELLED: { do: "cancelHandleMove", to: "notPointing" },
             STOPPED_POINTING: {
-              do: ["clearSelectedHandle"],
+              do: ["completeHandleMove", "saveData"],
               to: "notPointing",
             },
           },
         },
         pointingAnchor: {
-          onExit: ["clearSnaps", "saveData"],
+          onEnter: ["beginAnchorMove", "setSelectedGlob"],
+          onExit: ["clearSnaps"],
           on: {
-            WHEELED: ["moveSelectedAnchor"],
-            MOVED_POINTER: ["moveSelectedAnchor"],
+            WHEELED: "updateAnchorMove",
+            MOVED_POINTER: "updateAnchorMove",
+            CANCELLED: { do: "cancelAnchorMove", to: "notPointing" },
             STOPPED_POINTING: {
-              do: "clearSelectedAnchor",
+              do: ["completeAnchorMove", "saveData"],
               to: "notPointing",
             },
           },
@@ -307,36 +302,36 @@ const state = createState({
           },
         },
         edgeResizing: {
-          onEnter: ["setBounds", "setResizingEdge"],
+          onEnter: ["setEdgeResizer"],
           on: {
-            MOVED_POINTER: ["edgeResize", "updateGlobPoints"],
-            WHEELED: ["edgeResize", "updateGlobPoints"],
-            STOPPED_POINTING: { to: "notPointing" },
-            CANCELLED: { to: "notPointing" },
+            MOVED_POINTER: ["updateEdgeResize"],
+            WHEELED: ["updateEdgeResize"],
+            STOPPED_POINTING: { do: "completeEdgeResize", to: "notPointing" },
+            CANCELLED: { do: "cancelEdgeResize", to: "notPointing" },
           },
         },
         cornerResizing: {
-          onEnter: ["setBounds", "setResizingCorner"],
+          onEnter: ["setCornerResizer"],
           on: {
-            MOVED_POINTER: ["cornerResize", "updateGlobPoints"],
-            WHEELED: ["cornerResize", "updateGlobPoints"],
-            STOPPED_POINTING: { to: "notPointing" },
-            CANCELLED: { to: "notPointing" },
+            MOVED_POINTER: ["updateCornerResize"],
+            WHEELED: ["updateCornerResize"],
+            STOPPED_POINTING: { do: "completeCornerResize", to: "notPointing" },
+            CANCELLED: { do: "cancelCornerResize", to: "notPointing" },
           },
         },
         cornerRotating: {
-          onEnter: ["setBounds", "setRotatingCorner"],
+          onEnter: "beginRotate",
           on: {
-            MOVED_POINTER: ["cornerRotate", "updateGlobPoints"],
-            WHEELED: ["cornerRotate", "updateGlobPoints"],
-            STOPPED_POINTING: { to: "notPointing" },
-            CANCELLED: { to: "notPointing" },
+            MOVED_POINTER: "updateRotate",
+            WHEELED: "updateRotate",
+            STOPPED_POINTING: { do: "completeRotate", to: "notPointing" },
+            CANCELLED: { do: "cancelRotate", to: "notPointing" },
           },
         },
       },
     },
     cloningNodes: {
-      onEnter: "createClones",
+      onEnter: [],
       onExit: "saveData",
       on: {
         CANCELLED: { to: "selecting" },
@@ -400,6 +395,9 @@ const state = createState({
     nodeIsSelected(data, payload: { id: string }) {
       return data.selectedNodes.includes(payload.id)
     },
+    hasOneSelectedNode(data) {
+      return data.selectedNodes.length === 1
+    },
     hasSelectedNodes(data) {
       return data.selectedNodes.length > 0
     },
@@ -429,142 +427,12 @@ const state = createState({
     },
   },
   actions: {
-    // CLONES
-    createClones(data) {},
-    // BOUNDS
-    setBounds(data, payload: { bounds: IBounds }) {
-      data.bounds = payload.bounds
+    // HISTORY
+    undo(data) {
+      history.undo(data)
     },
-    changeBoundsX(data, payload: { value: number }) {
-      const { selectedNodes, selectedGlobs, nodes, globs } = data
-      const bounds = getSelectedBoundingBox(data)
-      const dx = payload.value - bounds.x
-
-      const sNodes = selectedNodes.map((id) => nodes[id])
-      const sGlobs = selectedGlobs.map((id) => globs[id])
-
-      let nodesToChange = new Set(sNodes)
-
-      // for (let glob of sGlobs) {
-      //   nodesToChange.add(nodes[glob.nodes[0]])
-      //   nodesToChange.add(nodes[glob.nodes[1]])
-      // }
-
-      for (let node of nodesToChange) {
-        node.point[0] += dx
-      }
-
-      for (let glob of sGlobs) {
-        glob.options.D[0] += dx
-        glob.options.Dp[0] += dx
-      }
-    },
-    changeBoundsY(data, payload: { value: number }) {
-      const { selectedNodes, selectedGlobs, nodes, globs } = data
-      const bounds = getSelectedBoundingBox(data)
-      const dy = payload.value - bounds.y
-
-      const sNodes = selectedNodes.map((id) => nodes[id])
-      const sGlobs = selectedGlobs.map((id) => globs[id])
-
-      let nodesToChange = new Set(sNodes)
-
-      // for (let glob of sGlobs) {
-      //   nodesToChange.add(nodes[glob.nodes[0]])
-      //   nodesToChange.add(nodes[glob.nodes[1]])
-      // }
-
-      for (let node of nodesToChange) {
-        node.point[1] += dy
-      }
-
-      for (let glob of sGlobs) {
-        glob.options.D[1] += dy
-        glob.options.Dp[1] += dy
-      }
-    },
-    changeBoundsWidth(data, payload: { value: number }) {
-      const { selectedNodes, selectedGlobs, nodes, globs } = data
-      const bounds = getSelectedBoundingBox(data)
-
-      const dx = payload.value - bounds.width
-
-      const sNodes = selectedNodes.map((id) => nodes[id])
-      const sGlobs = selectedGlobs.map((id) => globs[id])
-
-      resizeBounds(sNodes, sGlobs, bounds, dx, 0)
-    },
-    changeBoundsHeight(data, payload: { value: number }) {
-      const { selectedNodes, selectedGlobs, nodes, globs } = data
-      const bounds = getSelectedBoundingBox(data)
-
-      const dy = payload.value - bounds.height
-
-      const sNodes = selectedNodes.map((id) => nodes[id])
-      const sGlobs = selectedGlobs.map((id) => globs[id])
-
-      resizeBounds(sNodes, sGlobs, bounds, 0, dy)
-    },
-
-    // RESIZING
-    setResizingCorner(data, payload: { corner: number }) {
-      const { selectedNodes, selectedGlobs, globs, nodes } = data
-
-      cornerResizer = getCornerResizer(
-        selectedNodes.map((id) => nodes[id]),
-        selectedGlobs.map((id) => globs[id]),
-        getSelectedBoundingBox(data),
-        payload.corner
-      )
-    },
-    cornerResize(data) {
-      const { selectedNodes, selectedGlobs, globs, nodes, camera } = data
-
-      cornerResizer(
-        screenToWorld(pointer.point, camera.point, camera.zoom),
-        selectedNodes.map((id) => nodes[id]),
-        selectedGlobs.map((id) => globs[id]),
-        keys.Meta
-      )
-    },
-    setResizingEdge(data, payload: { edge: number }) {
-      const { selectedNodes, selectedGlobs, globs, nodes } = data
-
-      edgeResizer = getEdgeResizer(
-        selectedNodes.map((id) => nodes[id]),
-        selectedGlobs.map((id) => globs[id]),
-        getSelectedBoundingBox(data),
-        payload.edge
-      )
-    },
-    edgeResize(data) {
-      const { selectedNodes, selectedGlobs, nodes, globs, camera } = data
-
-      edgeResizer(
-        screenToWorld(pointer.point, camera.point, camera.zoom),
-        selectedNodes.map((id) => nodes[id]),
-        selectedGlobs.map((id) => globs[id]),
-        keys.Meta
-      )
-    },
-    setRotatingCorner(data) {
-      const { selectedNodes, selectedGlobs, globs, nodes, camera } = data
-
-      cornerRotater = getCornerRotater(
-        selectedNodes.map((id) => nodes[id]),
-        selectedGlobs.map((id) => globs[id]),
-        screenToWorld(pointer.point, camera.point, camera.zoom),
-        getSelectedBoundingBox(data)
-      )
-    },
-    cornerRotate(data) {
-      const { selectedNodes, selectedGlobs, globs, nodes, camera } = data
-
-      cornerRotater(
-        screenToWorld(pointer.point, camera.point, camera.zoom),
-        selectedNodes.map((id) => nodes[id]),
-        selectedGlobs.map((id) => globs[id])
-      )
+    redo(data) {
+      history.redo(data)
     },
 
     // ELEMENT REFERENCES
@@ -586,6 +454,412 @@ const state = createState({
     },
     disableFill(data) {
       data.fill = false
+    },
+
+    // CAMERA / VIEWPORT
+    panCamera(data) {
+      const { camera, document } = data
+      camera.point = vec.round(
+        vec.sub(camera.point, vec.div(pointer.delta, camera.zoom))
+      )
+      document.point = camera.point
+    },
+    wheelPanCamera(data, payload: { delta: number[] }) {
+      const { camera, document } = data
+      const delta = vec.div(vec.neg(payload.delta), camera.zoom)
+      camera.point = vec.round(vec.sub(camera.point, delta))
+      pointer.delta = vec.mul(vec.neg(delta), camera.zoom)
+      document.point = camera.point
+    },
+    zoomCamera(data, payload: { delta: number[] }) {
+      const { camera, viewport, document } = data
+      const { point } = pointer
+
+      const delta =
+        (vec.mul(vec.neg(payload.delta), 5)[1] / 500) *
+        Math.max(0.1, camera.zoom)
+
+      const pt0 = vec.add(vec.div(point, camera.zoom), camera.point)
+
+      camera.zoom = Math.max(Math.min(camera.zoom + delta, 10), 0.01)
+      camera.zoom = Math.round(camera.zoom * 100) / 100
+
+      const pt1 = vec.add(vec.div(point, camera.zoom), camera.point)
+
+      camera.point = vec.round(vec.sub(camera.point, vec.sub(pt1, pt0)))
+
+      document.size = vec.round(vec.div(viewport.size, camera.zoom))
+      document.point = camera.point
+    },
+    zoomToFit(data) {
+      const { camera, viewport, document } = data
+
+      camera.point = [-viewport.size[0] / 2, -viewport.size[1] / 2]
+      camera.zoom = 1
+      document.size = vec.round(vec.div(viewport.size, camera.zoom))
+      document.point = camera.point
+    },
+    setViewport(data, payload: { size: number[] }) {
+      const { viewport, camera, document } = data
+      const c0 = screenToWorld(
+        vec.add(document.point, vec.div(viewport.size, 2)),
+        camera.point,
+        camera.zoom
+      )
+      viewport.size = payload.size
+      document.size = vec.round(vec.div(viewport.size, camera.zoom))
+      const c1 = screenToWorld(
+        vec.add(document.point, vec.div(viewport.size, 2)),
+        camera.point,
+        camera.zoom
+      )
+      document.point = vec.sub(document.point, vec.sub(c1, c0))
+      camera.point = document.point
+    },
+
+    // MOVING STUFF
+    beginMove(data) {
+      mover = new Mover(data)
+    },
+    updateMove(data) {
+      mover.update(data)
+    },
+    cancelMove(data) {
+      mover.cancel(data)
+    },
+    completeMove(data) {
+      mover.complete(data)
+    },
+    clearSnaps(data) {
+      data.snaps.active = []
+    },
+
+    // SELECTION / HOVERS / HIGHLIGHTS
+    deleteSelection(data) {
+      commands.deleteSelection(data)
+    },
+    selectAll(data) {
+      data.selectedGlobs = [...data.globIds]
+      data.selectedNodes = [...data.nodeIds]
+    },
+    clearSelection(data) {
+      data.selectedHandle = undefined
+      data.selectedNodes = []
+      data.selectedGlobs = []
+      data.highlightNodes = []
+      data.highlightGlobs = []
+    },
+    setSelectedNode(data, payload: { id: string }) {
+      data.bounds = undefined
+      data.selectedHandle = undefined
+      data.selectedAnchor = undefined
+      data.selectedGlobs = []
+      data.selectedNodes = [payload.id]
+    },
+    pushSelectedNode(data, payload: { id: string }) {
+      data.selectedNodes.push(payload.id)
+    },
+    pullSelectedNode(data, payload: { id: string }) {
+      data.selectedNodes = data.selectedNodes.filter((id) => id !== payload.id)
+    },
+    pushHighlightNode(data, payload: { id: string }) {
+      if (data.highlightNodes.includes(payload.id)) return
+      data.highlightNodes.push(payload.id)
+    },
+    pullHighlightNode(data, payload: { id: string }) {
+      const index = data.highlightNodes.indexOf(payload.id)
+      data.highlightNodes.splice(index, 1)
+    },
+    pushHoveredNode(data, payload: { id: string }) {
+      if (data.hoveredNodes.includes(payload.id)) return
+      data.hoveredNodes.push(payload.id)
+    },
+    pullHoveredNode(data, payload: { id: string }) {
+      const index = data.hoveredNodes.indexOf(payload.id)
+      data.hoveredNodes.splice(index, 1)
+    },
+    setHoveredNode(data, payload: { id: string }) {
+      data.hoveredNodes = []
+    },
+    setSelectedGlob(data, payload: { id: string }) {
+      data.bounds = undefined
+      data.selectedHandle = undefined
+      data.selectedAnchor = undefined
+      data.selectedNodes = []
+      data.selectedGlobs = [payload.id]
+    },
+    pushSelectedGlob(data, payload: { id: string }) {
+      data.selectedGlobs.push(payload.id)
+      data.selectedHandle = undefined
+      data.selectedAnchor = undefined
+      data.selectedNodes = []
+    },
+    pullSelectedGlob(data, payload: { id: string }) {
+      data.selectedGlobs = data.selectedGlobs.filter((id) => id !== payload.id)
+    },
+    pushHighlightGlob(data, payload: { id: string }) {
+      if (data.highlightGlobs.includes(payload.id)) return
+      data.highlightGlobs.push(payload.id)
+    },
+    pullHighlightGlob(data, payload: { id: string }) {
+      const index = data.highlightGlobs.indexOf(payload.id)
+      data.highlightGlobs.splice(index, 1)
+    },
+    pushHoveredGlob(data, payload: { id: string }) {
+      if (data.hoveredGlobs.includes(payload.id)) return
+      data.hoveredGlobs.push(payload.id)
+    },
+    pullHoveredGlob(data, payload: { id: string }) {
+      const index = data.hoveredGlobs.indexOf(payload.id)
+      data.hoveredGlobs.splice(index, 1)
+    },
+    setHoveredGlobs(data, payload: { ids: string[] }) {
+      data.hoveredGlobs = payload.ids
+      data.highlightGlobs = []
+    },
+    setHoveredGlob(data, payload: { id: string }) {
+      data.hoveredGlobs = [payload.id]
+      data.highlightGlobs = []
+    },
+    clearHovers(data) {
+      data.hoveredGlobs = []
+      data.hoveredNodes = []
+    },
+
+    // NODES
+    createNode(data) {
+      commands.createNode(data)
+    },
+    lockSelectedNodes(data) {
+      commands.toggleSelectionLocked(data)
+    },
+    toggleNodeCap(data, payload: { id: string }) {
+      commands.toggleNodeCap(data, payload.id)
+    },
+    setSelectedNodesPointX(data, payload: { value: number }) {
+      commands.setPropertyOnSelectedNodes(data, { x: payload.value })
+    },
+    setSelectedNodesPointY(data, payload: { value: number }) {
+      commands.setPropertyOnSelectedNodes(data, { y: payload.value })
+    },
+    setSelectedNodesRadius(data, payload: { value: number }) {
+      commands.setPropertyOnSelectedNodes(data, { r: payload.value })
+    },
+    setSelectedNodesCap(data, payload: { value: "round" | "flat" }) {
+      commands.setPropertyOnSelectedNodes(data, { cap: payload.value })
+    },
+    setSelectedNodesLocked(data, payload: { value: boolean }) {
+      commands.setPropertyOnSelectedNodes(data, { locked: payload.value })
+    },
+    moveNodeOrder(data, payload: { from: number; to: number }) {
+      commands.reorderNodes(data, payload.from, payload.to)
+    },
+    beginRadiusMove(data) {
+      radiusMover = new RadiusMover(data, data.selectedNodes[0])
+    },
+    cancelRadiusMove(data) {
+      radiusMover.cancel(data)
+    },
+    updateRadiusMove(data) {
+      radiusMover.update(data)
+    },
+    completeRadiusMove(data) {
+      radiusMover.complete(data)
+    },
+    // TODO: Make a command
+    toggleNodeLocked(data, payload: { id: string }) {
+      data.nodes[payload.id].locked = !data.nodes[payload.id].locked
+    },
+
+    // GLOBS
+    // TODO: Make a command
+    setSelectedGlobOptions(data, payload: Partial<IGlob["options"]>) {
+      const { globs, selectedGlobs } = data
+      for (let id of selectedGlobs) {
+        const glob = globs[id]
+        Object.assign(glob.options, payload)
+      }
+    },
+    // TODO: Remove once other commands are in
+    updateGlobPoints(data) {
+      const { globs, globIds, nodes, selectedNodes, selectedGlobs } = data
+
+      const nodesToUpdate = new Set(selectedNodes)
+
+      const globsToUpdate = new Set(selectedGlobs.map((id) => globs[id]))
+
+      const sGlobs = globIds.map((id) => globs[id])
+
+      for (let glob of sGlobs) {
+        nodesToUpdate.add(glob.nodes[0])
+        nodesToUpdate.add(glob.nodes[1])
+      }
+
+      for (let glob of sGlobs) {
+        if (
+          nodesToUpdate.has(glob.nodes[0]) ||
+          nodesToUpdate.has(glob.nodes[1])
+        ) {
+          globsToUpdate.add(glob)
+        }
+      }
+
+      globsToUpdate.forEach((glob) => {
+        const [start, end] = glob.nodes.map((id) => nodes[id])
+        try {
+          glob.points = getGlob(
+            start.point,
+            start.radius,
+            end.point,
+            end.radius,
+            glob.options.D,
+            glob.options.Dp,
+            glob.options.a,
+            glob.options.b,
+            glob.options.ap,
+            glob.options.bp
+          )
+        } catch (e) {
+          glob.points = null
+        }
+      })
+    },
+    createNodeAndGlob(data) {
+      commands.createGlobToNewNode(data, pointer.point)
+    },
+    createGlobBetweenNodes(data, payload: { id: string }) {
+      commands.createGlobBetweenNodes(data, payload.id)
+    },
+    moveGlobOrder(data, payload: { from: number; to: number }) {
+      commands.reorderGlobs(data, payload.from, payload.to)
+    },
+    splitGlob(data, payload: { id: string }) {
+      commands.splitGlob(data, payload.id)
+    },
+
+    // HANDLES
+    beginHandleMove(data, payload: { id: string; handle: IHandle }) {
+      handleMover = new HandleMover(data, payload.id, payload.handle)
+    },
+    updateHandleMove(data) {
+      handleMover.update(data)
+    },
+    cancelHandleMove(data) {
+      handleMover.cancel(data)
+    },
+    completeHandleMove(data) {
+      handleMover.complete(data)
+    },
+
+    // ANCHORS
+    beginAnchorMove(data, payload: { id: string; anchor: IAnchor }) {
+      anchorMover = new AnchorMover(data, payload.id, payload.anchor)
+    },
+    cancelAnchorMove(data) {
+      anchorMover.cancel(data)
+    },
+    updateAnchorMove(data) {
+      anchorMover.update(data)
+    },
+    completeAnchorMove(data) {
+      anchorMover.complete(data)
+    },
+
+    // BOUNDS / RESIZING
+    setBounds(data, payload: { bounds: IBounds }) {
+      data.bounds = payload.bounds
+    },
+    // TODO: Make a command
+    changeBoundsX(data, payload: { value: number }) {
+      const { selectedNodes, selectedGlobs, nodes, globs } = data
+      const bounds = getSelectedBoundingBox(data)
+      const dx = payload.value - bounds.x
+
+      const sNodes = selectedNodes.map((id) => nodes[id])
+      const sGlobs = selectedGlobs.map((id) => globs[id])
+
+      // let nodesToChange = new Set(sNodes)
+
+      // for (let glob of sGlobs) {
+      //   nodesToChange.add(nodes[glob.nodes[0]])
+      //   nodesToChange.add(nodes[glob.nodes[1]])
+      // }
+
+      for (let node of sNodes) {
+        node.point[0] += dx
+      }
+
+      for (let glob of sGlobs) {
+        glob.options.D[0] += dx
+        glob.options.Dp[0] += dx
+      }
+    },
+    // TODO: Make a command
+    changeBoundsY(data, payload: { value: number }) {
+      const { selectedNodes, selectedGlobs, nodes, globs } = data
+      const bounds = getSelectedBoundingBox(data)
+      const dy = payload.value - bounds.y
+
+      const sNodes = selectedNodes.map((id) => nodes[id])
+      const sGlobs = selectedGlobs.map((id) => globs[id])
+
+      // let nodesToChange = new Set(sNodes)
+
+      // for (let glob of sGlobs) {
+      //   nodesToChange.add(nodes[glob.nodes[0]])
+      //   nodesToChange.add(nodes[glob.nodes[1]])
+      // }
+
+      for (let node of sNodes) {
+        node.point[1] += dy
+      }
+
+      for (let glob of sGlobs) {
+        glob.options.D[1] += dy
+        glob.options.Dp[1] += dy
+      }
+    },
+    changeBoundsWidth(data, payload: { value: number }) {
+      commands.resizeBounds(data, [payload.value, 0])
+    },
+    changeBoundsHeight(data, payload: { value: number }) {
+      commands.resizeBounds(data, [0, payload.value])
+    },
+    setEdgeResizer(data, payload: { edge: number }) {
+      resizeMover = new ResizerMover(data, "edge", payload.edge)
+    },
+    cancelEdgeResize(data) {
+      resizeMover.cancel(data)
+    },
+    updateEdgeResize(data) {
+      resizeMover.update(data)
+    },
+    completeEdgeResize(data) {
+      resizeMover.complete(data)
+    },
+    setCornerResizer(data, payload: { corner: number }) {
+      resizeMover = new ResizerMover(data, "corner", payload.corner)
+    },
+    cancelCornerResize(data) {
+      resizeMover.cancel(data)
+    },
+    updateCornerResize(data) {
+      resizeMover.update(data)
+    },
+    completeCornerResize(data) {
+      resizeMover.complete(data)
+    },
+    beginRotate(data) {
+      rotateMover = new RotateMover(data)
+    },
+    updateRotate(data) {
+      rotateMover.update(data)
+    },
+    cancelRotate(data) {
+      rotateMover.cancel(data)
+    },
+    completeRotate(data) {
+      rotateMover.complete(data)
     },
 
     // BRUSH
@@ -649,21 +923,11 @@ const state = createState({
 
         if (target.type === "node") {
           const node = nodes[target.id]
-
-          if (!node) {
-            throw Error("Could not find that node!")
-          }
-
-          bounds = getNodeBounds(nodes[target.id])
+          bounds = getNodeBounds(node)
         } else {
           const glob = globs[target.id]
-
-          if (!glob) {
-            throw Error("Could not find that glob!")
-          }
-
           try {
-            bounds = getGlobInnerBounds(globs[target.id])
+            bounds = getGlobInnerBounds(glob)
           } catch (e) {
             console.warn("Could not get bounds", e)
           }
@@ -685,1076 +949,18 @@ const state = createState({
       data.brush = undefined
     },
 
-    // CAMERA
-    panCamera(data) {
-      const { camera, document } = data
-      camera.point = vec.round(
-        vec.sub(camera.point, vec.div(pointer.delta, camera.zoom))
-      )
-      document.point = camera.point
-    },
-    wheelPanCamera(data, payload: { delta: number[] }) {
-      const { camera, document } = data
-      const delta = vec.div(vec.neg(payload.delta), camera.zoom)
-      camera.point = vec.round(vec.sub(camera.point, delta))
-      pointer.delta = vec.mul(vec.neg(delta), camera.zoom)
-      document.point = camera.point
-    },
-    zoomCamera(data, payload: { delta: number[] }) {
-      const { camera, viewport, document } = data
-      const { point } = pointer
-
-      const delta =
-        (vec.mul(vec.neg(payload.delta), 5)[1] / 500) *
-        Math.max(0.1, camera.zoom)
-
-      const pt0 = vec.add(vec.div(point, camera.zoom), camera.point)
-
-      camera.zoom = Math.max(Math.min(camera.zoom + delta, 10), 0.01)
-      camera.zoom = Math.round(camera.zoom * 100) / 100
-
-      const pt1 = vec.add(vec.div(point, camera.zoom), camera.point)
-
-      camera.point = vec.round(vec.sub(camera.point, vec.sub(pt1, pt0)))
-
-      document.size = vec.round(vec.div(viewport.size, camera.zoom))
-      document.point = camera.point
-    },
-    zoomToFit(data) {
-      const { camera, viewport, document } = data
-
-      camera.point = [-viewport.size[0] / 2, -viewport.size[1] / 2]
-      camera.zoom = 1
-      document.size = vec.round(vec.div(viewport.size, camera.zoom))
-      document.point = camera.point
-
-      // if (nodeIds.length + globIds.length === 0) return null
-
-      // const bounds = getCommonBounds(
-      //   ...globIds
-      //     .map((id) => globs[id])
-      //     .filter((glob) => glob.points !== null)
-      //     .map((glob) =>
-      //       getGlobBounds(glob, nodes[glob.nodes[0]], nodes[glob.nodes[1]])
-      //     ),
-      //   ...nodeIds.map((id) => getNodeBounds(nodes[id]))
-      // )
-
-      // camera.point = [bounds.x - 800, bounds.y - 200]
-      // camera.zoom = (viewport.size[0] - 400) / bounds.width
-
-      // document.size = vec.round(vec.div(viewport.size, camera.zoom))
-      // document.point = camera.point
-    },
-
-    // VIEWPORT
-    setViewport(data, payload: { size: number[] }) {
-      const { viewport, camera, document } = data
-      const c0 = screenToWorld(
-        vec.add(document.point, vec.div(viewport.size, 2)),
-        camera.point,
-        camera.zoom
-      )
-      viewport.size = payload.size
-      document.size = vec.round(vec.div(viewport.size, camera.zoom))
-      const c1 = screenToWorld(
-        vec.add(document.point, vec.div(viewport.size, 2)),
-        camera.point,
-        camera.zoom
-      )
-      document.point = vec.sub(document.point, vec.sub(c1, c0))
-      camera.point = document.point
-    },
-
-    // SELECTION
-    clearSelection(data) {
-      data.selectedHandle = undefined
-      data.selectedNodes = []
-      data.selectedGlobs = []
-      data.highlightNodes = []
-      data.highlightGlobs = []
-    },
-
-    // HOVERS / HIGHLIGHTS
-    pushHighlightGlob(data, payload: { id: string }) {
-      if (data.highlightGlobs.includes(payload.id)) return
-      data.highlightGlobs.push(payload.id)
-    },
-    pullHighlightGlob(data, payload: { id: string }) {
-      const index = data.highlightGlobs.indexOf(payload.id)
-      data.highlightGlobs.splice(index, 1)
-    },
-    pushHoveredGlob(data, payload: { id: string }) {
-      if (data.hoveredGlobs.includes(payload.id)) return
-      data.hoveredGlobs.push(payload.id)
-    },
-    pullHoveredGlob(data, payload: { id: string }) {
-      const index = data.hoveredGlobs.indexOf(payload.id)
-      data.hoveredGlobs.splice(index, 1)
-    },
-    setHoveredGlobs(data, payload: { ids: string[] }) {
-      data.hoveredGlobs = payload.ids
-      data.highlightGlobs = []
-    },
-    setHoveredGlob(data, payload: { id: string }) {
-      data.hoveredGlobs = [payload.id]
-      data.highlightGlobs = []
-    },
-    pushHighlightNode(data, payload: { id: string }) {
-      if (data.highlightNodes.includes(payload.id)) return
-      data.highlightNodes.push(payload.id)
-    },
-    pullHighlightNode(data, payload: { id: string }) {
-      const index = data.highlightNodes.indexOf(payload.id)
-      data.highlightNodes.splice(index, 1)
-    },
-    pushHoveredNode(data, payload: { id: string }) {
-      if (data.hoveredNodes.includes(payload.id)) return
-      data.hoveredNodes.push(payload.id)
-    },
-    pullHoveredNode(data, payload: { id: string }) {
-      const index = data.hoveredNodes.indexOf(payload.id)
-      data.hoveredNodes.splice(index, 1)
-    },
-    setHoveredNode(data, payload: { id: string }) {
-      data.hoveredNodes = []
-    },
-    clearHovers(data) {
-      data.hoveredGlobs = []
-      data.hoveredNodes = []
-    },
-
-    // NODES
-    createNode(data) {
-      const { nodes, nodeIds, camera } = data
-      const point = screenToWorld(pointer.point, camera.point, camera.zoom)
-      const node = createNode(point)
-      nodeIds.push(node.id)
-      nodes[node.id] = node
-      data.hoveredNodes = [node.id]
-      data.selectedNodes = [node.id]
-    },
-    setNodeResizer(data) {
-      const { nodes, hoveredNodes, camera, selectedNodes } = data
-      if (selectedNodes[0] !== hoveredNodes[0]) return
-      const node = nodes[selectedNodes[0]]
-      nodeResizer = getNodeResizer(
-        node,
-        screenToWorld(pointer.point, camera.point, camera.zoom)
-      )
-    },
-    resizeNode(data) {
-      const { nodes, hoveredNodes, camera, selectedNodes } = data
-      if (selectedNodes[0] !== hoveredNodes[0]) return
-      const node = nodes[selectedNodes[0]]
-      node.radius = nodeResizer(
-        screenToWorld(pointer.point, camera.point, camera.zoom),
-        keys.Shift
-      )
-    },
-    setSelectedNode(data, payload: { id: string }) {
-      data.bounds = undefined
-      data.selectedHandle = undefined
-      data.selectedAnchor = undefined
-      data.selectedGlobs = []
-      data.selectedNodes = [payload.id]
-    },
-    pushSelectedNode(data, payload: { id: string }) {
-      data.selectedNodes.push(payload.id)
-    },
-    pullSelectedNode(data, payload: { id: string }) {
-      data.selectedNodes = data.selectedNodes.filter((id) => id !== payload.id)
-    },
-    toggleNodeCap(data, payload: { id: string }) {
-      const node = data.nodes[payload.id]
-      node.cap = node.cap === "round" ? "flat" : "round"
-    },
-    setSelectedNodesPointX(data, payload: { value: number }) {
-      for (let id of data.selectedNodes) {
-        data.nodes[id].point[0] = payload.value
-      }
-    },
-    setSelectedNodesPointY(data, payload: { value: number }) {
-      for (let id of data.selectedNodes) {
-        data.nodes[id].point[1] = payload.value
-      }
-    },
-    setSelectedNodesRadius(data, payload: { value: number }) {
-      for (let id of data.selectedNodes) {
-        data.nodes[id].radius = payload.value
-      }
-    },
-    setSelectedNodesCap(data, payload: { value: "round" | "flat" }) {
-      for (let id of data.selectedNodes) {
-        data.nodes[id].cap = payload.value
-      }
-    },
-    setSelectedNodesLocked(data, payload: { value: boolean }) {
-      for (let id of data.selectedNodes) {
-        data.nodes[id].locked = payload.value
-      }
-    },
-    deleteSelectedNodes(data) {
-      const { globIds, globs, nodeIds, nodes, selectedNodes } = data
-      data.nodeIds = nodeIds.filter((id) => !selectedNodes.includes(id))
-
-      // pull(data.nodeIds, ...data.selectedNodes)
-      for (let id of selectedNodes) {
-        delete nodes[id]
-
-        for (let gid of globIds) {
-          const glob = globs[gid]
-          if (!glob) continue
-
-          if (glob.nodes.includes(id)) {
-            data.globIds = data.globIds.filter((g) => g !== gid)
-            delete globs[gid]
-          }
-        }
-      }
-
-      data.selectedNodes = []
-    },
-    moveNodeOrder(
-      data,
-      payload: {
-        id: string
-        from: number
-        to: number
-        reason: string
-      }
-    ) {
-      if (payload.reason === "CANCEL") return
-
-      const { nodeIds } = data
-      nodeIds.splice(nodeIds.indexOf(payload.id), 1)
-      nodeIds.splice(payload.to, 0, payload.id)
-    },
-    setInitialNodes(data) {
-      const { selectedNodes, selectedGlobs, globs, nodes } = data
-
-      data.initialNodes = {}
-
-      for (let id of selectedNodes) {
-        data.initialNodes[id] = { ...nodes[id] }
-      }
-
-      for (let globId of selectedGlobs) {
-        const glob = globs[globId]
-        for (let nodeId of glob.nodes) {
-          data.initialNodes[nodeId] = { ...nodes[nodeId] }
-        }
-      }
-    },
-    clearInitialNodes(data) {
-      data.initialNodes = {}
-    },
-
-    // GLOBS
-    createNodeAndGlob(data) {
-      const { selectedNodes, nodes, globs, globIds, camera } = data
-
-      const minRadius = selectedNodes.reduce(
-        (a, c) => (nodes[c].radius < a ? nodes[c].radius : a),
-        nodes[selectedNodes[0]].radius
-      )
-
-      const newNode = createNode(
-        screenToWorld(pointer.point, camera.point, camera.zoom)
-      )
-
-      newNode.radius = minRadius
-
-      data.nodeIds.push(newNode.id)
-      data.nodes[newNode.id] = newNode
-
-      for (let nodeId of selectedNodes) {
-        const glob = createGlob(nodes[nodeId], nodes[newNode.id])
-        globIds.push(glob.id)
-        data.globs[glob.id] = glob
-      }
-
-      data.selectedGlobs = []
-      data.selectedNodes = [newNode.id]
-    },
-    setSelectedGlob(data, payload: { id: string }) {
-      data.bounds = undefined
-      data.selectedHandle = undefined
-      data.selectedAnchor = undefined
-      data.selectedNodes = []
-      data.selectedGlobs = [payload.id]
-    },
-    pushSelectedGlob(data, payload: { id: string }) {
-      data.selectedGlobs.push(payload.id)
-      data.selectedHandle = undefined
-      data.selectedAnchor = undefined
-      data.selectedNodes = []
-    },
-    pullSelectedGlob(data, payload: { id: string }) {
-      data.selectedGlobs = data.selectedGlobs.filter((id) => id !== payload.id)
-    },
-    returnSelected(data) {
-      const { nodes, globs, initialPoints, camera } = data
-
-      // Move nodes back to the initial points.
-      for (let nodeId in initialPoints.nodes) {
-        nodes[nodeId].point = initialPoints.nodes[nodeId]
-      }
-
-      // Move handles back by the same delta, too.
-      for (let globId of data.selectedGlobs) {
-        globs[globId].options.D = initialPoints.globs[globId].D
-        globs[globId].options.Dp = initialPoints.globs[globId].Dp
-      }
-    },
-    setInitialGlobs(data) {
-      const { selectedGlobs, globs } = data
-
-      data.initialGlobs = {}
-
-      for (let id of selectedGlobs) {
-        data.initialGlobs[id] = { ...globs[id] }
-      }
-    },
-    clearInitialGlobs(data) {
-      data.initialGlobs = {}
-    },
-    setNodeSnapper(data) {
-      try {
-        const { selectedNodes, nodes, selectedGlobs, globs, camera } = data
-        const point = screenToWorld(pointer.point, camera.point, camera.zoom)
-
-        // Find the closest selected node to the pointer
-
-        let closestNodeToPointer = nodes[selectedNodes[0]]
-        let d = vec.dist(closestNodeToPointer.point, point)
-
-        for (let i = 1; i < selectedNodes.length; i++) {
-          const node = nodes[selectedNodes[i]]
-          const d1 = vec.dist(node.point, point)
-          if (d1 < d) closestNodeToPointer = node
-        }
-
-        // Create a snapper based on this node
-        snappingNode = closestNodeToPointer.id
-        nodeSnapper = getNodeSnapper(
-          closestNodeToPointer,
-          Object.values(nodes).filter((n) => !selectedNodes.includes(n.id)),
-          Object.values(globs).filter((n) => !selectedGlobs.includes(n.id))
-        )
-      } catch (e) {
-        console.log(e)
-      }
-    },
-    setGlobSnapper(data) {},
-    moveSelected(data) {
-      const {
-        selectedGlobs,
-        selectedNodes,
-        globs,
-        nodes,
-        document,
-        camera,
-        initialNodes,
-        initialGlobs,
-      } = data
-
-      let delta = vec.div(vec.vec(pointer.origin, pointer.point), camera.zoom)
-
-      if (nodeSnapper) {
-        const snapResults = nodeSnapper(delta, camera, document, keys.Alt)
-
-        delta = snapResults.delta
-        data.snaps.active = snapResults.snaps as any
-      }
-
-      // Lock to initial axis
-      if (keys.Shift) {
-        if (pointer.axis === "x") {
-          delta[1] = 0
-        } else {
-          delta[0] = 0
-        }
-      }
-
-      // Moving maybe nodes and globs
-      const nodesToMove = new Set(selectedNodes)
-
-      for (let globId of selectedGlobs) {
-        const glob = globs[globId]
-        for (let nodeId of glob.nodes) {
-          nodesToMove.add(nodeId)
-        }
-
-        const { D, Dp } = initialGlobs[glob.id].options
-
-        glob.options.D = vec.round(vec.add(D, delta))
-        glob.options.Dp = vec.round(vec.add(Dp, delta))
-      }
-
-      // Move nodes
-      for (let id of nodesToMove) {
-        const node = nodes[id]
-        if (node.locked) continue
-
-        let next = vec.round(vec.add(initialNodes[node.id].point, delta), 2)
-
-        node.point = next
-      }
-
-      // Move globs
-      for (let id in globs) {
-        const glob = globs[id]
-        if (
-          selectedGlobs.includes(id) ||
-          nodesToMove.has(glob.nodes[0]) ||
-          nodesToMove.has(glob.nodes[1])
-        ) {
-          const {
-            options: { D, Dp, a, b, ap, bp },
-          } = glob
-
-          const [
-            { point: C0, radius: r0 },
-            { point: C1, radius: r1 },
-          ] = glob.nodes.map((id) => nodes[id])
-
-          try {
-            glob.points = getGlob(C0, r0, C1, r1, D, Dp, a, b, ap, bp)
-          } catch (e) {
-            glob.points = null
-          }
-        }
-      }
-    },
-    clearSnaps(data) {
-      data.snaps.active = []
-    },
-    setSelectedGlobOptions(data, payload: Partial<IGlob["options"]>) {
-      const { globs, selectedGlobs } = data
-      for (let id of selectedGlobs) {
-        const glob = globs[id]
-        Object.assign(glob.options, payload)
-      }
-    },
-    updateGlobPoints(data) {
-      const { globs, globIds, nodes, selectedNodes, selectedGlobs } = data
-
-      const nodesToUpdate = new Set(selectedNodes)
-
-      const globsToUpdate = new Set(selectedGlobs.map((id) => globs[id]))
-
-      const sGlobs = globIds.map((id) => globs[id])
-
-      for (let glob of sGlobs) {
-        nodesToUpdate.add(glob.nodes[0])
-        nodesToUpdate.add(glob.nodes[1])
-      }
-
-      for (let glob of sGlobs) {
-        if (
-          nodesToUpdate.has(glob.nodes[0]) ||
-          nodesToUpdate.has(glob.nodes[1])
-        ) {
-          globsToUpdate.add(glob)
-        }
-      }
-
-      globsToUpdate.forEach((glob) => {
-        const [start, end] = glob.nodes.map((id) => nodes[id])
-        try {
-          glob.points = getGlob(
-            start.point,
-            start.radius,
-            end.point,
-            end.radius,
-            glob.options.D,
-            glob.options.Dp,
-            glob.options.a,
-            glob.options.b,
-            glob.options.ap,
-            glob.options.bp
-          )
-        } catch (e) {
-          glob.points = null
-        }
-      })
-    },
-    createGlobBetweenNodes(data, payload: { id: string }) {
-      const { selectedNodes, globs, globIds, nodes } = data
-      const globsArr = Object.values(data.globs)
-
-      for (let id of selectedNodes) {
-        if (payload.id === id) continue
-
-        // Don't re-glob
-        for (let glob of globsArr) {
-          if (arrsIntersect(glob.nodes, [id, payload.id])) continue
-        }
-
-        const newGlob = createGlob(nodes[id], nodes[payload.id])
-        globs[newGlob.id] = newGlob
-        globIds.push(newGlob.id)
-      }
-    },
-    deleteSelectedGlobs(data) {
-      const { globs, selectedGlobs } = data
-      for (let gid of selectedGlobs) {
-        delete globs[gid]
-      }
-      data.globIds = Object.keys(globs)
-      data.selectedGlobs = []
-    },
-    toggleNodeLocked(data, payload: { id: string }) {
-      data.nodes[payload.id].locked = !data.nodes[payload.id].locked
-    },
-    lockSelectedNodes(data) {
-      const { selectedNodes, nodeIds, nodes } = data
-      if (selectedNodes.every((id) => nodes[id].locked)) {
-        for (let id of selectedNodes) {
-          nodes[id].locked = false
-        }
-      } else {
-        for (let id of selectedNodes) {
-          nodes[id].locked = true
-        }
-      }
-    },
-    moveGlobOrder(
-      data,
-      payload: {
-        id: string
-        from: number
-        to: number
-        reason: string
-      }
-    ) {
-      if (payload.reason === "CANCEL") return
-
-      const { globIds } = data
-      globIds.splice(globIds.indexOf(payload.id), 1)
-      globIds.splice(payload.to, 0, payload.id)
-    },
-    splitGlob(data, payload: { id: string }) {
-      const { globs, nodes, nodeIds, globIds } = data
-
-      const glob = globs[payload.id]
-
-      const point = mvPointer.world.get()
-
-      const { E0, E0p, E1, E1p, F0, F1, F0p, F1p, D, Dp } = glob.points
-
-      // Points on curve
-      const closestP = getClosestPointOnCurve(point, E0, F0, F1, E1)
-      const closestPp = getClosestPointOnCurve(point, E0p, F0p, F1p, E1p)
-
-      if (!(closestP.point && closestPp.point)) {
-        console.warn("Could not find closest points.")
-        return
-      }
-
-      const P = closestP.point
-      const Pp = closestPp.point
-
-      // Find the circle
-      let C: number[], r: number
-
-      // Normals
-      const N = getNormalOnCurve(E0, F0, F1, E1, closestP.t)
-      const Np = getNormalOnCurve(E0p, F0p, F1p, E1p, closestPp.t)
-      const center = vec.med(N, Np)
-
-      try {
-        // Find intersection between normals
-        const intA = getLineLineIntersection(
-          vec.sub(P, vec.mul(N, 1000000)),
-          vec.add(P, vec.mul(N, 1000000)),
-          vec.sub(Pp, vec.mul(Np, 1000000)),
-          vec.add(Pp, vec.mul(Np, 1000000))
-        )
-
-        const L0 = vec.sub(P, vec.mul(vec.per(N), 10000000))
-        const L1 = vec.add(P, vec.mul(vec.per(N), 10000000))
-
-        // Center intersection
-        const intB = getLineLineIntersection(
-          L0,
-          L1,
-          vec.sub(intA, vec.mul(center, 10000000)),
-          vec.add(intA, vec.mul(center, 10000000))
-        )
-
-        // Create a circle at the point of intersection. The distance
-        // will be the same to either point.
-        C = intB
-        r = vec.dist(P, C)
-      } catch (e) {
-        // If the lines are parallel, we won't have an intersection.
-        // In this case, create a circle between the two points.
-        C = vec.med(P, Pp)
-        r = vec.dist(P, Pp) / 2
-      }
-
-      // Find an intersection between E0->D and L0->inverted D
-
-      const PL = [
-        vec.sub(P, vec.mul(N, 10000000)),
-        vec.add(P, vec.mul(N, 10000000)),
-      ]
-
-      const PLp = [
-        vec.sub(Pp, vec.mul(Np, 10000000)),
-        vec.add(Pp, vec.mul(Np, 10000000)),
-      ]
-
-      const D0 = getLineLineIntersection(PL[0], PL[1], E0, D)
-      const D1 = getLineLineIntersection(PL[0], PL[1], E1, D)
-      const D0p = getLineLineIntersection(PLp[0], PLp[1], E0p, Dp)
-      const D1p = getLineLineIntersection(PLp[0], PLp[1], E1p, Dp)
-
-      // The radio of distances between old and new handles
-      const d0 = vec.dist(E0, D0) / vec.dist(E0, D)
-      const d0p = vec.dist(E0p, D0p) / vec.dist(E0p, Dp)
-      const d1 = vec.dist(E1, D1) / vec.dist(E1, D)
-      const d1p = vec.dist(E1p, D1p) / vec.dist(E1p, Dp)
-
-      // Not sure why this part works
-      const t0 = 0.75 - d0 * 0.25
-      const t0p = 0.75 - d0p * 0.25
-      const t1 = 0.75 - d1 * 0.25
-      const t1p = 0.75 - d1p * 0.25
-
-      const a0 = t0,
-        b0 = t0,
-        a0p = t0p,
-        b0p = t0p,
-        a1 = t1,
-        b1 = t1,
-        a1p = t1p,
-        b1p = t1p
-
-      try {
-        const oldEndNode = nodes[glob.nodes[1]]
-
-        const newStartNode = createNode(C, r)
-        nodeIds.push(newStartNode.id)
-        nodes[newStartNode.id] = newStartNode
-
-        // Old glob
-        const oldGlob = glob
-        oldGlob.nodes[1] = newStartNode.id
-        oldGlob.options.D = D0
-        oldGlob.options.Dp = D0p
-        oldGlob.options.a = a0
-        oldGlob.options.b = b0
-        oldGlob.options.ap = a0p
-        oldGlob.options.bp = b0p
-
-        // New Glob
-        const newGlob = createGlob(newStartNode, oldEndNode)
-        globIds.push(newGlob.id)
-        globs[newGlob.id] = newGlob
-        newGlob.options.D = D1
-        newGlob.options.Dp = D1p
-        oldGlob.options.a = a1
-        oldGlob.options.b = b1
-        oldGlob.options.ap = a1p
-        oldGlob.options.bp = b1p
-
-        for (let g of [oldGlob, newGlob]) {
-          const [start, end] = g.nodes.map((id) => nodes[id])
-          g.points = getGlob(
-            start.point,
-            start.radius,
-            end.point,
-            end.radius,
-            g.options.D,
-            g.options.Dp,
-            g.options.a,
-            g.options.b,
-            g.options.ap,
-            g.options.bp
-          )
-        }
-
-        data.hoveredGlobs = []
-        data.hoveredNodes = [newStartNode.id]
-      } catch (e) {
-        // console.warn("Could not create glob.")
-      }
-    },
-
-    // HANDLES
-    setSelectingHandle(data, payload: { id: string; handle: string }) {
-      // const glob = data.globs[payload.id]
-      data.selectedGlobs = [payload.id]
-      data.selectedHandle = payload
-      data.selectedNodes = []
-    },
-    moveSelectedHandle(data) {
-      const {
-        camera,
-        nodes,
-        globs,
-        selectedHandle,
-        snaps,
-        initialGlobs,
-        document,
-      } = data
-      const glob = globs[selectedHandle.id]
-      const [start, end] = glob.nodes
-
-      snaps.active = []
-
-      const handle = initialGlobs[glob.id].options[selectedHandle.handle]
-
-      let delta = vec.div(vec.vec(pointer.origin, pointer.point), camera.zoom)
-
-      // Lock to initial axis
-      if (keys.Shift) {
-        if (pointer.axis === "x") {
-          delta[1] = 0
-        } else {
-          delta[0] = 0
-        }
-      }
-
-      let next = vec.add(handle, delta)
-
-      // Snapping
-      if (!keys.Alt) {
-        let d: number
-
-        const [A0, A1] =
-          selectedHandle.handle === "D"
-            ? [glob.points.E0, glob.points.E1]
-            : [glob.points.E0p, glob.points.E1p]
-
-        const mp = vec.med(A0, A1)
-        const n = vec.uni(vec.vec(A0, A1))
-
-        // Is the near the midpoint of its points?
-        d = vec.dist(next, mp) * camera.zoom
-        if (d < 5) {
-          next = mp
-          snaps.active.push({
-            type: ISnapTypes.HandleStraight,
-            from: vec.sub(next, vec.mul(n, 32 / camera.zoom)),
-            to: vec.add(next, vec.mul(n, 32 / camera.zoom)),
-            n,
-          })
-        }
-
-        // Is the handle near to the line between its points?
-        if (Math.abs(vec.distanceToLine(A0, A1, next) * camera.zoom) < 3) {
-          next = vec.nearestPointOnLine(A0, A1, next, false)
-
-          snaps.active.push({
-            type: ISnapTypes.HandleStraight,
-            from: vec.sub(next, vec.mul(n, 64 / camera.zoom)),
-            to: vec.add(next, vec.mul(n, 64 / camera.zoom)),
-            n,
-          })
-        }
-
-        // Is the handle near the perpendicular of its points?
-        const p0 = vec.sub(mp, vec.mul(vec.per(n), 100000))
-        const p1 = vec.add(mp, vec.mul(vec.per(n), 100000))
-
-        if (Math.abs(vec.distanceToLine(p0, p1, next) * camera.zoom) < 3) {
-          next = vec.nearestPointOnLine(p0, p1, next, false)
-
-          snaps.active.push({
-            type: ISnapTypes.Handle,
-            from: next,
-            to: mp,
-          })
-        }
-
-        // Is the handle at a right triangle?
-        const dd = vec.dist(A0, A1) / 2
-        const md = vec.dist(next, mp)
-
-        if (Math.abs(dd - md) * camera.zoom < 3) {
-          next = vec.add(mp, vec.mul(vec.vec(mp, next), dd / md))
-
-          snaps.active.push({
-            type: ISnapTypes.Handle,
-            from: next,
-            to: A0,
-          })
-          snaps.active.push({
-            type: ISnapTypes.Handle,
-            from: next,
-            to: A1,
-          })
-        }
-
-        // Snap to other handles
-        for (let id in snaps.globs) {
-          if (id === selectedHandle.id) continue
-
-          const pts = snaps.globs[id]
-          let snapped = false
-
-          for (let snap of pts) {
-            const d = vec.dist(next, snap) * camera.zoom
-
-            if (d < 3) {
-              // Snap to point
-              next = snap
-              snapped = true
-              break
-            }
-          }
-
-          if (!snapped) {
-            if (globs[id].points === null) continue
-
-            const { E0: a, D: b, E1: c, E0p: ap, Dp: bp, E1p: cp } = globs[
-              id
-            ].points
-
-            if (
-              (isInView(a, document) || isInView(b, document)) &&
-              Math.abs(vec.distanceToLine(a, b, next) * camera.zoom) < 3
-            ) {
-              next = vec.nearestPointOnLine(a, b, next, false)
-              snaps.active.push({
-                type: ISnapTypes.Handle,
-                from: next,
-                to: vec.dist(next, a) > vec.dist(next, b) ? a : b,
-              })
-              snapped = true
-            } else if (
-              (isInView(b, document) || isInView(c, document)) &&
-              Math.abs(vec.distanceToLine(b, c, next) * camera.zoom) < 3
-            ) {
-              next = vec.nearestPointOnLine(b, c, next, false)
-              snaps.active.push({
-                type: ISnapTypes.Handle,
-                from: next,
-                to: vec.dist(next, b) > vec.dist(next, c) ? b : c,
-              })
-              snapped = true
-            } else if (
-              (isInView(ap, document) || isInView(bp, document)) &&
-              Math.abs(vec.distanceToLine(ap, bp, next) * camera.zoom) < 3
-            ) {
-              next = vec.nearestPointOnLine(ap, bp, next, false)
-              snaps.active.push({
-                type: ISnapTypes.Handle,
-                from: next,
-                to: vec.dist(next, ap) > vec.dist(next, bp) ? ap : bp,
-              })
-              snapped = true
-            } else if (
-              (isInView(bp, document) || isInView(cp, document)) &&
-              Math.abs(vec.distanceToLine(bp, cp, next) * camera.zoom) < 3
-            ) {
-              next = vec.nearestPointOnLine(bp, cp, next, false)
-              snaps.active.push({
-                type: ISnapTypes.Handle,
-                from: next,
-                to: vec.dist(next, bp) > vec.dist(next, cp) ? bp : cp,
-              })
-              snapped = true
-            }
-          }
-        }
-
-        // Apply the change to the handle
-        glob.options[selectedHandle.handle] = vec.round(
-          getSafeHandlePoint(nodes[start], nodes[end], next)
-        )
-
-        // Move the other handle, too.
-        if (keys.Meta) {
-          const otherHandle = selectedHandle.handle === "D" ? "Dp" : "D"
-          glob.options[otherHandle] = getSafeHandlePoint(
-            nodes[start],
-            nodes[end],
-            vec.add(
-              initialGlobs[glob.id].options[otherHandle],
-              vec.sub(
-                next,
-                initialGlobs[glob.id].options[selectedHandle.handle]
-              )
-            )
-          )
-        }
-      }
-
-      try {
-        // Rebuild the glob points
-        glob.points = getGlob(
-          nodes[start].point,
-          nodes[start].radius,
-          nodes[end].point,
-          nodes[end].radius,
-          glob.options.D,
-          glob.options.Dp,
-          glob.options.a,
-          glob.options.b,
-          glob.options.ap,
-          glob.options.bp
-        )
-      } catch (e) {
-        glob.points = null
-      }
-    },
-    clearSelectedHandle(data) {
-      data.selectedHandle = undefined
-    },
-
-    // ANCHORS
-    setSelectingAnchor(data, payload: { id: string; anchor: string }) {
-      // const glob = data.globs[payload.id]
-      data.selectedGlobs = [payload.id]
-      data.selectedAnchor = payload
-      data.selectedNodes = []
-    },
-    moveSelectedAnchor(data) {
-      const { camera, nodes, globs, selectedAnchor, snaps } = data
-      const glob = globs[selectedAnchor.id]
-      const {
-        points: { E0, D, E1, E0p, Dp, E1p },
-        nodes: [start, end],
-      } = glob
-
-      let next = screenToWorld(pointer.point, camera.point, camera.zoom)
-      let n: number
-
-      if (selectedAnchor.anchor === "a") {
-        next = vec.nearestPointOnLine(E0, D, next)
-        n = vec.dist(E0, next) / vec.dist(E0, D)
-      } else if (selectedAnchor.anchor === "b") {
-        next = vec.nearestPointOnLine(E1, D, next)
-        n = vec.dist(E1, next) / vec.dist(E1, D)
-      } else if (selectedAnchor.anchor === "ap") {
-        next = vec.nearestPointOnLine(E0p, Dp, next)
-        n = vec.dist(E0p, next) / vec.dist(E0p, Dp)
-      } else if (selectedAnchor.anchor === "bp") {
-        next = vec.nearestPointOnLine(E1p, Dp, next)
-        n = vec.dist(E1p, next) / vec.dist(E1p, Dp)
-      }
-
-      n = Math.round(n * 100) / 100
-
-      // Round to midpoint
-      if (!keys.Alt) {
-        if (Math.abs(n - 0.5) < 0.025) {
-          n = 0.5
-        }
-      }
-
-      if (keys.Meta) {
-        const otherAnchor =
-          selectedAnchor.anchor === "a" ? "ap" : "b" ? "bp" : "ap" ? "a" : "b"
-        glob.options[otherAnchor] = n
-      }
-
-      glob.options[selectedAnchor.anchor] = n
-
-      glob.points = getGlob(
-        nodes[start].point,
-        nodes[start].radius,
-        nodes[end].point,
-        nodes[end].radius,
-        glob.options.D,
-        glob.options.Dp,
-        glob.options.a,
-        glob.options.b,
-        glob.options.ap,
-        glob.options.bp
-      )
-    },
-    clearSelectedAnchor(data) {
-      data.selectedAnchor = undefined
-    },
-
-    // INITIAL POINTS
-    setInitialPoints(data) {
-      const { nodes, globs, initialPoints } = data
-
-      const nodePts: IData["initialPoints"]["nodes"] = {}
-
-      for (let key in nodes) {
-        nodePts[key] = nodes[key].point
-      }
-
-      const globPts: IData["initialPoints"]["globs"] = {}
-
-      for (let key in globs) {
-        globPts[key] = { D: globs[key].options.D, Dp: globs[key].options.Dp }
-      }
-
-      initialPoints.nodes = nodePts
-      initialPoints.globs = globPts
-    },
-    // SNAPS
-    setSnapPoints(data) {
-      const { nodes, snaps, globs } = data
-
-      const nodePts: IData["snaps"]["nodes"] = {}
-
-      for (let key in nodes) {
-        const node = nodes[key]
-        nodePts[key] = { point: node.point, radius: node.radius }
-      }
-
-      const globPts: IData["snaps"]["globs"] = {}
-
-      for (let key in globs) {
-        const {
-          options: { D, Dp },
-          points,
-        } = globs[key]
-
-        globPts[key] = [D, Dp]
-
-        if (points) {
-          globPts[key].push(
-            projectPoint(
-              D,
-              vec.angle(D, points.E0),
-              vec.dist(D, points.E0) * 2
-            ),
-            projectPoint(
-              Dp,
-              vec.angle(Dp, points.E0p),
-              vec.dist(Dp, points.E0p) * 2
-            ),
-            projectPoint(
-              D,
-              vec.angle(D, points.E1),
-              vec.dist(D, points.E1) * 2
-            ),
-            projectPoint(
-              Dp,
-              vec.angle(Dp, points.E1p),
-              vec.dist(Dp, points.E1p) * 2
-            )
-          )
-        }
-      }
-
-      snaps.nodes = nodePts
-      snaps.globs = globPts
-    },
-
     // DATA
     saveData(data) {
       if (typeof window === "undefined") return
       if (typeof localStorage === "undefined") return
-      localStorage.setItem("glob_aldata_v5", JSON.stringify(data))
+      localStorage.setItem("glob_aldata_v6", JSON.stringify(data))
     },
 
     // EVENTS
     setup(data) {
       if (typeof window === "undefined") return
       if (typeof localStorage === "undefined") return
-      const saved = localStorage.getItem("glob_aldata_v5")
+      const saved = localStorage.getItem("glob_aldata_v6")
       if (saved) {
         Object.assign(data, JSON.parse(saved))
       }
@@ -1773,6 +979,7 @@ const state = createState({
         window.addEventListener("keydown", handleKeyDown)
         window.addEventListener("keyup", handleKeyUp)
         window.addEventListener("resize", handleResize)
+        window.addEventListener("blur", handleWindowBlur)
       }
     },
     teardown() {
@@ -1780,6 +987,7 @@ const state = createState({
         window.removeEventListener("keydown", handleKeyDown)
         window.removeEventListener("keyup", handleKeyUp)
         window.removeEventListener("resize", handleResize)
+        window.removeEventListener("blur", handleWindowBlur)
       }
     },
   },
@@ -1792,12 +1000,16 @@ const state = createState({
 
 /* -------------------- RESIZERS -------------------- */
 
-let edgeResizer: EdgeResizer = undefined
-let cornerResizer: CornerResizer = undefined
-let cornerRotater: CornerRotater = undefined
-let nodeResizer: NodeResizer = undefined
-let snappingNode: string = undefined
-let nodeSnapper: NodeSnapper = undefined
+let edgeResizer: EdgeResizer
+let cornerResizer: CornerResizer
+let cornerRotater: CornerRotater
+let nodeResizer: NodeResizer
+let handleMover: HandleMover
+let anchorMover: AnchorMover
+let radiusMover: RadiusMover
+let resizeMover: ResizeMover
+let rotateMover: RotateMover
+let mover: Mover
 
 /* --------------------- INPUTS --------------------- */
 
@@ -1834,9 +1046,11 @@ const handleResize = throttle(() => {
 
 const downCommands: Record<string, KeyCommand[]> = {
   z: [
-    { eventName: "UNDID", modifiers: ["Meta"] },
-    { eventName: "REDID", modifiers: ["Meta", "Shift"] },
+    { eventName: "REDO", modifiers: ["Meta", "Shift"] },
+    { eventName: "UNDO", modifiers: ["Meta"] },
   ],
+  a: [{ eventName: "SELECTED_ALL", modifiers: ["Meta"] }],
+  s: [{ eventName: "SAVED", modifiers: ["Meta"] }],
   c: [{ eventName: "COPIED", modifiers: ["Meta"] }],
   v: [{ eventName: "PASTED", modifiers: ["Meta"] }],
   g: [{ eventName: "STARTED_LINKING_NODES", modifiers: [] }],
@@ -1863,6 +1077,15 @@ const upCommands = {
   Shift: [{ eventName: "RELEASED_SHIFT", modifiers: [] }],
   Alt: [{ eventName: "RELEASED_ALT", modifiers: [] }],
   Meta: [{ eventName: "RELEASED_META", modifiers: [] }],
+}
+
+function handleWindowBlur(e) {
+  for (let key in keys) {
+    keys[key] = false
+  }
+  pointer.id = -1
+  pointer.buttons = 0
+  pointer.points.clear()
 }
 
 function handleKeyDown(e: KeyboardEvent) {
