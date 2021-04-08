@@ -49,8 +49,9 @@ const state = createState({
     MOUNTED: { do: ["setup", "setViewport"], to: "selecting" },
     UNMOUNTED: "teardown",
     RESIZED: "setViewport",
-    PRESSED_SPACE: "enableFill",
-    RELEASED_SPACE: "disableFill",
+    PRESSED_SPACE: "toggleFill",
+    RELEASED_SPACE: "toggleFill",
+    TOGGLED_FILL: "toggleFill",
     WHEELED: {
       ifAny: ["hasShift", "isTrackpadZoom"],
       do: ["zoomCamera", "updateMvPointer"],
@@ -458,6 +459,9 @@ const state = createState({
     },
     disableFill(data) {
       data.fill = false
+    },
+    toggleFill(data) {
+      data.fill = !data.fill
     },
 
     // CAMERA / VIEWPORT

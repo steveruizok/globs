@@ -9,6 +9,7 @@ import {
   ArrowUp,
   X,
   Menu,
+  Circle,
 } from "react-feather"
 import { styled } from "stitches.config"
 import useTheme from "hooks/useTheme"
@@ -77,6 +78,9 @@ export default function Toolbar() {
       </section>
       <Spacer />
       <section>
+        <button title="Toggle Fill" onClick={() => state.send("TOGGLED_FILL")}>
+          <Circle className="fill-flat" />
+        </button>
         <button disabled={true}>
           <Copy />
         </button>
