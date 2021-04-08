@@ -18,7 +18,11 @@ import {
   getLineLineIntersection,
   getClosestPointOnCircle,
 } from "./utils"
-import { updateGlobPoints, saveSelectionState } from "./movers/mover-utils"
+import {
+  updateGlobPoints,
+  saveSelectionState,
+  getPositionSnapshot,
+} from "./movers/mover-utils"
 
 import HandleMover from "./movers/HandleMover"
 import Mover, { MoverSnapshot } from "./movers/Mover"
@@ -28,6 +32,11 @@ import { getCommonBounds, getGlobBounds, getNodeBounds } from "./bounds-utils"
 import { getClosestPointOnCurve, getNormalOnCurve } from "./bez"
 import getNodeSnapper, { NodeSnapper } from "./snaps"
 import RadiusMover, { RadiusMoverSnapshot } from "./movers/RadiusMover"
+import ResizerMover, {
+  ResizerMoverSnapshot,
+  ResizerValues,
+} from "./movers/ResizeMover"
+import RotateMover from "./movers/RotateMover"
 
 /* --------------------- Generic -------------------- */
 
@@ -240,6 +249,9 @@ export const commands = {
             data.globs[glob.id] = glob
             data.globIds.push(glob.id)
           }
+          restoreSelectionState(data)
+          data.selectedGlobs = []
+          data.selectedNodes[targetId]
         },
         undo(data) {
           for (let glob of newGlobs) {
@@ -252,6 +264,7 @@ export const commands = {
     )
   },
   moveSelection(data: IData, delta: number[], snapshot: MoverSnapshot) {
+    const restoreSelectionState = saveSelectionState(data)
     const sSnapshot = Mover.getSnapshot(data)
 
     history.execute(
@@ -262,9 +275,11 @@ export const commands = {
           // When first executed, the items will already be in the correct position
           if (initial) return
 
+          restoreSelectionState(data)
           Mover.moveSelection(data, delta, snapshot)
         },
         undo(data) {
+          restoreSelectionState(data)
           Mover.moveSelection(data, vec.neg(delta), sSnapshot)
         },
       })
@@ -276,6 +291,7 @@ export const commands = {
     initial: { D: number[]; Dp: number[] },
     current: { D: number[]; Dp: number[] }
   ) {
+    const restoreSelectionState = saveSelectionState(data)
     // We need a way to restore the nodes from when the drag began and ended
     history.execute(
       data,
@@ -283,6 +299,8 @@ export const commands = {
         type: CommandType.Move,
         do(data, initial) {
           if (initial) return
+
+          restoreSelectionState(data)
 
           const glob = data.globs[id]
           const [start, end] = glob.nodes.map((id) => data.nodes[id])
@@ -308,6 +326,7 @@ export const commands = {
           }
         },
         undo(data) {
+          restoreSelectionState(data)
           data.globs[id].options.D = initial.D
           data.globs[id].options.Dp = initial.Dp
           const glob = data.globs[id]
@@ -335,6 +354,7 @@ export const commands = {
     )
   },
   moveAnchor(data: IData, globId: string, initial: AnchorMoverSnapshot) {
+    const restoreSelectionState = saveSelectionState(data)
     const current = AnchorMover.getSnapshot(data, globId)
 
     // We need a way to restore the nodes from when the drag began and ended
@@ -344,6 +364,7 @@ export const commands = {
         type: CommandType.MoveAnchor,
         do(data, initial) {
           if (initial) return
+          restoreSelectionState(data)
           const glob = data.globs[globId]
           Object.assign(glob.options, current)
           const [start, end] = glob.nodes.map((id) => data.nodes[id])
@@ -362,6 +383,7 @@ export const commands = {
           )
         },
         undo(data) {
+          restoreSelectionState(data)
           const glob = data.globs[globId]
           Object.assign(glob.options, initial)
           const [start, end] = glob.nodes.map((id) => data.nodes[id])
@@ -663,6 +685,7 @@ export const commands = {
   },
   // Bounds
   deleteSelection(data: IData) {
+    const restoreSelectionState = saveSelectionState(data)
     const {
       globs: sGlobs,
       nodes: sNodes,
@@ -691,6 +714,7 @@ export const commands = {
       new Command({
         type: CommandType.Delete,
         do(data) {
+          restoreSelectionState(data)
           deletedGlobIds.forEach((id) => delete data.globs[id])
           data.globIds = Object.keys(data.globs)
           data.selectedGlobs = []
@@ -702,16 +726,16 @@ export const commands = {
         undo(data) {
           deletedGlobIds.forEach((id) => (data.globs[id] = sGlobs[id]))
           data.globIds = Object.keys(data.globs)
-          data.selectedGlobs = sSelectedGlobIds
 
           deletedNodeIds.forEach((id) => (data.nodes[id] = sNodes[id]))
           data.nodeIds = Object.keys(data.nodes)
-          data.selectedNodes = sSelectedNodeIds
+          restoreSelectionState(data)
         },
       })
     )
   },
   toggleSelectionLocked(data: IData) {
+    const restoreSelectionState = saveSelectionState(data)
     const selectedNodes = [...data.selectedNodes]
     const currentLocked = Object.fromEntries(
       Object.entries(data.nodes).map(([id, node]) => [id, node.locked])
@@ -722,12 +746,14 @@ export const commands = {
       new Command({
         type: CommandType.ToggleLocked,
         do(data) {
+          restoreSelectionState(data)
           const locked = !selectedNodes.every((id) => data.nodes[id].locked)
           for (let id of selectedNodes) {
             data.nodes[id].locked = locked
           }
         },
         undo(data) {
+          restoreSelectionState(data)
           for (let id in currentLocked) {
             data.nodes[id].locked = currentLocked[id]
           }
@@ -736,6 +762,7 @@ export const commands = {
     )
   },
   moveBounds(data: IData, delta: number[]) {
+    const restoreSelectionState = saveSelectionState(data)
     const sNodeIds = [...data.selectedNodes]
     const sGlobIds = [...data.selectedGlobs]
 
@@ -744,6 +771,7 @@ export const commands = {
       new Command({
         type: CommandType.ChangeBounds,
         do(data) {
+          restoreSelectionState(data)
           for (let nodeId of sNodeIds) {
             const node = data.nodes[nodeId]
             node.point = vec.add(node.point, delta)
@@ -756,6 +784,7 @@ export const commands = {
           }
         },
         undo(data) {
+          restoreSelectionState(data)
           for (let nodeId of sNodeIds) {
             const node = data.nodes[nodeId]
             node.point = vec.sub(node.point, delta)
@@ -770,7 +799,108 @@ export const commands = {
       })
     )
   },
+  rotateSelection(
+    data: IData,
+    center: number[],
+    angle: number,
+    snapshot: ReturnType<typeof getPositionSnapshot>
+  ) {
+    const restoreSelectionState = saveSelectionState(data)
+
+    history.execute(
+      data,
+      new Command({
+        type: CommandType.ChangeBounds,
+        do(data, initial) {
+          if (initial) return
+          restoreSelectionState(data)
+          RotateMover.rotate(data, center, angle, snapshot)
+          updateGlobPoints(data)
+        },
+        undo(data) {
+          restoreSelectionState(data)
+          for (let id in snapshot.nodes) {
+            const sNode = snapshot.nodes[id]
+            const node = data.nodes[id]
+            node.point = sNode.point
+            node.radius = sNode.radius
+          }
+
+          for (let id in snapshot.globs) {
+            const sGlob = snapshot.globs[id]
+            const glob = data.globs[id]
+            Object.assign(glob.options, sGlob)
+          }
+
+          updateGlobPoints(data)
+        },
+      })
+    )
+  },
+  edgeOrCornerResizeBounds(
+    data: IData,
+    type: "corner" | "edge",
+    value: number,
+    restore: ReturnType<typeof getPositionSnapshot>,
+    snapshot: ResizerMoverSnapshot,
+    preserveRadii: boolean
+  ) {
+    const restoreSelectionState = saveSelectionState(data)
+    const current = ResizerMover.getSnapshot(data)
+
+    history.execute(
+      data,
+      new Command({
+        type: CommandType.CreateNode,
+        do(data, initial) {
+          if (initial) return
+          restoreSelectionState(data)
+
+          const { x: x0, y: y0, maxX: x1, maxY: y1 } = snapshot.bounds
+          const { maxX: mx, maxY: my, width: mw, height: mh } = snapshot.bounds
+
+          ResizerMover.resize(
+            data,
+            type,
+            current.point,
+            value,
+            {
+              x0,
+              y0,
+              x1,
+              y1,
+              mx,
+              my,
+              mw,
+              mh,
+            },
+            snapshot,
+            preserveRadii
+          )
+          updateGlobPoints(data)
+        },
+        undo(data) {
+          restoreSelectionState(data)
+          for (let id in restore.nodes) {
+            const sNode = restore.nodes[id]
+            const node = data.nodes[id]
+            node.point = sNode.point
+            node.radius = sNode.radius
+          }
+
+          for (let id in restore.globs) {
+            const sGlob = restore.globs[id]
+            const glob = data.globs[id]
+            Object.assign(glob.options, sGlob)
+          }
+
+          updateGlobPoints(data)
+        },
+      })
+    )
+  },
   resizeBounds(data: IData, size: number[]) {
+    const restoreSelectionState = saveSelectionState(data)
     const sNodeIds = [...data.selectedNodes]
     const sGlobIds = [...data.selectedGlobs]
     const bounds = getSelectedBoundingBox(data)
@@ -785,6 +915,7 @@ export const commands = {
       new Command({
         type: CommandType.ChangeBounds,
         do(data) {
+          restoreSelectionState(data)
           resizeBounds(
             sNodeIds.map((id) => data.nodes[id]),
             sGlobIds.map((id) => data.globs[id]),
@@ -796,6 +927,7 @@ export const commands = {
           updateGlobPoints(data)
         },
         undo(data) {
+          restoreSelectionState(data)
           resizeBounds(
             sNodeIds.map((id) => data.nodes[id]),
             sGlobIds.map((id) => data.globs[id]),
@@ -809,29 +941,8 @@ export const commands = {
       })
     )
   },
-  edgeResizeBounds(data: IData, delta: number[]) {
-    // We need a way to restore the nodes from when the resize began and ended
-    history.execute(
-      data,
-      new Command({
-        type: CommandType.ChangeBounds,
-        do(data) {},
-        undo(data) {},
-      })
-    )
-  },
-  cornerResizeBounds(data: IData, delta: number[]) {
-    // We need a way to restore the nodes from when the resize began and ended
-    history.execute(
-      data,
-      new Command({
-        type: CommandType.ChangeBounds,
-        do(data) {},
-        undo(data) {},
-      })
-    )
-  },
   resizeNode(data: IData, id: string, initial: RadiusMoverSnapshot) {
+    const restoreSelectionState = saveSelectionState(data)
     const current = RadiusMover.getSnapshot(data, id)
     // We need a way to restore the nodes from when the drag began and ended
     history.execute(
@@ -840,13 +951,14 @@ export const commands = {
         type: CommandType.Move,
         do(data, initial) {
           if (initial) return
-
+          restoreSelectionState(data)
           const { nodes } = data
           const node = nodes[id]
           node.radius = current.radius
           updateGlobPoints(data)
         },
         undo(data) {
+          restoreSelectionState(data)
           const { nodes } = data
           const node = nodes[id]
           node.radius = initial.radius
@@ -856,16 +968,19 @@ export const commands = {
     )
   },
   toggleNodeCap(data: IData, id: string) {
+    const restoreSelectionState = saveSelectionState(data)
     const cap = data.nodes[id].cap
     history.execute(
       data,
       new Command({
         type: CommandType.CreateNode,
         do(data) {
+          restoreSelectionState(data)
           const node = data.nodes[id]
           node.cap = cap === "round" ? "flat" : "round"
         },
         undo(data) {
+          restoreSelectionState(data)
           const node = data.nodes[id]
           node.cap = cap
         },
@@ -882,6 +997,7 @@ export const commands = {
       locked: boolean
     }>
   ) {
+    const restoreSelectionState = saveSelectionState(data)
     const { x = null, y = null, r = null, cap = null, locked = null } = change
 
     const sNodes = Object.fromEntries(
@@ -904,6 +1020,7 @@ export const commands = {
       new Command({
         type: CommandType.CreateNode,
         do(data) {
+          restoreSelectionState(data)
           for (let key in sNodes) {
             const node = data.nodes[key]
             if (x !== null) node.point[0] = x
@@ -915,6 +1032,7 @@ export const commands = {
           updateGlobPoints(data)
         },
         undo(data) {
+          restoreSelectionState(data)
           for (let key in sNodes) {
             const node = data.nodes[key]
             const sNode = sNodes[key]

@@ -9,6 +9,7 @@ import { commands, history } from "./history"
 import AnchorMover from "./movers/AnchorMover"
 import HandleMover from "./movers/HandleMover"
 import RadiusMover from "./movers/RadiusMover"
+import ResizeMover from "./movers/ResizeMover"
 import Mover from "./movers/Mover"
 import {
   ICanvasItems,
@@ -42,6 +43,8 @@ import {
   getGlobInnerBounds,
   getNodeBounds,
 } from "./bounds-utils"
+import ResizerMover from "./movers/ResizeMover"
+import RotateMover from "./movers/RotateMover"
 
 export const elms: Record<string, SVGPathElement> = {}
 
@@ -299,30 +302,30 @@ const state = createState({
           },
         },
         edgeResizing: {
-          onEnter: ["setBounds", "setResizingEdge"],
+          onEnter: ["setEdgeResizer"],
           on: {
-            MOVED_POINTER: ["edgeResize", "updateGlobPoints"],
-            WHEELED: ["edgeResize", "updateGlobPoints"],
-            STOPPED_POINTING: { to: "notPointing" },
-            CANCELLED: { to: "notPointing" },
+            MOVED_POINTER: ["updateEdgeResize"],
+            WHEELED: ["updateEdgeResize"],
+            STOPPED_POINTING: { do: "completeEdgeResize", to: "notPointing" },
+            CANCELLED: { do: "cancelEdgeResize", to: "notPointing" },
           },
         },
         cornerResizing: {
-          onEnter: ["setBounds", "setResizingCorner"],
+          onEnter: ["setCornerResizer"],
           on: {
-            MOVED_POINTER: ["cornerResize", "updateGlobPoints"],
-            WHEELED: ["cornerResize", "updateGlobPoints"],
-            STOPPED_POINTING: { to: "notPointing" },
-            CANCELLED: { to: "notPointing" },
+            MOVED_POINTER: ["updateCornerResize"],
+            WHEELED: ["updateCornerResize"],
+            STOPPED_POINTING: { do: "completeCornerResize", to: "notPointing" },
+            CANCELLED: { do: "cancelCornerResize", to: "notPointing" },
           },
         },
         cornerRotating: {
-          onEnter: ["setBounds", "setRotatingCorner"],
+          onEnter: "beginRotate",
           on: {
-            MOVED_POINTER: ["cornerRotate", "updateGlobPoints"],
-            WHEELED: ["cornerRotate", "updateGlobPoints"],
-            STOPPED_POINTING: { to: "notPointing" },
-            CANCELLED: { to: "notPointing" },
+            MOVED_POINTER: "updateRotate",
+            WHEELED: "updateRotate",
+            STOPPED_POINTING: { do: "completeRotate", to: "notPointing" },
+            CANCELLED: { do: "cancelRotate", to: "notPointing" },
           },
         },
       },
@@ -839,64 +842,101 @@ const state = createState({
     changeBoundsHeight(data, payload: { value: number }) {
       commands.resizeBounds(data, [0, payload.value])
     },
-    setResizingCorner(data, payload: { corner: number }) {
-      const { selectedNodes, selectedGlobs, globs, nodes } = data
-
-      cornerResizer = getCornerResizer(
-        selectedNodes.map((id) => nodes[id]),
-        selectedGlobs.map((id) => globs[id]),
-        getSelectedBoundingBox(data),
-        payload.corner
-      )
+    setEdgeResizer(data, payload: { edge: number }) {
+      resizeMover = new ResizerMover(data, "edge", payload.edge)
     },
-    cornerResize(data) {
-      const { selectedNodes, selectedGlobs, globs, nodes, camera } = data
-
-      cornerResizer(
-        screenToWorld(pointer.point, camera.point, camera.zoom),
-        selectedNodes.map((id) => nodes[id]),
-        selectedGlobs.map((id) => globs[id]),
-        keys.Meta
-      )
+    cancelEdgeResize(data) {
+      resizeMover.cancel(data)
     },
-    setResizingEdge(data, payload: { edge: number }) {
-      const { selectedNodes, selectedGlobs, globs, nodes } = data
-
-      edgeResizer = getEdgeResizer(
-        selectedNodes.map((id) => nodes[id]),
-        selectedGlobs.map((id) => globs[id]),
-        getSelectedBoundingBox(data),
-        payload.edge
-      )
+    updateEdgeResize(data) {
+      resizeMover.update(data)
     },
-    edgeResize(data) {
-      const { selectedNodes, selectedGlobs, nodes, globs, camera } = data
-
-      edgeResizer(
-        screenToWorld(pointer.point, camera.point, camera.zoom),
-        selectedNodes.map((id) => nodes[id]),
-        selectedGlobs.map((id) => globs[id]),
-        keys.Meta
-      )
+    completeEdgeResize(data) {
+      resizeMover.complete(data)
     },
-    setRotatingCorner(data) {
-      const { selectedNodes, selectedGlobs, globs, nodes, camera } = data
-
-      cornerRotater = getCornerRotater(
-        selectedNodes.map((id) => nodes[id]),
-        selectedGlobs.map((id) => globs[id]),
-        screenToWorld(pointer.point, camera.point, camera.zoom),
-        getSelectedBoundingBox(data)
-      )
+    setCornerResizer(data, payload: { corner: number }) {
+      resizeMover = new ResizerMover(data, "corner", payload.corner)
     },
-    cornerRotate(data) {
-      const { selectedNodes, selectedGlobs, globs, nodes, camera } = data
+    cancelCornerResize(data) {
+      resizeMover.cancel(data)
+    },
+    updateCornerResize(data) {
+      resizeMover.update(data)
+    },
+    completeCornerResize(data) {
+      resizeMover.complete(data)
+    },
+    // setResizingCorner(data, payload: { corner: number }) {
+    //   const { selectedNodes, selectedGlobs, globs, nodes } = data
 
-      cornerRotater(
-        screenToWorld(pointer.point, camera.point, camera.zoom),
-        selectedNodes.map((id) => nodes[id]),
-        selectedGlobs.map((id) => globs[id])
-      )
+    //   cornerResizer = getCornerResizer(
+    //     selectedNodes.map((id) => nodes[id]),
+    //     selectedGlobs.map((id) => globs[id]),
+    //     getSelectedBoundingBox(data),
+    //     payload.corner
+    //   )
+    // },
+    // cornerResize(data) {
+    //   const { selectedNodes, selectedGlobs, globs, nodes, camera } = data
+
+    //   cornerResizer(
+    //     screenToWorld(pointer.point, camera.point, camera.zoom),
+    //     selectedNodes.map((id) => nodes[id]),
+    //     selectedGlobs.map((id) => globs[id]),
+    //     keys.Meta
+    //   )
+    // },
+    // setResizingEdge(data, payload: { edge: number }) {
+    //   const { selectedNodes, selectedGlobs, globs, nodes } = data
+
+    //   edgeResizer = getEdgeResizer(
+    //     selectedNodes.map((id) => nodes[id]),
+    //     selectedGlobs.map((id) => globs[id]),
+    //     getSelectedBoundingBox(data),
+    //     payload.edge
+    //   )
+    // },
+    // edgeResize(data) {
+    //   const { selectedNodes, selectedGlobs, nodes, globs, camera } = data
+
+    //   edgeResizer(
+    //     screenToWorld(pointer.point, camera.point, camera.zoom),
+    //     selectedNodes.map((id) => nodes[id]),
+    //     selectedGlobs.map((id) => globs[id]),
+    //     keys.Meta
+    //   )
+    // },
+    // setRotatingCorner(data) {
+    //   const { selectedNodes, selectedGlobs, globs, nodes, camera } = data
+
+    //   cornerRotater = getCornerRotater(
+    //     selectedNodes.map((id) => nodes[id]),
+    //     selectedGlobs.map((id) => globs[id]),
+    //     screenToWorld(pointer.point, camera.point, camera.zoom),
+    //     getSelectedBoundingBox(data)
+    //   )
+    // },
+    // cornerRotate(data) {
+    //   const { selectedNodes, selectedGlobs, globs, nodes, camera } = data
+
+    //   cornerRotater(
+    //     screenToWorld(pointer.point, camera.point, camera.zoom),
+    //     selectedNodes.map((id) => nodes[id]),
+    //     selectedGlobs.map((id) => globs[id])
+    //   )
+    // },
+    beginRotate(data) {
+      console.log("beginning rotate")
+      rotateMover = new RotateMover(data)
+    },
+    updateRotate(data) {
+      rotateMover.update(data)
+    },
+    cancelRotate(data) {
+      rotateMover.cancel(data)
+    },
+    completeRotate(data) {
+      rotateMover.complete(data)
     },
 
     // BRUSH
@@ -1037,14 +1077,16 @@ const state = createState({
 
 /* -------------------- RESIZERS -------------------- */
 
-let edgeResizer: EdgeResizer = undefined
-let cornerResizer: CornerResizer = undefined
-let cornerRotater: CornerRotater = undefined
-let nodeResizer: NodeResizer = undefined
-let handleMover: HandleMover = undefined
-let anchorMover: AnchorMover = undefined
-let radiusMover: RadiusMover = undefined
-let mover: Mover = undefined
+let edgeResizer: EdgeResizer
+let cornerResizer: CornerResizer
+let cornerRotater: CornerRotater
+let nodeResizer: NodeResizer
+let handleMover: HandleMover
+let anchorMover: AnchorMover
+let radiusMover: RadiusMover
+let resizeMover: ResizeMover
+let rotateMover: RotateMover
+let mover: Mover
 
 /* --------------------- INPUTS --------------------- */
 

@@ -210,3 +210,46 @@ export function saveSelectionState(data: IData) {
     data.selectedGlobs = sSelectedGlobs
   }
 }
+
+export function getPositionSnapshot(data: IData) {
+  const nodes = Object.fromEntries(
+    data.selectedNodes.map((id) => {
+      let {
+        radius,
+        point: [x, y],
+      } = data.nodes[id]
+
+      return [id, { point: [x, y], radius }]
+    })
+  )
+
+  const globs = Object.fromEntries(
+    data.selectedGlobs.map((id) => {
+      let {
+        D: [dx, dy],
+        Dp: [dpx, dpy],
+        a,
+        b,
+        ap,
+        bp,
+      } = data.globs[id].options
+
+      return [
+        id,
+        {
+          D: [dx, dy],
+          Dp: [dpx, dpy],
+          a,
+          b,
+          ap,
+          bp,
+        },
+      ]
+    })
+  )
+
+  return {
+    nodes,
+    globs,
+  }
+}

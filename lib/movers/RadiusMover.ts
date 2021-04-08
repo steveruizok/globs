@@ -48,6 +48,7 @@ export default class RadiusMover extends BaseMover {
     const { camera, nodes } = data
     const node = nodes[this.nodeId]
     node.radius = this.snapshot.radius
+    updateGlobPoints(data)
   }
 
   complete(data: IData) {
