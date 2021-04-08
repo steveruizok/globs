@@ -347,7 +347,9 @@ const handleMove = throttle(
     pointer.buttons = buttons
     pointer.delta = vec.sub([x, y], pointer.point)
     pointer.point = [x, y]
-    state.send("MOVED_POINTER")
+    state.send("MOVED_POINTER", {
+      isPan: buttons === 4,
+    })
   },
   16
 )

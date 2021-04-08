@@ -68,7 +68,10 @@ const state = createState({
       do: ["zoomCamera", "updateMvPointer"],
       else: ["wheelPanCamera", "updateMvPointer"],
     },
-    MOVED_POINTER: { secretlyDo: "updateMvPointer" },
+    MOVED_POINTER: [
+      { secretlyDo: "updateMvPointer" },
+      { if: "hasMiddleButton", do: "panCamera" },
+    ],
     ZOOMED_TO_FIT: "zoomToFit",
     STARTED_MOVING_THUMBSTICK: {
       to: "draggingThumbstick",
@@ -405,6 +408,9 @@ const state = createState({
     isTrackpadZoom(data, payload: { ctrlKey: boolean }) {
       return keys.Alt || payload.ctrlKey
     },
+    hasMiddleButton(data, payload: { isPan: boolean }) {
+      return payload.isPan
+    },
     hasMeta() {
       return keys.Meta
     },
@@ -451,9 +457,8 @@ const state = createState({
     // CAMERA / VIEWPORT
     panCamera(data) {
       const { camera, document } = data
-      camera.point = vec.round(
-        vec.sub(camera.point, vec.div(pointer.delta, camera.zoom))
-      )
+      const delta = vec.div(pointer.delta, camera.zoom)
+      camera.point = vec.round(vec.add(camera.point, vec.neg(delta)))
       document.point = camera.point
     },
     wheelPanCamera(data, payload: { delta: number[] }) {
