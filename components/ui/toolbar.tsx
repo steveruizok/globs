@@ -27,24 +27,19 @@ export default function Toolbar() {
   return (
     <StyledContainer>
       <section>
-        <button
-          title="Menu"
+        {/* <button
           disabled={true}
+          title="Menu"
           onClick={() => state.send("OPENED_MENU")}
-          onDoubleClick={() => state.send("HARD_RESET")}
         >
           <Menu />
-        </button>
+        </button> */}
         <button title="Undo" onClick={() => state.send("UNDO")}>
           <RotateCcw />
         </button>
         <button title="Redo" onClick={() => state.send("REDO")}>
           <RotateCw />
         </button>
-        <button
-          title="Hard Reset"
-          onDoubleClick={() => state.send("HARD_RESET")}
-        ></button>
       </section>
       <Spacer />
 
@@ -81,9 +76,9 @@ export default function Toolbar() {
         <button title="Toggle Fill" onClick={() => state.send("TOGGLED_FILL")}>
           <Circle className="fill-flat" />
         </button>
-        <button disabled={true}>
+        {/* <button disabled={true}>
           <Copy />
-        </button>
+        </button> */}
         <button onClick={toggle}>
           <Sun />
         </button>
