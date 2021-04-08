@@ -258,7 +258,7 @@ const state = createState({
           },
         },
         pointingHandle: {
-          onEnter: ["beginHandleMove", "setSelectedGlob"],
+          onEnter: ["beginHandleMove", "setSelectedGlob", "setSelectedHandle"],
           onExit: ["clearSnaps", "clearSelectedHandle"],
           on: {
             WHEELED: ["updateHandleMove"],
@@ -729,6 +729,7 @@ const state = createState({
 
     // HANDLES
     beginHandleMove(data, payload: { id: string; handle: IHandle }) {
+      data.selectedHandle = payload
       handleMover = new HandleMover(data, payload.id, payload.handle)
     },
     updateHandleMove(data) {
@@ -739,6 +740,9 @@ const state = createState({
     },
     completeHandleMove(data) {
       handleMover.complete(data)
+    },
+    setSelectedHandle(data, payload: { id: string; handle: IHandle }) {
+      data.selectedHandle = payload
     },
     clearSelectedHandle(data) {
       data.selectedHandle = undefined
