@@ -137,32 +137,21 @@ export interface IData {
     targets: { id: string; type: "glob" | "handle" | "node"; path: string }[]
   }
   bounds?: IBounds
-  initialPoints: {
-    nodes: Record<string, number[]>
-    globs: Record<string, { D: number[]; Dp: number[] }>
-  }
   snaps: {
-    nodes: Record<string, { point: number[]; radius: number }>
-    globs: Record<string, number[][]>
     active: ISnap[]
   }
   fill: boolean
   nodeIds: string[]
-  nodes: Record<string, INode>
-  initialNodes: Record<string, INode>
   globIds: string[]
+  nodes: Record<string, INode>
   globs: Record<string, IGlob>
-  initialGlobs: Record<string, IGlob>
-  selectedAnchor: { id: string; anchor: IAnchor }
-  selectedHandle?: { id: string; handle: IHandle }
   selectedGlobs: string[]
   hoveredNodes: string[]
   hoveredGlobs: string[]
   highlightNodes: string[]
   highlightGlobs: string[]
   selectedNodes: string[]
-  cloningNodes: string[]
-  cloningGlobs: string[]
+  selectedHandle?: { id: string; handle: IHandle }
 }
 
 export type IAnchor = "a" | "ap" | "b" | "bp"
@@ -194,11 +183,3 @@ export interface KeyCommand {
   eventName: string
   modifiers: string[]
 }
-
-// export interface IGlobSnapshot {
-//   id: string
-// 	x: number
-// 	y: number
-//   nx: number
-//   ny: number
-// }

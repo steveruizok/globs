@@ -5,11 +5,13 @@ import * as vec from "lib/vec"
 import * as svg from "lib/svg"
 
 import { initialData } from "./data"
-import { commands, history } from "./history"
-import AnchorMover from "./movers/AnchorMover"
-import HandleMover from "./movers/HandleMover"
-import RadiusMover from "./movers/RadiusMover"
-import ResizeMover from "./movers/ResizeMover"
+import { commands, history } from "lib/history"
+import AnchorMover from "lib/movers/AnchorMover"
+import HandleMover from "lib/movers/HandleMover"
+import RadiusMover from "lib/movers/RadiusMover"
+import ResizeMover from "lib/movers/ResizeMover"
+import ResizerMover from "lib/movers/ResizeMover"
+import RotateMover from "lib/movers/RotateMover"
 import Mover from "./movers/Mover"
 import {
   ICanvasItems,
@@ -22,20 +24,12 @@ import {
   IAnchor,
 } from "lib/types"
 import {
-  getCornerRotater,
-  CornerRotater,
-  CornerResizer,
-  EdgeResizer,
-  getCornerResizer,
   getClosestPointOnCircle,
-  getEdgeResizer,
   getGlob,
   getGlobPath,
   getOuterTangents,
   rectContainsRect,
   throttle,
-  getNodeResizer,
-  NodeResizer,
 } from "utils"
 import {
   getCommonBounds,
@@ -43,8 +37,6 @@ import {
   getGlobInnerBounds,
   getNodeBounds,
 } from "./bounds-utils"
-import ResizerMover from "./movers/ResizeMover"
-import RotateMover from "./movers/RotateMover"
 
 export const elms: Record<string, SVGPathElement> = {}
 
@@ -52,6 +44,7 @@ const state = createState({
   data: initialData,
   onEnter: "setup",
   on: {
+    HARD_RESET: { do: "hardReset" },
     MOUNTED_ELEMENT: { secretlyDo: "mountElement" },
     UNMOUNTED_ELEMENT: { secretlyDo: "deleteElement" },
     MOUNTED: { do: ["setup", "setViewport"], to: "selecting" },
@@ -127,7 +120,6 @@ const state = createState({
                   do: "setSelectedNode",
                 },
               },
-
               { if: "nodeIsHovered", to: "pointingNodes" },
             ],
             SELECTED_GLOB: [
@@ -267,7 +259,7 @@ const state = createState({
         },
         pointingHandle: {
           onEnter: ["beginHandleMove", "setSelectedGlob"],
-          onExit: ["clearSnaps"],
+          onExit: ["clearSnaps", "clearSelectedHandle"],
           on: {
             WHEELED: ["updateHandleMove"],
             MOVED_POINTER: "updateHandleMove",
@@ -543,6 +535,7 @@ const state = createState({
       data.selectedNodes = [...data.nodeIds]
     },
     clearSelection(data) {
+      data.bounds = undefined
       data.selectedHandle = undefined
       data.selectedNodes = []
       data.selectedGlobs = []
@@ -552,7 +545,6 @@ const state = createState({
     setSelectedNode(data, payload: { id: string }) {
       data.bounds = undefined
       data.selectedHandle = undefined
-      data.selectedAnchor = undefined
       data.selectedGlobs = []
       data.selectedNodes = [payload.id]
     },
@@ -584,14 +576,12 @@ const state = createState({
     setSelectedGlob(data, payload: { id: string }) {
       data.bounds = undefined
       data.selectedHandle = undefined
-      data.selectedAnchor = undefined
       data.selectedNodes = []
       data.selectedGlobs = [payload.id]
     },
     pushSelectedGlob(data, payload: { id: string }) {
       data.selectedGlobs.push(payload.id)
       data.selectedHandle = undefined
-      data.selectedAnchor = undefined
       data.selectedNodes = []
     },
     pullSelectedGlob(data, payload: { id: string }) {
@@ -749,6 +739,9 @@ const state = createState({
     },
     completeHandleMove(data) {
       handleMover.complete(data)
+    },
+    clearSelectedHandle(data) {
+      data.selectedHandle = undefined
     },
 
     // ANCHORS
@@ -971,8 +964,6 @@ const state = createState({
       data.highlightNodes = []
       data.hoveredNodes = []
       data.hoveredGlobs = []
-      data.selectedAnchor = undefined
-      data.selectedHandle = undefined
       data.fill = false
 
       if (typeof window !== "undefined") {
@@ -990,6 +981,22 @@ const state = createState({
         window.removeEventListener("blur", handleWindowBlur)
       }
     },
+    hardReset(data) {
+      data.nodes = {}
+      data.globs = {}
+      data.nodeIds = []
+      data.globIds = []
+      data.selectedGlobs = []
+      data.selectedNodes = []
+      data.highlightNodes = []
+      data.highlightGlobs = []
+      data.hoveredGlobs = []
+      data.hoveredNodes = []
+      data.snaps.active = []
+      data.selectedHandle = undefined
+      data.bounds = undefined
+      window.alert("Hard Reset!")
+    },
   },
   values: {
     selectionBounds(data) {
@@ -1000,10 +1007,6 @@ const state = createState({
 
 /* -------------------- RESIZERS -------------------- */
 
-let edgeResizer: EdgeResizer
-let cornerResizer: CornerResizer
-let cornerRotater: CornerRotater
-let nodeResizer: NodeResizer
 let handleMover: HandleMover
 let anchorMover: AnchorMover
 let radiusMover: RadiusMover

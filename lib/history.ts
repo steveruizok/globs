@@ -727,7 +727,7 @@ export const commands = {
           data.selectedGlobs = []
 
           deletedNodeIds.forEach((id) => delete data.nodes[id])
-          data.globIds = Object.keys(data.globs)
+          data.nodeIds = Object.keys(data.nodes)
           data.selectedGlobs = []
         },
         undo(data) {

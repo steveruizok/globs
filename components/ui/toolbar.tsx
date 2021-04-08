@@ -30,23 +30,28 @@ export default function Toolbar() {
           title="Menu"
           disabled={true}
           onClick={() => state.send("OPENED_MENU")}
+          onDoubleClick={() => state.send("HARD_RESET")}
         >
           <Menu />
         </button>
         <button
           title="Undo"
-          disabled={!canUndo}
+          disabled={true} //!canUndo}
           onClick={() => state.send("UNDO")}
         >
           <RotateCcw />
         </button>
         <button
           title="Redo"
-          disabled={!canRedo}
+          disabled={true} //!canRedo}
           onClick={() => state.send("REDO")}
         >
           <RotateCw />
         </button>
+        <button
+          title="Hard Reset"
+          onDoubleClick={() => state.send("HARD_RESET")}
+        ></button>
       </section>
       <Spacer />
 
