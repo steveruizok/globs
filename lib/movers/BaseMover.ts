@@ -1,9 +1,15 @@
 import { IData } from "lib/types"
 
 export default class BaseMover {
-  complete(data: IData) {}
+  update(data: IData) {
+    // Update the state
+  }
 
-  cancel(data: IData) {}
+  cancel(data: IData) {
+    // Clean up the change
+  }
 
-  update(data: IData) {}
+  complete(data: IData) {
+    // Create a command
+  }
 }
