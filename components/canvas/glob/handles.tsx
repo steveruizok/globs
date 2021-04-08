@@ -88,7 +88,7 @@ export default function Handles({
         isSelected={isSelected}
         isPrime={isPrime}
         onSelect={() =>
-          state.send("SELECTED_ANCHOR", {
+          state.send("POINTED_ANCHOR", {
             id,
             anchor: isPrime ? "ap" : "a",
           })
@@ -99,7 +99,7 @@ export default function Handles({
         isSelected={isSelected}
         isPrime={isPrime}
         onSelect={() =>
-          state.send("SELECTED_ANCHOR", {
+          state.send("POINTED_ANCHOR", {
             id,
             anchor: isPrime ? "bp" : "b",
           })

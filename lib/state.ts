@@ -44,25 +44,13 @@ const state = createState({
   data: initialData,
   onEnter: "setup",
   on: {
-    HARD_RESET: { do: ["hardReset", "saveData"] },
     MOUNTED_ELEMENT: { secretlyDo: "mountElement" },
     UNMOUNTED_ELEMENT: { secretlyDo: "deleteElement" },
     MOUNTED: { do: ["setup", "setViewport"], to: "selecting" },
     UNMOUNTED: "teardown",
     RESIZED: "setViewport",
-    SET_NODES_X: ["setSelectedNodesPointX"],
-    SET_NODES_Y: ["setSelectedNodesPointY"],
-    SET_NODES_RADIUS: ["setSelectedNodesRadius"],
-    SET_NODES_CAP: ["setSelectedNodesCap"],
-    SET_NODES_LOCKED: "setSelectedNodesLocked",
-    SET_GLOB_OPTIONS: ["setSelectedGlobOptions", "updateGlobPoints"],
-    CHANGED_BOUNDS_X: ["changeBoundsX", "updateGlobPoints"],
-    CHANGED_BOUNDS_Y: ["changeBoundsY", "updateGlobPoints"],
-    CHANGED_BOUNDS_WIDTH: ["changeBoundsWidth"],
-    CHANGED_BOUNDS_HEIGHT: ["changeBoundsHeight"],
     PRESSED_SPACE: "enableFill",
     RELEASED_SPACE: "disableFill",
-    TOGGLED_NODE_LOCKED: "toggleNodeLocked",
     WHEELED: {
       ifAny: ["hasShift", "isTrackpadZoom"],
       do: ["zoomCamera", "updateMvPointer"],
@@ -72,24 +60,15 @@ const state = createState({
       { secretlyDo: "updateMvPointer" },
       { if: "hasMiddleButton", do: "panCamera" },
     ],
-    ZOOMED_TO_FIT: "zoomToFit",
     STARTED_MOVING_THUMBSTICK: {
       to: "draggingThumbstick",
     },
+    ZOOMED_TO_FIT: "zoomToFit",
   },
   initial: "selecting",
   states: {
     selecting: {
-      on: {
-        LOCKED_NODES: "lockSelectedNodes",
-        STARTED_CREATING_NODES: {
-          to: "creatingNodes",
-        },
-        STARTED_LINKING_NODES: {
-          if: "hasSelectedNodes",
-          to: "linkingNodes",
-        },
-      },
+      on: {},
       initial: "notPointing",
       states: {
         notPointing: {
@@ -110,8 +89,28 @@ const state = createState({
             UNHOVERED_NODE: "pullHoveredNode",
             MOVED_NODE_ORDER: "moveNodeOrder",
             MOVED_GLOB_ORDER: "moveGlobOrder",
+            SET_NODES_X: ["setSelectedNodesPointX"],
+            SET_NODES_Y: ["setSelectedNodesPointY"],
+            SET_NODES_RADIUS: ["setSelectedNodesRadius"],
+            SET_NODES_CAP: ["setSelectedNodesCap"],
+            SET_NODES_LOCKED: "setSelectedNodesLocked",
+            TOGGLED_NODE_LOCKED: "toggleNodeLocked",
+            SET_GLOB_OPTIONS: ["setSelectedGlobOptions", "updateGlobPoints"],
+            CHANGED_BOUNDS_X: ["changeBoundsX", "updateGlobPoints"],
+            CHANGED_BOUNDS_Y: ["changeBoundsY", "updateGlobPoints"],
+            CHANGED_BOUNDS_WIDTH: ["changeBoundsWidth"],
+            CHANGED_BOUNDS_HEIGHT: ["changeBoundsHeight"],
+            HARD_RESET: { do: ["hardReset", "saveData"] },
             SELECTED_ALL: "selectAll",
-            SELECTED_NODE: [
+            LOCKED_NODES: "lockSelectedNodes",
+            STARTED_CREATING_NODES: {
+              to: "creatingNodes",
+            },
+            STARTED_LINKING_NODES: {
+              if: "hasSelectedNodes",
+              to: "linkingNodes",
+            },
+            POINTED_NODE: [
               { unless: "isLeftClick", break: true },
               {
                 if: "hasShift",
@@ -126,7 +125,7 @@ const state = createState({
               },
               { if: "nodeIsHovered", to: "pointingNodes" },
             ],
-            SELECTED_GLOB: [
+            POINTED_GLOB: [
               { unless: "isLeftClick", break: true },
               {
                 if: ["globIsSelected", "hasMeta"],
@@ -147,7 +146,7 @@ const state = createState({
               },
               { if: "globIsHovered", to: "pointingBounds" },
             ],
-            SELECTED_ANCHOR: {
+            POINTED_ANCHOR: {
               if: "isLeftClick",
               to: "pointingAnchor",
             },
@@ -334,22 +333,15 @@ const state = createState({
         },
       },
     },
-    cloningNodes: {
-      onEnter: [],
-      onExit: "saveData",
-      on: {
-        CANCELLED: { to: "selecting" },
-        MOVED_POINTER: {},
-        STOPPED_POINTING: {
-          to: "selecting",
-        },
-      },
-    },
     creatingNodes: {
       onExit: "saveData",
       on: {
         STARTED_CREATING_NODES: {
           to: "selecting",
+        },
+        STARTED_LINKING_NODES: {
+          if: "hasSelectedNodes",
+          to: "linkingNodes",
         },
         CANCELLED: { to: "selecting" },
         POINTED_CANVAS: {
@@ -363,11 +355,14 @@ const state = createState({
       on: {
         CANCELLED: { to: "selecting" },
         STARTED_LINKING_NODES: { to: "selecting" },
+        STARTED_CREATING_NODES: {
+          to: "creatingNodes",
+        },
         POINTED_CANVAS: {
           do: ["createNodeAndGlob", "saveData"],
           to: "selecting",
         },
-        SELECTED_NODE: {
+        POINTED_NODE: {
           do: ["createGlobBetweenNodes", "clearSelection"],
           to: "selecting",
         },
@@ -375,7 +370,6 @@ const state = createState({
         UNHOVERED_NODE: { do: "pullHoveredNode" },
       },
     },
-
     splittingGlob: {
       on: {
         POINTED_CANVAS: { unless: "hasMeta", to: "selecting" },

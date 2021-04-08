@@ -41,7 +41,7 @@ const BaseNode = forwardRef<SVGCircleElement, Props>(
           r={Math.max(r, 8)}
           fill="transparent"
           stroke="transparent"
-          onPointerDown={() => state.send("SELECTED_NODE", { id })}
+          onPointerDown={() => state.send("POINTED_NODE", { id })}
           onDoubleClick={() => state.send("TOGGLED_CAP", { id })}
           onPointerEnter={(e) => {
             e.stopPropagation()

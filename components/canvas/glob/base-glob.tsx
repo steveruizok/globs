@@ -21,7 +21,7 @@ const BaseGlob = forwardRef<SVGPathElement, Props>(
       <path
         ref={ref}
         d={outline}
-        onPointerDown={() => state.send("SELECTED_GLOB", { id })}
+        onPointerDown={() => state.send("POINTED_GLOB", { id })}
         className={classNames([
           "strokewidth-m",
           {

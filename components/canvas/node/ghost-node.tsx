@@ -11,6 +11,7 @@ export default function GhostNode() {
   return (
     <motion.path
       d={path}
+      data-bp-desktop={true}
       className={classNames([
         "strokewidth-m",
         {

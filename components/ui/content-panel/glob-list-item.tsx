@@ -20,7 +20,7 @@ export default function GlobListItem({
     [id]
   )
 
-  const handleSelect = useCallback(() => state.send("SELECTED_GLOB", { id }), [
+  const handleSelect = useCallback(() => state.send("POINTED_GLOB", { id }), [
     id,
   ])
 

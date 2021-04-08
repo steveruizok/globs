@@ -21,7 +21,7 @@ export default function NodeListItem({
     [id]
   )
 
-  const handleSelect = useCallback(() => state.send("SELECTED_NODE", { id }), [
+  const handleSelect = useCallback(() => state.send("POINTED_NODE", { id }), [
     id,
   ])
 

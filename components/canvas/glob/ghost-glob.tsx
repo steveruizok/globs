@@ -51,6 +51,7 @@ export default function GhostBranchGlob() {
 
   return (
     <motion.path
+      data-bp-desktop={true}
       d={path}
       className={classNames([
         "strokewidth-m",

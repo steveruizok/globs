@@ -323,6 +323,12 @@ const SVGWrapper = styled(ContextMenuTrigger, {
     touchAction: "none",
   },
 
+  "@media (max-width: 480px)": {
+    '& *[data-bp-desktop="true"]': {
+      display: "none",
+    },
+  },
+
   variants: {
     quality: {
       low: {
