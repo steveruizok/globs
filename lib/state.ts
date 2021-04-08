@@ -44,7 +44,7 @@ const state = createState({
   data: initialData,
   onEnter: "setup",
   on: {
-    HARD_RESET: { do: "hardReset" },
+    HARD_RESET: { do: ["hardReset", "saveData"] },
     MOUNTED_ELEMENT: { secretlyDo: "mountElement" },
     UNMOUNTED_ELEMENT: { secretlyDo: "deleteElement" },
     MOUNTED: { do: ["setup", "setViewport"], to: "selecting" },
