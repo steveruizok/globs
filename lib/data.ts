@@ -117,29 +117,18 @@ export const initialData: IData = {
       zIndex: 3,
     },
   },
-  initialPoints: {
-    nodes: {},
-    globs: {},
-  },
   snaps: {
-    nodes: {},
-    globs: {},
     active: [],
   },
   nodeIds: ["0", "1", "2", "3", "4"],
   globIds: ["g0", "g1", "g2"],
   hoveredNodes: [],
   hoveredGlobs: [],
-  initialNodes: {},
-  initialGlobs: {},
   highlightNodes: [],
   highlightGlobs: [],
   selectedNodes: [],
   selectedGlobs: [],
-  selectedAnchor: undefined,
   selectedHandle: undefined,
-  cloningNodes: [],
-  cloningGlobs: [],
 }
 
 for (let key in initialData.globs) {
