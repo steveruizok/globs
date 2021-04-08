@@ -20,11 +20,13 @@ export default function getNodeSnapper(
   // Since we'll be using a closure, create a not-proxy copy of the data.
   const iPoint = [...node.point]
   const r = node.radius
-  const iNodes = nodes.map(({ id, point, radius }) => ({
-    id,
-    point: [...point],
-    radius,
-  }))
+  const iNodes = nodes
+    .filter(({ id }) => id !== node.id)
+    .map(({ id, point, radius }) => ({
+      id,
+      point: [...point],
+      radius,
+    }))
 
   // The delta here should be in world space!
   // let delta = vec.div(vec.vec(pointer.origin, pointer.point), camera.zoom)
@@ -55,7 +57,7 @@ export default function getNodeSnapper(
       maxY = minY + document.size[1] * 1.5
 
     // Get nodes that are close enough;
-    const nodesToCheck = iNodes.filter(({ point }) =>
+    const nodesToCheck = iNodes.filter(({ id, point }) =>
       pointInRect(point, minX, minY, maxX, maxY)
     )
 

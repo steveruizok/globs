@@ -153,8 +153,8 @@ export interface IData {
   globIds: string[]
   globs: Record<string, IGlob>
   initialGlobs: Record<string, IGlob>
-  selectedAnchor: { id: string; anchor: string }
-  selectedHandle?: { id: string; handle: string }
+  selectedAnchor: { id: string; anchor: IAnchor }
+  selectedHandle?: { id: string; handle: IHandle }
   selectedGlobs: string[]
   hoveredNodes: string[]
   hoveredGlobs: string[]
@@ -164,6 +164,9 @@ export interface IData {
   cloningNodes: string[]
   cloningGlobs: string[]
 }
+
+export type IAnchor = "a" | "ap" | "b" | "bp"
+export type IHandle = "D" | "Dp"
 
 export type IBounds = {
   x: number

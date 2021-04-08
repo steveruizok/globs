@@ -35,14 +35,14 @@ export default function Toolbar() {
         </button>
         <button
           title="Undo"
-          disabled={true} //!canUndo}
+          disabled={!canUndo}
           onClick={() => state.send("UNDO")}
         >
           <RotateCcw />
         </button>
         <button
           title="Redo"
-          disabled={true} //!canRedo}
+          disabled={!canRedo}
           onClick={() => state.send("REDO")}
         >
           <RotateCw />
