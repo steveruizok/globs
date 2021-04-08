@@ -154,6 +154,15 @@ export default function Editor() {
     })
   }, [])
 
+  const handleWrapperPointerDown = useCallback(
+    (e: React.PointerEvent<HTMLDivElement>) => {
+      if (e.target.constructor.name !== "SVGSVGElement") return
+      if (e.buttons !== 1) return
+      state.send("POINTED_CANVAS")
+    },
+    []
+  )
+
   const { handleTouchStart, handleTouchMove } = usePinchZoom(rContainer)
 
   return (
@@ -169,11 +178,7 @@ export default function Editor() {
         <EditorContainer ref={rContainer}>
           <Layout>
             <SVGWrapper
-              onPointerDown={(e) => {
-                if (e.target.constructor.name !== "SVGSVGElement") return
-                if (e.buttons !== 1) return
-                state.send("POINTED_CANVAS")
-              }}
+              onPointerDown={handleWrapperPointerDown}
               onTouchStart={handleTouchStart}
               onTouchEnd={handleTouchMove}
               onWheel={handleWheel}

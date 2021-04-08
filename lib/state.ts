@@ -112,6 +112,7 @@ const state = createState({
             MOVED_GLOB_ORDER: "moveGlobOrder",
             SELECTED_ALL: "selectAll",
             SELECTED_NODE: [
+              { unless: "isLeftClick", break: true },
               {
                 if: "hasShift",
                 then: {
@@ -126,12 +127,13 @@ const state = createState({
               { if: "nodeIsHovered", to: "pointingNodes" },
             ],
             SELECTED_GLOB: [
+              { unless: "isLeftClick", break: true },
               {
                 if: ["globIsSelected", "hasMeta"],
                 to: "splittingGlob",
               },
               {
-                if: "globIsSelected",
+                if: ["globIsSelected"],
                 then: {
                   if: "hasShift",
                   do: "pullSelectedGlob",
@@ -146,15 +148,18 @@ const state = createState({
               { if: "globIsHovered", to: "pointingBounds" },
             ],
             SELECTED_ANCHOR: {
+              if: "isLeftClick",
               to: "pointingAnchor",
             },
             POINTED_HANDLE: {
+              if: "isLeftClick",
               to: "pointingHandle",
             },
             POINTED_CANVAS: [
+              { unless: "isLeftClick", break: true },
               { if: "hasMeta", break: true },
               {
-                if: "hasSelection",
+                if: ["isLeftClick", "hasSelection"],
                 do: ["clearSelection"],
               },
               {
@@ -167,15 +172,19 @@ const state = createState({
               },
             ],
             POINTED_BOUNDS: {
+              if: "isLeftClick",
               to: "pointingBounds",
             },
             POINTED_BOUNDS_EDGE: {
+              if: "isLeftClick",
               to: "edgeResizing",
             },
             POINTED_BOUNDS_CORNER: {
+              if: "isLeftClick",
               to: "cornerResizing",
             },
             POINTED_ROTATE_CORNER: {
+              if: "isLeftClick",
               to: "cornerRotating",
             },
           },
@@ -410,6 +419,9 @@ const state = createState({
     },
     hasMiddleButton(data, payload: { isPan: boolean }) {
       return payload.isPan
+    },
+    isLeftClick(data) {
+      return pointer.buttons === 1
     },
     hasMeta() {
       return keys.Meta
