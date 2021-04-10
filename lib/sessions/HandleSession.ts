@@ -194,7 +194,6 @@ export default class HandleSession extends BaseSession {
               from: next,
               to: vec.dist(next, a) > vec.dist(next, b) ? a : b,
             })
-            break
           } else if (
             (isInView(b, document) || isInView(c, document)) &&
             Math.abs(vec.distanceToLine(b, c, next) * camera.zoom) < 3
@@ -205,7 +204,6 @@ export default class HandleSession extends BaseSession {
               from: next,
               to: vec.dist(next, b) > vec.dist(next, c) ? b : c,
             })
-            break
           } else if (
             (isInView(ap, document) || isInView(bp, document)) &&
             Math.abs(vec.distanceToLine(ap, bp, next) * camera.zoom) < 3
@@ -216,7 +214,6 @@ export default class HandleSession extends BaseSession {
               from: next,
               to: vec.dist(next, ap) > vec.dist(next, bp) ? ap : bp,
             })
-            break
           } else if (
             (isInView(bp, document) || isInView(cp, document)) &&
             Math.abs(vec.distanceToLine(bp, cp, next) * camera.zoom) < 3
@@ -227,7 +224,6 @@ export default class HandleSession extends BaseSession {
               from: next,
               to: vec.dist(next, bp) > vec.dist(next, cp) ? bp : cp,
             })
-            break
           }
         }
       }
