@@ -1,6 +1,6 @@
 # Todo
 
-- [ ] Fix zooming
+- [x] Fix zooming
 - [x] Keep camera centered when resizing
 - [x] Reorder nodes
 - [x] Reorder globs
@@ -31,3 +31,6 @@
 - [x] Node snap lines
 - [x] Handle snap lines
 - [ ] Bounds snapping
+- [ ] Multitouch dragging, zooming
+- [x] Undo / Redo
+- [ ] Translate Session

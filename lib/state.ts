@@ -10,10 +10,19 @@ import * as commands from "lib/commands"
 import AnchorSession from "lib/sessions/AnchorSession"
 import HandleSession from "lib/sessions/HandleSession"
 import ResizeSession from "lib/sessions/ResizeSession"
+import TranslateSession from "lib/sessions/TranslateSession"
 import TransformSession from "lib/sessions/TransformSession"
 import RotateSession from "lib/sessions/RotateSession"
 import MoveSession from "./sessions/MoveSession"
-import { IGlob, IData, IBounds, KeyCommand, IHandle, IAnchor } from "lib/types"
+import {
+  IGlob,
+  IData,
+  IBounds,
+  KeyCommand,
+  IHandle,
+  IAnchor,
+  ITranslation,
+} from "lib/types"
 import {
   getGlobPath,
   getGlobPoints,
@@ -91,12 +100,9 @@ const state = createState({
                 SET_NODES_CAP: ["setSelectedNodesCap"],
                 SET_NODES_LOCKED: "setSelectedNodesLocked",
                 TOGGLED_NODE_LOCKED: "toggleNodeLocked",
-                SET_GLOB_OPTIONS: [
-                  "setSelectedGlobOptions",
-                  "updateGlobPoints",
-                ],
-                CHANGED_BOUNDS_X: ["changeBoundsX", "updateGlobPoints"],
-                CHANGED_BOUNDS_Y: ["changeBoundsY", "updateGlobPoints"],
+                SET_GLOB_OPTIONS: "setSelectedGlobOptions",
+                CHANGED_BOUNDS_X: ["changeBoundsX"],
+                CHANGED_BOUNDS_Y: ["changeBoundsY"],
                 CHANGED_BOUNDS_WIDTH: ["changeBoundsWidth"],
                 CHANGED_BOUNDS_HEIGHT: ["changeBoundsHeight"],
                 HARD_RESET: { do: ["hardReset", "saveData"] },
@@ -188,6 +194,21 @@ const state = createState({
                 POINTED_ROTATE_CORNER: {
                   if: "isLeftClick",
                   to: "cornerRotating",
+                },
+                STARTED_TRANSLATING: {
+                  to: "translating",
+                },
+              },
+            },
+            translating: {
+              onEnter: "beginTranslation",
+              on: {
+                MOVED_POINTER: {
+                  do: "updateTranslation",
+                },
+                STOPPED_POINTING: {
+                  do: "completeTranslation",
+                  to: "notPointing",
                 },
               },
             },
@@ -701,16 +722,16 @@ const state = createState({
       commands.reorderNodes(data, payload.from, payload.to)
     },
     beginRadiusMove(data) {
-      radiusSession = new ResizeSession(data, data.selectedNodes[0])
+      resizeSession = new ResizeSession(data, data.selectedNodes[0])
     },
     cancelRadiusMove(data) {
-      radiusSession.cancel(data)
+      resizeSession.cancel(data)
     },
     updateRadiusMove(data) {
-      radiusSession.update(data)
+      resizeSession.update(data)
     },
     completeRadiusMove(data) {
-      radiusSession.complete(data)
+      resizeSession.complete(data)
     },
     // TODO: Make a command
     toggleNodeLocked(data, payload: { id: string }) {
@@ -718,46 +739,8 @@ const state = createState({
     },
 
     // GLOBS
-    // TODO: Make a command
     setSelectedGlobOptions(data, payload: Partial<IGlob>) {
-      const { globs, selectedGlobs } = data
-      for (let id of selectedGlobs) {
-        const glob = globs[id]
-        Object.assign(glob, payload)
-      }
-    },
-    // TODO: Remove once other commands are in
-    updateGlobPoints(data) {
-      const { globs, globIds, nodes, selectedNodes, selectedGlobs } = data
-
-      const nodesToUpdate = new Set(selectedNodes)
-
-      const globsToUpdate = new Set(selectedGlobs.map((id) => globs[id]))
-
-      const sGlobs = globIds.map((id) => globs[id])
-
-      for (let glob of sGlobs) {
-        nodesToUpdate.add(glob.nodes[0])
-        nodesToUpdate.add(glob.nodes[1])
-      }
-
-      for (let glob of sGlobs) {
-        if (
-          nodesToUpdate.has(glob.nodes[0]) ||
-          nodesToUpdate.has(glob.nodes[1])
-        ) {
-          globsToUpdate.add(glob)
-        }
-      }
-
-      globsToUpdate.forEach((glob) => {
-        const [start, end] = glob.nodes.map((id) => nodes[id])
-        try {
-          glob.points = getGlobPoints(glob, start, end)
-        } catch (e) {
-          glob.points = null
-        }
-      })
+      commands.updateGlobOptions(data, payload)
     },
     createGlobToNewNode(data) {
       commands.createGlobToNewNode(data, pointer.point)
@@ -811,55 +794,24 @@ const state = createState({
     setBounds(data, payload: { bounds: IBounds }) {
       data.bounds = payload.bounds
     },
-    // TODO: Make a command
+    beginTranslation(data, payload: ITranslation) {
+      translateSession = new TranslateSession(data, payload)
+    },
+    updateTranslation(data) {
+      translateSession.update(data)
+    },
+    cancelTranslation(data) {
+      translateSession.cancel(data)
+    },
+    completeTranslation(data) {
+      translateSession.complete(data)
+    },
     changeBoundsX(data, payload: { value: number }) {
-      const { selectedNodes, selectedGlobs, nodes, globs } = data
-      const bounds = getSelectedBoundingBox(data)
-      const dx = payload.value - bounds.x
-
-      const sNodes = selectedNodes.map((id) => nodes[id])
-      const sGlobs = selectedGlobs.map((id) => globs[id])
-
-      // let nodesToChange = new Set(sNodes)
-
-      // for (let glob of sGlobs) {
-      //   nodesToChange.add(nodes[glob.nodes[0]])
-      //   nodesToChange.add(nodes[glob.nodes[1]])
-      // }
-
-      for (let node of sNodes) {
-        node.point[0] += dx
-      }
-
-      for (let glob of sGlobs) {
-        glob.D[0] += dx
-        glob.Dp[0] += dx
-      }
+      commands.moveBounds(data, [payload.value, 0])
     },
     // TODO: Make a command
     changeBoundsY(data, payload: { value: number }) {
-      const { selectedNodes, selectedGlobs, nodes, globs } = data
-      const bounds = getSelectedBoundingBox(data)
-      const dy = payload.value - bounds.y
-
-      const sNodes = selectedNodes.map((id) => nodes[id])
-      const sGlobs = selectedGlobs.map((id) => globs[id])
-
-      // let nodesToChange = new Set(sNodes)
-
-      // for (let glob of sGlobs) {
-      //   nodesToChange.add(nodes[glob.nodes[0]])
-      //   nodesToChange.add(nodes[glob.nodes[1]])
-      // }
-
-      for (let node of sNodes) {
-        node.point[1] += dy
-      }
-
-      for (let glob of sGlobs) {
-        glob.D[1] += dy
-        glob.Dp[1] += dy
-      }
+      commands.moveBounds(data, [0, payload.value])
     },
     changeBoundsWidth(data, payload: { value: number }) {
       commands.resizeBounds(data, [payload.value, 0])
@@ -1013,6 +965,7 @@ const state = createState({
       data.highlightNodes = []
       data.hoveredNodes = []
       data.hoveredGlobs = []
+      data.snaps.active = []
       data.fill = false
 
       if (typeof window !== "undefined") {
@@ -1054,14 +1007,14 @@ const state = createState({
   },
 })
 
-/* -------------------- RESIZERS -------------------- */
+/* -------------------- SESSIONS -------------------- */
 
 let moveSession: MoveSession
 let handleSession: HandleSession
 let anchorSession: AnchorSession
-let radiusSession: ResizeSession
 let resizeSession: ResizeSession
 let rotateSession: RotateSession
+let translateSession: TranslateSession
 let transformSession: TransformSession
 
 /* --------------------- INPUTS --------------------- */

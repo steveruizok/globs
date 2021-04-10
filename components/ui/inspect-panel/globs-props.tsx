@@ -95,20 +95,38 @@ export default function GlobsProps() {
         min={0}
         max={1}
         onChange={handleAChange}
+        onPanStart={() =>
+          state.send("STARTED_TRANSLATING", {
+            type: "anchor",
+            anchor: "a",
+          })
+        }
       />
       <NumberInput
         value={b}
         label="b"
         min={0}
         max={1}
-        onChange={handleApChange}
+        onChange={handleBChange}
+        onPanStart={() =>
+          state.send("STARTED_TRANSLATING", {
+            type: "anchor",
+            anchor: "b",
+          })
+        }
       />
       <NumberInput
         value={ap}
         label="ap"
         min={0}
         max={1}
-        onChange={handleBChange}
+        onChange={handleApChange}
+        onPanStart={() =>
+          state.send("STARTED_TRANSLATING", {
+            type: "anchor",
+            anchor: "ap",
+          })
+        }
       />
       <NumberInput
         value={bp}
@@ -116,6 +134,12 @@ export default function GlobsProps() {
         min={0}
         max={1}
         onChange={handleBpChange}
+        onPanStart={() =>
+          state.send("STARTED_TRANSLATING", {
+            type: "anchor",
+            anchor: "bp",
+          })
+        }
       />
       {selectedGlobs.length === 1 && (
         <>
@@ -123,21 +147,49 @@ export default function GlobsProps() {
             value={selectedGlobs[0].D[0]}
             label="Dx"
             onChange={handleDxChange}
+            onPanStart={() =>
+              state.send("STARTED_TRANSLATING", {
+                type: "handle",
+                handle: "D",
+                axis: "x",
+              })
+            }
           />
           <NumberInput
             value={selectedGlobs[0].D[1]}
             label="Dy"
             onChange={handleDyChange}
+            onPanStart={() =>
+              state.send("STARTED_TRANSLATING", {
+                type: "handle",
+                handle: "D",
+                axis: "y",
+              })
+            }
           />
           <NumberInput
             value={selectedGlobs[0].Dp[0]}
             label="Dpx"
             onChange={handleDpxChange}
+            onPanStart={() =>
+              state.send("STARTED_TRANSLATING", {
+                type: "handle",
+                handle: "Dp",
+                axis: "x",
+              })
+            }
           />
           <NumberInput
             value={selectedGlobs[0].Dp[1]}
             label="Dpy"
             onChange={handleDpyChange}
+            onPanStart={() =>
+              state.send("STARTED_TRANSLATING", {
+                type: "handle",
+                handle: "Dp",
+                axis: "y",
+              })
+            }
           />
         </>
       )}

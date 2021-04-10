@@ -1,4 +1,5 @@
 import { motion, PanInfo } from "framer-motion"
+import state from "lib/state"
 import { clamp } from "lib/utils"
 import React, { memo, useEffect, useRef, useState } from "react"
 import { PropContainer } from "./shared"
@@ -9,10 +10,19 @@ interface Props {
   min?: number
   max?: number
   step?: number
+  onPanStart?: () => void
   onChange: (value: number) => void
 }
 
-function NumberInput({ min, max, step = 1, value, label, onChange }: Props) {
+function NumberInput({
+  min,
+  max,
+  step = 1,
+  value,
+  label,
+  onPanStart,
+  onChange,
+}: Props) {
   const rInput = useRef<HTMLInputElement>(null)
   const [val, setVal] = useState(value === "mixed" ? 0 : value)
   const [isHovered, setIsHovered] = useState(false)
@@ -32,18 +42,25 @@ function NumberInput({ min, max, step = 1, value, label, onChange }: Props) {
   }, [value])
 
   function handlePanStart() {
-    document.body.style.cursor = "ew-resize"
-  }
-
-  function handlePan(_: PointerEvent, info: PanInfo) {
-    if (!isFocused && value !== "mixed") {
-      const clamped = max !== undefined && min !== undefined
-      rPanStart.current += info.delta.x * (clamped ? (max - min) / 100 : 1)
-      const next = Math.round(Number(rPanStart.current) * 100) / 100
-      setVal(next)
-      onChange(min !== undefined ? clamp(next, min, max) : next)
+    if (!isFocused) {
+      onPanStart && onPanStart()
     }
   }
+
+  function handlePanEnd() {
+    onPanStart && onPanStart()
+  }
+
+  // function handlePan(_: PointerEvent, info: PanInfo) {
+  //   if (!isFocused && value !== "mixed") {
+  //     state.send("TRANSLATED")
+  //     const clamped = max !== undefined && min !== undefined
+  //     rPanStart.current += info.delta.x * (clamped ? (max - min) / 100 : 1)
+  //     const next = Math.round(Number(rPanStart.current) * 100) / 100
+  //     setVal(next)
+  //     onChange(min !== undefined ? clamp(next, min, max) : next)
+  //   }
+  // }
 
   function handleChange({
     currentTarget: { value },
@@ -94,7 +111,7 @@ function NumberInput({ min, max, step = 1, value, label, onChange }: Props) {
         onPointerLeave={() => setIsHovered(false)}
         onPanStart={handlePanStart}
         onPanEnd={handlePanEnd}
-        onPan={handlePan}
+        // onPan={handlePan}
         onTap={handleTap}
       >
         <input

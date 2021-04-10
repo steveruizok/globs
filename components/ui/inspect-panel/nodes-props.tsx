@@ -68,13 +68,28 @@ export default function NodesProps() {
 
   return (
     <>
-      <NumberInput value={x} label="x" onChange={handleXChange} />
-      <NumberInput value={y} label="y" onChange={handleYChange} />
+      <NumberInput
+        value={x}
+        label="x"
+        onChange={handleXChange}
+        onPanStart={() =>
+          state.send("STARTED_TRANSLATING", { type: "point", axis: "x" })
+        }
+      />
+      <NumberInput
+        value={y}
+        label="y"
+        onChange={handleYChange}
+        onPanStart={() =>
+          state.send("STARTED_TRANSLATING", { type: "point", axis: "y" })
+        }
+      />
       <NumberInput
         value={radius}
         label="radius"
         min={0}
         onChange={handleRadiusChange}
+        onPanStart={() => state.send("STARTED_TRANSLATING", { type: "radius" })}
       />
       <EnumInput value={cap} label="cap" onChange={handleCapChange}>
         {cap === "mixed" && <option value="mixed">Mixed</option>}

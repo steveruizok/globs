@@ -202,3 +202,9 @@ export interface ISelectionSnapshot {
     }
   >
 }
+
+export type ITranslation =
+  | { type: "anchor"; anchor: IAnchor }
+  | { type: "handle"; axis: "x" | "y"; handle: IHandle }
+  | { type: "point"; axis: "x" | "y" }
+  | { type: "radius" }

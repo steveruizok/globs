@@ -586,6 +586,34 @@ export function toggleSelectionLocked(data: IData) {
   )
 }
 
+export function updateGlobOptions(data: IData, options: Partial<IGlob>) {
+  const snapshot = getSelectionSnapshot(data)
+  const sGlobIds = [...data.selectedGlobs]
+
+  history.execute(
+    data,
+    new Command({
+      type: CommandType.ChangeBounds,
+      do(data) {
+        for (let globId of sGlobIds) {
+          const glob = data.globs[globId]
+          Object.assign(glob, options)
+        }
+
+        updateGlobPoints(data)
+      },
+      undo(data) {
+        for (let globId of sGlobIds) {
+          const glob = data.globs[globId]
+          Object.assign(glob, snapshot.globs[globId])
+        }
+
+        updateGlobPoints(data)
+      },
+    })
+  )
+}
+
 export function moveBounds(data: IData, delta: number[]) {
   const sNodeIds = [...data.selectedNodes]
   const sGlobIds = [...data.selectedGlobs]
@@ -605,6 +633,7 @@ export function moveBounds(data: IData, delta: number[]) {
           glob.D = vec.add(glob.D, delta)
           glob.Dp = vec.add(glob.Dp, delta)
         }
+        updateGlobPoints(data)
       },
       undo(data) {
         for (let nodeId of sNodeIds) {
@@ -617,6 +646,7 @@ export function moveBounds(data: IData, delta: number[]) {
           glob.D = vec.sub(glob.D, delta)
           glob.Dp = vec.sub(glob.Dp, delta)
         }
+        updateGlobPoints(data)
       },
     })
   )
@@ -718,7 +748,7 @@ export function transformBounds(
   )
 }
 
-// TODO: Turn this into a mover, so that it doesn't blow undo stack
+// This is only for resizing to specific values, e.g. via the props panel
 export function resizeBounds(data: IData, size: number[]) {
   const sNodeIds = [...data.selectedNodes]
   const sGlobIds = [...data.selectedGlobs]

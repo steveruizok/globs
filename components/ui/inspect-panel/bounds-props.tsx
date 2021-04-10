@@ -56,8 +56,22 @@ export default function BoundsProps() {
 
   return (
     <>
-      <NumberInput value={round(x)} label="x" onChange={handleXChange} />
-      <NumberInput value={round(y)} label="y" onChange={handleYChange} />
+      <NumberInput
+        value={round(x)}
+        label="x"
+        onChange={handleXChange}
+        onPanStart={() =>
+          state.send("STARTED_TRANSLATING", { type: "point", axis: "x" })
+        }
+      />
+      <NumberInput
+        value={round(y)}
+        label="y"
+        onChange={handleYChange}
+        onPanStart={() =>
+          state.send("STARTED_TRANSLATING", { type: "point", axis: "y" })
+        }
+      />
       <NumberInput
         value={round(width)}
         label="width"
