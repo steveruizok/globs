@@ -10,10 +10,10 @@ import BaseSession from "./BaseSession"
 export interface MoveSessionSnapshot extends ISelectionSnapshot {}
 
 export default class MoveSession extends BaseSession {
-  nodeSnapper?: NodeSnapper
-  delta = [0, 0]
-  snapshot: MoveSessionSnapshot
-  origin: number[]
+  private nodeSnapper?: NodeSnapper
+  private delta = [0, 0]
+  private snapshot: MoveSessionSnapshot
+  private origin: number[]
 
   constructor(data: IData) {
     super(data)

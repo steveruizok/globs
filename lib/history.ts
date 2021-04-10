@@ -120,4 +120,4 @@ export class Command extends BaseCommand<IData> {
   }
 }
 
-export const history = new BaseHistory<IData>()
+export default new BaseHistory<IData>()

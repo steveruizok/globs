@@ -1,7 +1,7 @@
 import state, { useSelector } from "lib/state"
 import { clamp, deepCompareArrays } from "lib/utils"
 
-import NumberInput from "./inputs/number-input"
+import NumberInput from "../inputs/number-input"
 import { useCallback } from "react"
 
 export default function GlobsProps() {

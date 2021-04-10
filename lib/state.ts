@@ -5,7 +5,8 @@ import * as vec from "lib/vec"
 import * as svg from "lib/svg"
 
 import { initialData } from "./data"
-import { history } from "lib/history"
+import history from "lib/history"
+import inputs from "lib/Inputs"
 import * as commands from "lib/commands"
 import AnchorSession from "lib/sessions/AnchorSession"
 import HandleSession from "lib/sessions/HandleSession"
@@ -16,7 +17,6 @@ import RotateSession from "lib/sessions/RotateSession"
 import MoveSession from "./sessions/MoveSession"
 import {
   IGlob,
-  IData,
   IBounds,
   KeyCommand,
   IHandle,
@@ -25,7 +25,6 @@ import {
 } from "lib/types"
 import {
   getGlobPath,
-  getGlobPoints,
   getSelectedBoundingBox,
   rectContainsRect,
   screenToWorld,
