@@ -4,6 +4,7 @@ import {
   IBounds,
   ICanvasItem,
   ICanvasItems,
+  IData,
   IGlob,
   IGlobPoints,
   INode,
@@ -410,7 +411,7 @@ export function getSweep(C: number[], A: number[], B: number[]) {
 }
 
 export function getGlobPath(glob: IGlob, start: INode, end: INode) {
-  const { D, Dp, a, b, ap, bp } = glob.options
+  const { D, Dp, a, b, ap, bp } = glob
   const { point: C0, radius: r0 } = start
   const { point: C1, radius: r1 } = end
   const { E0, E0p, F0, F0p, E1, E1p, F1, F1p } = getGlob(
@@ -896,7 +897,7 @@ export function getSnapglobs(globs: IGlob[], bounds: IBounds) {
       let {
         D: [dx, dy],
         Dp: [dpx, dpy],
-      } = glob.options
+      } = glob
 
       return [
         glob.id,
@@ -917,71 +918,17 @@ export function getSnapglobs(globs: IGlob[], bounds: IBounds) {
             nmx: 1 - (dpx - bounds.x) / bounds.width,
             nmy: 1 - (dpy - bounds.y) / bounds.height,
           },
-          a: glob.options.a,
-          ap: glob.options.ap,
-          b: glob.options.b,
-          bp: glob.options.bp,
+          a: glob.a,
+          ap: glob.ap,
+          b: glob.b,
+          bp: glob.bp,
         },
       ]
     })
   )
 }
 
-export function resizeBounds(
-  nodes: INode[],
-  globs: IGlob[],
-  bounds: IBounds,
-  deltaX: number,
-  deltaY: number
-) {
-  const snapshots = getSnapshots(nodes, bounds)
-  const snapglobs = getSnapglobs(globs, bounds)
-
-  let { x: x0, y: y0, maxX: x1, maxY: y1 } = bounds
-  let { maxX: mx, maxY: my, width: mw, height: mh } = bounds
-
-  const [x, y] = [
-    bounds.x + bounds.width + deltaX,
-    bounds.y + bounds.height + deltaY,
-  ]
-
-  y1 = y
-  my = y0
-  mh = Math.abs(y1 - y0)
-
-  x1 = x
-  mx = x0
-  mw = Math.abs(x1 - x0)
-
-  for (let node of nodes) {
-    const { nx, nmx, ny, nmy, nw, nh } = snapshots[node.id]
-
-    node.point = vec.round([mx + nx * mw, my + ny * mh])
-    node.radius = (nw * mw + nh * mh) / 2
-  }
-
-  for (let glob of globs) {
-    const { D, Dp, a, ap, b, bp } = snapglobs[glob.id]
-
-    Object.assign(glob.options, {
-      a: a,
-      ap: ap,
-      b: b,
-      bp: bp,
-    })
-
-    Object.assign(glob.options, {
-      D: [mx + D.nx * mw, my + D.ny * mh],
-      Dp: [mx + Dp.nx * mw, my + Dp.ny * mh],
-      a,
-      ap,
-      b,
-      bp,
-    })
-  }
-}
-
-export function getEdgeResizer(
+export function getEdgeTransform(
   initialNodes: INode[],
   initialGlobs: IGlob[],
   bounds: IBounds,
@@ -1027,7 +974,7 @@ export function getEdgeResizer(
         const { D, Dp, a, b, ap, bp } = snapglobs[glob.id]
 
         if (y1 < y0) {
-          Object.assign(glob.options, {
+          Object.assign(glob, {
             D: [Dp.x, my + Dp.nmy * mh],
             Dp: [D.x, my + D.nmy * mh],
             a: ap,
@@ -1036,7 +983,7 @@ export function getEdgeResizer(
             bp: b,
           })
         } else {
-          Object.assign(glob.options, {
+          Object.assign(glob, {
             D: [D.x, my + D.ny * mh],
             Dp: [Dp.x, my + Dp.ny * mh],
             a,
@@ -1065,7 +1012,7 @@ export function getEdgeResizer(
         const { D, Dp, a, b, ap, bp } = snapglobs[glob.id]
 
         if (x1 < x0) {
-          Object.assign(glob.options, {
+          Object.assign(glob, {
             D: [mx + Dp.nmx * mw, Dp.y],
             Dp: [mx + D.nmx * mw, D.y],
             a: ap,
@@ -1074,7 +1021,7 @@ export function getEdgeResizer(
             bp: b,
           })
         } else {
-          Object.assign(glob.options, {
+          Object.assign(glob, {
             D: [mx + D.nx * mw, D.y],
             Dp: [mx + Dp.nx * mw, Dp.y],
             a,
@@ -1093,10 +1040,10 @@ export function getEdgeResizer(
  * @param boxes An array of the boxes being resized.
  * @param corner A number representing the corner being dragged. Top Left: 0, Top Right: 1, Bottom Right: 2, Bottom Left: 3.
  * @example
- * const resizer = getCornerResizer(selectedBoxes, 3)
+ * const resizer = getCornerTransform(selectedBoxes, 3)
  * resizer(selectedBoxes, )
  */
-export function getCornerResizer(
+export function getCornerTransform(
   initialNodes: INode[],
   initialGlobs: IGlob[],
   bounds: IBounds,
@@ -1116,7 +1063,7 @@ export function getCornerResizer(
   let { x: x0, y: y0, maxX: x1, maxY: y1 } = bounds
   let { maxX: mx, maxY: my, width: mw, height: mh } = bounds
 
-  return function cornerResizer(
+  return function cornerTransform(
     point: number[],
     nodes: INode[],
     globs: IGlob[],
@@ -1147,7 +1094,7 @@ export function getCornerResizer(
     for (let glob of globs) {
       const { D, Dp, a, ap, b, bp } = snapglobs[glob.id]
 
-      Object.assign(glob.options, {
+      Object.assign(glob, {
         a: a,
         ap: ap,
         b: b,
@@ -1155,7 +1102,7 @@ export function getCornerResizer(
       })
 
       if (x1 < x0 && y1 < y0) {
-        Object.assign(glob.options, {
+        Object.assign(glob, {
           D: [mx + D.nmx * mw, my + D.nmy * mh],
           Dp: [mx + Dp.nmx * mw, my + Dp.nmy * mh],
           a,
@@ -1164,7 +1111,7 @@ export function getCornerResizer(
           bp,
         })
       } else if (x1 < x0) {
-        Object.assign(glob.options, {
+        Object.assign(glob, {
           D: [mx + Dp.nmx * mw, my + Dp.ny * mh],
           Dp: [mx + D.nmx * mw, my + D.ny * mh],
           a: ap,
@@ -1173,7 +1120,7 @@ export function getCornerResizer(
           bp: b,
         })
       } else if (y1 < y0) {
-        Object.assign(glob.options, {
+        Object.assign(glob, {
           D: [mx + Dp.nx * mw, my + Dp.nmy * mh],
           Dp: [mx + D.nx * mw, my + D.nmy * mh],
           a: ap,
@@ -1182,7 +1129,7 @@ export function getCornerResizer(
           bp: b,
         })
       } else {
-        Object.assign(glob.options, {
+        Object.assign(glob, {
           D: [mx + D.nx * mw, my + D.ny * mh],
           Dp: [mx + Dp.nx * mw, my + Dp.ny * mh],
           a,
@@ -1219,14 +1166,14 @@ export function getCornerRotater(
 
     for (let glob of globs) {
       const snap = snapglobs[glob.id]
-      glob.options.D = rotatePoint([snap.D.x, snap.D.y], center, delta)
-      glob.options.Dp = rotatePoint([snap.Dp.x, snap.Dp.y], center, delta)
+      glob.D = rotatePoint([snap.D.x, snap.D.y], center, delta)
+      glob.Dp = rotatePoint([snap.Dp.x, snap.Dp.y], center, delta)
     }
   }
 }
 
-export type EdgeResizer = ReturnType<typeof getEdgeResizer>
-export type CornerResizer = ReturnType<typeof getCornerResizer>
+export type EdgeTransform = ReturnType<typeof getEdgeTransform>
+export type CornerTransform = ReturnType<typeof getCornerTransform>
 export type CornerRotater = ReturnType<typeof getCornerRotater>
 
 export function getGlobOutline(
@@ -1439,7 +1386,7 @@ export function pointInRect(
 }
 
 // Point should be in world space
-export function getNodeResizer(node: INode, point: number[]) {
+export function getNodeTransform(node: INode, point: number[]) {
   let iPoint = [...node.point]
   const iRadius = node.radius
   const iDist = vec.dist(node.point, point)
@@ -1450,4 +1397,316 @@ export function getNodeResizer(node: INode, point: number[]) {
   }
 }
 
-export type NodeResizer = ReturnType<typeof getNodeResizer>
+export type NodeTransform = ReturnType<typeof getNodeTransform>
+
+export function createGlob(A: INode, B: INode): IGlob {
+  const { point: C0, radius: r0 } = A
+  const { point: C1, radius: r1 } = B
+
+  const [E0, E1, E0p, E1p] = getOuterTangents(C0, r0, C1, r1)
+
+  const D = vec.med(E0, E1),
+    Dp = vec.med(E0p, E1p),
+    a = 0.5,
+    b = 0.5,
+    ap = 0.5,
+    bp = 0.5
+
+  const id = "glob_" + Math.random() * Date.now()
+
+  return {
+    id,
+    name: "Glob",
+    nodes: [A.id, B.id],
+    D,
+    Dp,
+    a,
+    b,
+    ap,
+    bp,
+    points: getGlob(C0, r0, C1, r1, D, Dp, a, b, ap, bp),
+    zIndex: 1,
+  }
+}
+
+export function screenToWorld(point: number[], camera: IData["camera"]) {
+  return vec.add(vec.div(point, camera.zoom), camera.point)
+}
+
+export function createNode(point: number[], radius = 25): INode {
+  const id = "node_" + Math.random() * Date.now()
+
+  return {
+    id,
+    name: "Node",
+    point,
+    type: ICanvasItems.Node,
+    radius,
+    cap: "round",
+    zIndex: 1,
+    locked: false,
+  }
+}
+
+export function getSelectedBoundingBox(data: IData) {
+  const { selectedGlobs, selectedNodes, nodes, globs } = data
+
+  if (selectedGlobs.length + selectedNodes.length === 0) return null
+
+  return getCommonBounds(
+    ...selectedGlobs
+      .map((id) => globs[id])
+      .filter((glob) => glob.points !== null)
+      .map((glob) =>
+        getGlobBounds(glob, nodes[glob.nodes[0]], nodes[glob.nodes[1]])
+      ),
+    ...selectedNodes.map((id) => getNodeBounds(nodes[id]))
+  )
+}
+
+export function resizeBounds(
+  nodes: INode[],
+  globs: IGlob[],
+  bounds: IBounds,
+  pointDelta: number[],
+  sizeDelta: number[],
+  resizeRadius: boolean
+) {
+  const snapshots = getSnapshots(nodes, bounds)
+  const snapglobs = getSnapglobs(globs, bounds)
+
+  let { x: x0, y: y0, maxX: x1, maxY: y1 } = bounds
+  let { maxX: mx, maxY: my, width: mw, height: mh } = bounds
+
+  const [x, y] = [
+    bounds.x + bounds.width + sizeDelta[0],
+    bounds.y + bounds.height + sizeDelta[1],
+  ]
+
+  y1 = y
+  my = y0
+  mh = Math.abs(y1 - y0)
+
+  x1 = x
+  mx = x0
+  mw = Math.abs(x1 - x0)
+
+  for (let node of nodes) {
+    const { nx, nmx, ny, nmy, nw, nh } = snapshots[node.id]
+
+    node.point = vec.round(vec.add([mx + nx * mw, my + ny * mh], pointDelta))
+    if (resizeRadius) {
+      node.radius = (nw * mw + nh * mh) / 2
+    }
+  }
+
+  for (let glob of globs) {
+    const { D, Dp, a, ap, b, bp } = snapglobs[glob.id]
+
+    Object.assign(glob, {
+      a: a,
+      ap: ap,
+      b: b,
+      bp: bp,
+    })
+
+    Object.assign(glob, {
+      D: [mx + D.nx * mw, my + D.ny * mh],
+      Dp: [mx + Dp.nx * mw, my + Dp.ny * mh],
+      a,
+      ap,
+      b,
+      bp,
+    })
+  }
+}
+
+// Evaluate a 2D bezier curve
+export function bez2d(
+  A: number[],
+  B: number[],
+  C: number[],
+  D: number[],
+  t: number
+) {
+  return [bez1d(A[0], B[0], C[0], D[0], t), bez1d(A[1], B[1], C[1], D[1], t)]
+}
+
+// Evaluate a point along a 1d bezier curve.
+export function bez1d(a: number, b: number, c: number, d: number, t: number) {
+  return (
+    a * (1 - t) * (1 - t) * (1 - t) +
+    3 * b * t * (1 - t) * (1 - t) +
+    3 * c * t * t * (1 - t) +
+    d * t * t * t
+  )
+}
+
+/**
+ * Get the bounding box of a cubic bezier curve.
+ * @param p0 The first point.
+ * @param c0 The first control point.
+ * @param c1 The second control point.
+ * @param p1 The second point.
+ * @returns
+ */
+export function getCubicBezierBounds(
+  p0: number[],
+  c0: number[],
+  c1: number[],
+  p1: number[]
+) {
+  // solve for x
+  let a = 3 * p1[0] - 9 * c1[0] + 9 * c0[0] - 3 * p0[0]
+  let b = 6 * p0[0] - 12 * c0[0] + 6 * c1[0]
+  let c = 3 * c0[0] - 3 * p0[0]
+  let disc = b * b - 4 * a * c
+  let xl = p0[0]
+  let xh = p0[0]
+
+  if (p1[0] < xl) xl = p1[0]
+  if (p1[0] > xh) xh = p1[0]
+
+  if (disc >= 0) {
+    var t1 = (-b + Math.sqrt(disc)) / (2 * a)
+    if (t1 > 0 && t1 < 1) {
+      var x1 = bez1d(p0[0], c0[0], c1[0], p1[0], t1)
+      if (x1 < xl) xl = x1
+      if (x1 > xh) xh = x1
+    }
+    var t2 = (-b - Math.sqrt(disc)) / (2 * a)
+    if (t2 > 0 && t2 < 1) {
+      var x2 = bez1d(p0[0], c0[0], c1[0], p1[0], t2)
+      if (x2 < xl) xl = x2
+      if (x2 > xh) xh = x2
+    }
+  }
+
+  // Solve for y
+  a = 3 * p1[1] - 9 * c1[1] + 9 * c0[1] - 3 * p0[1]
+  b = 6 * p0[1] - 12 * c0[1] + 6 * c1[1]
+  c = 3 * c0[1] - 3 * p0[1]
+  disc = b * b - 4 * a * c
+  let yl = p0[1]
+  let yh = p0[1]
+  if (p1[1] < yl) yl = p1[1]
+  if (p1[1] > yh) yh = p1[1]
+  if (disc >= 0) {
+    var t1 = (-b + Math.sqrt(disc)) / (2 * a)
+    if (t1 > 0 && t1 < 1) {
+      var y1 = bez1d(p0[1], c0[1], c1[1], p1[1], t1)
+      if (y1 < yl) yl = y1
+      if (y1 > yh) yh = y1
+    }
+    var t2 = (-b - Math.sqrt(disc)) / (2 * a)
+    if (t2 > 0 && t2 < 1) {
+      var y2 = bez1d(p0[1], c0[1], c1[1], p1[1], t2)
+      if (y2 < yl) yl = y2
+      if (y2 > yh) yh = y2
+    }
+  }
+
+  return {
+    x: xl,
+    y: yl,
+    maxX: xh,
+    maxY: yh,
+    width: Math.abs(xl - xh),
+    height: Math.abs(yl - yh),
+  }
+}
+
+/**
+ * Get the bounding box of a circle.
+ */
+export function getCircleBounds(cx: number, cy: number, r: number): IBounds {
+  return {
+    x: cx - r,
+    y: cy - r,
+    maxX: cx + r,
+    maxY: cy + r,
+    width: r * 2,
+    height: r * 2,
+  }
+}
+
+/**
+ * Get the bounds of a node.
+ * @param node
+ * @returns
+ */
+export function getNodeBounds(node: INode): IBounds {
+  const {
+    point: [x, y],
+    radius,
+  } = node
+  return getCircleBounds(x, y, radius)
+}
+
+/**
+ * Get the bounds of a glob's inner curves.
+ * @param glob
+ * @returns
+ */
+export function getGlobInnerBounds(glob: IGlob) {
+  const { E0, F0, F1, E1, E0p, F0p, F1p, E1p } = glob.points
+
+  const b = getCubicBezierBounds(E0, F0, F1, E1)
+  const bp = getCubicBezierBounds(E0p, F0p, F1p, E1p)
+  return getCommonBounds(b, bp)
+}
+
+/**
+ * Get a bounding box that includes two bounding boxes.
+ * @param a Bounding box
+ * @param b Bounding box
+ * @returns
+ */
+export function getExpandedBounds(a: IBounds, b: IBounds) {
+  const x = Math.min(a.x, b.x),
+    y = Math.min(a.y, b.y),
+    maxX = Math.max(a.maxX, b.maxX),
+    maxY = Math.max(a.maxY, b.maxY),
+    width = Math.abs(maxX - x),
+    height = Math.abs(maxY - y)
+
+  return { x, y, maxX, maxY, width, height }
+}
+
+/**
+ * Get the common bounds of a group of bounds.
+ * @param b
+ * @returns
+ */
+export function getCommonBounds(...b: IBounds[]) {
+  if (b.length < 2) return b[0]
+
+  let bounds = b[0]
+
+  for (let i = 1; i < b.length; i++) {
+    bounds = getExpandedBounds(bounds, b[i])
+  }
+
+  return bounds
+}
+
+/**
+ * Get the bounding box for a glob.
+ * @param glob The glob
+ * @param start The glob's start node (as a node)
+ * @param end The glob's end node (as a node)
+ * @returns
+ */
+export function getGlobBounds(glob: IGlob, start: INode, end: INode) {
+  if (glob.points === null) {
+    throw Error("Can't get bounds of a glob without points!")
+  }
+
+  const { E0, F0, F1, E1, E0p, F0p, F1p, E1p } = glob.points
+  const b = getCubicBezierBounds(E0, F0, F1, E1)
+  const bp = getCubicBezierBounds(E0p, F0p, F1p, E1p)
+  const sb = getNodeBounds(start)
+  const eb = getNodeBounds(end)
+
+  return getCommonBounds(b, bp, sb, eb)
+}

@@ -1,49 +1,53 @@
 import { IData } from "lib/types"
 import { commands } from "lib/history"
 import * as vec from "lib/vec"
-import { isInView, screenToWorld } from "./mover-utils"
+import { isInView, screenToWorld } from "./session-utils"
 import { getGlob } from "lib/utils"
 import { keys, pointer } from "lib/state"
 import getNodeSnapper, { NodeSnapper } from "lib/snaps"
-import BaseMover from "./BaseMover"
+import BaseSession from "./BaseSession"
 
-export interface MoverSnapshot {
+export interface MoveSessionSnapshot {
   selectedNodes: string[]
   selectedGlobs: string[]
   nodes: Record<string, { id: string; point: number[]; radius: number }>
   globs: Record<string, { id: string; D: number[]; Dp: number[] }>
 }
 
-export default class Mover extends BaseMover {
+export default class MoveSession extends BaseSession {
   nodeSnapper?: NodeSnapper
   delta = [0, 0]
-  snapshot: MoverSnapshot
+  snapshot: MoveSessionSnapshot
   origin: number[]
 
   constructor(data: IData) {
-    super()
+    super(data)
     const nodes = data.nodeIds.map((id) => data.nodes[id])
     const globs = data.globIds.map((id) => data.globs[id])
 
     this.origin = screenToWorld(pointer.point, data.camera)
-    this.snapshot = Mover.getSnapshot(data)
+    this.snapshot = MoveSession.getSnapshot(data)
 
-    const snapNode = Mover.getClosestNodeToPointer(data)
+    const snapNode = MoveSession.getClosestNodeToPointer(data)
 
     if (snapNode) {
       this.nodeSnapper = getNodeSnapper(snapNode, nodes, globs)
     }
   }
 
-  complete(data: IData) {
+  complete = (data: IData) => {
     commands.moveSelection(data, this.delta, this.snapshot)
   }
 
-  cancel(data: IData) {
-    Mover.moveSelection(data, vec.neg(this.delta), Mover.getSnapshot(data))
+  cancel = (data: IData) => {
+    MoveSession.moveSelection(
+      data,
+      vec.neg(this.delta),
+      MoveSession.getSnapshot(data)
+    )
   }
 
-  update(data: IData) {
+  update = (data: IData) => {
     const { document, camera } = data
 
     this.delta = vec.vec(this.origin, screenToWorld(pointer.point, camera))
@@ -70,7 +74,7 @@ export default class Mover extends BaseMover {
     }
 
     // Move stuff...
-    Mover.moveSelection(data, this.delta, this.snapshot)
+    MoveSession.moveSelection(data, this.delta, this.snapshot)
   }
 
   static getSnapshot(data: IData) {
@@ -95,8 +99,8 @@ export default class Mover extends BaseMover {
           glob.id,
           {
             id: glob.id,
-            D: [...glob.options.D],
-            Dp: [...glob.options.Dp],
+            D: [...glob.D],
+            Dp: [...glob.Dp],
           },
         ])
       ),
@@ -127,7 +131,11 @@ export default class Mover extends BaseMover {
     return nodeUnderPointer
   }
 
-  static moveSelection(data: IData, delta: number[], snapshot: MoverSnapshot) {
+  static moveSelection(
+    data: IData,
+    delta: number[],
+    snapshot: MoveSessionSnapshot
+  ) {
     const { globs, nodes } = data
 
     // Moving maybe nodes and globs
@@ -141,8 +149,8 @@ export default class Mover extends BaseMover {
 
       const { D, Dp } = snapshot.globs[glob.id]
 
-      glob.options.D = vec.round(vec.add(D, delta))
-      glob.options.Dp = vec.round(vec.add(Dp, delta))
+      glob.D = vec.round(vec.add(D, delta))
+      glob.Dp = vec.round(vec.add(Dp, delta))
     }
 
     // Move nodes
@@ -163,9 +171,7 @@ export default class Mover extends BaseMover {
         nodesToMove.has(glob.nodes[0]) ||
         nodesToMove.has(glob.nodes[1])
       ) {
-        const {
-          options: { D, Dp, a, b, ap, bp },
-        } = glob
+        const { D, Dp, a, b, ap, bp } = glob
 
         const [
           { point: C0, radius: r0 },

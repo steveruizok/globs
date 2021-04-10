@@ -1,42 +1,31 @@
-import state, { keys, pointer } from "./state"
-import {
-  IBounds,
-  ICanvasItems,
-  IData,
-  IGlob,
-  IHandle,
-  INode,
-  ISnapTypes,
-} from "./types"
+import state, { pointer } from "./state"
+import { IData, IGlob, INode } from "./types"
 import { current } from "immer"
 import * as vec from "./vec"
 import {
   getGlob,
-  getOuterTangents,
-  getSnapshots,
-  getSnapglobs,
   getLineLineIntersection,
-  getClosestPointOnCircle,
+  resizeBounds,
+  getSelectedBoundingBox,
+  createNode,
+  createGlob,
+  screenToWorld,
 } from "./utils"
 import {
   updateGlobPoints,
   saveSelectionState,
   getPositionSnapshot,
-} from "./movers/mover-utils"
+} from "./sessions/session-utils"
 
-import HandleMover from "./movers/HandleMover"
-import Mover, { MoverSnapshot } from "./movers/Mover"
-import AnchorMover, { AnchorMoverSnapshot } from "./movers/AnchorMover"
+import Session, { MoveSessionSnapshot } from "./sessions/MoveSession"
+import AnchorSession, { AnchorSessionSnapshot } from "./sessions/AnchorSession"
 
-import { getCommonBounds, getGlobBounds, getNodeBounds } from "./bounds-utils"
 import { getClosestPointOnCurve, getNormalOnCurve } from "./bez"
-import getNodeSnapper, { NodeSnapper } from "./snaps"
-import RadiusMover, { RadiusMoverSnapshot } from "./movers/RadiusMover"
-import ResizerMover, {
-  ResizerMoverSnapshot,
-  ResizerValues,
-} from "./movers/ResizeMover"
-import RotateMover from "./movers/RotateMover"
+import ResizeSession, { ResizeSessionSnapshot } from "./sessions/ResizeSession"
+import TransformSession, {
+  TransformSessionSnapshot,
+} from "./sessions/TransformSession"
+import RotateSession from "./sessions/RotateSession"
 
 /* --------------------- Generic -------------------- */
 
@@ -270,9 +259,9 @@ export const commands = {
       })
     )
   },
-  moveSelection(data: IData, delta: number[], snapshot: MoverSnapshot) {
+  moveSelection(data: IData, delta: number[], snapshot: MoveSessionSnapshot) {
     const restoreSelectionState = saveSelectionState(data)
-    const sSnapshot = Mover.getSnapshot(data)
+    const sSnapshot = Session.getSnapshot(data)
 
     history.execute(
       data,
@@ -283,11 +272,11 @@ export const commands = {
           if (initial) return
 
           restoreSelectionState(data)
-          Mover.moveSelection(data, delta, snapshot)
+          Session.moveSelection(data, delta, snapshot)
         },
         undo(data) {
           restoreSelectionState(data)
-          Mover.moveSelection(data, vec.neg(delta), sSnapshot)
+          Session.moveSelection(data, vec.neg(delta), sSnapshot)
         },
       })
     )
@@ -311,8 +300,8 @@ export const commands = {
 
           const glob = data.globs[id]
           const [start, end] = glob.nodes.map((id) => data.nodes[id])
-          glob.options.D = current.D
-          glob.options.Dp = current.Dp
+          glob.D = current.D
+          glob.Dp = current.Dp
 
           try {
             // Rebuild the glob points
@@ -321,12 +310,12 @@ export const commands = {
               start.radius,
               end.point,
               end.radius,
-              glob.options.D,
-              glob.options.Dp,
-              glob.options.a,
-              glob.options.b,
-              glob.options.ap,
-              glob.options.bp
+              glob.D,
+              glob.Dp,
+              glob.a,
+              glob.b,
+              glob.ap,
+              glob.bp
             )
           } catch (e) {
             glob.points = null
@@ -334,8 +323,8 @@ export const commands = {
         },
         undo(data) {
           restoreSelectionState(data)
-          data.globs[id].options.D = initial.D
-          data.globs[id].options.Dp = initial.Dp
+          data.globs[id].D = initial.D
+          data.globs[id].Dp = initial.Dp
           const glob = data.globs[id]
           const [start, end] = glob.nodes.map((id) => data.nodes[id])
 
@@ -346,12 +335,12 @@ export const commands = {
               start.radius,
               end.point,
               end.radius,
-              glob.options.D,
-              glob.options.Dp,
-              glob.options.a,
-              glob.options.b,
-              glob.options.ap,
-              glob.options.bp
+              glob.D,
+              glob.Dp,
+              glob.a,
+              glob.b,
+              glob.ap,
+              glob.bp
             )
           } catch (e) {
             glob.points = null
@@ -360,9 +349,9 @@ export const commands = {
       })
     )
   },
-  moveAnchor(data: IData, globId: string, initial: AnchorMoverSnapshot) {
+  moveAnchor(data: IData, globId: string, initial: AnchorSessionSnapshot) {
     const restoreSelectionState = saveSelectionState(data)
-    const current = AnchorMover.getSnapshot(data, globId)
+    const current = AnchorSession.getSnapshot(data, globId)
 
     // We need a way to restore the nodes from when the drag began and ended
     history.execute(
@@ -373,7 +362,7 @@ export const commands = {
           if (initial) return
           restoreSelectionState(data)
           const glob = data.globs[globId]
-          Object.assign(glob.options, current)
+          Object.assign(glob, current)
           const [start, end] = glob.nodes.map((id) => data.nodes[id])
 
           glob.points = getGlob(
@@ -381,18 +370,18 @@ export const commands = {
             start.radius,
             end.point,
             end.radius,
-            glob.options.D,
-            glob.options.Dp,
-            glob.options.a,
-            glob.options.b,
-            glob.options.ap,
-            glob.options.bp
+            glob.D,
+            glob.Dp,
+            glob.a,
+            glob.b,
+            glob.ap,
+            glob.bp
           )
         },
         undo(data) {
           restoreSelectionState(data)
           const glob = data.globs[globId]
-          Object.assign(glob.options, initial)
+          Object.assign(glob, initial)
           const [start, end] = glob.nodes.map((id) => data.nodes[id])
 
           glob.points = getGlob(
@@ -400,12 +389,12 @@ export const commands = {
             start.radius,
             end.point,
             end.radius,
-            glob.options.D,
-            glob.options.Dp,
-            glob.options.a,
-            glob.options.b,
-            glob.options.ap,
-            glob.options.bp
+            glob.D,
+            glob.Dp,
+            glob.a,
+            glob.b,
+            glob.ap,
+            glob.bp
           )
         },
       })
@@ -470,14 +459,14 @@ export const commands = {
       D0p = vec.med(E0p, closestPp.point)
       D1p = vec.med(closestPp.point, E1p)
 
-      a0 = glob.options.a
-      b0 = glob.options.b
-      a0p = glob.options.ap
-      b0p = glob.options.bp
-      a1 = glob.options.a
-      b1 = glob.options.b
-      a1p = glob.options.ap
-      b1p = glob.options.bp
+      a0 = glob.a
+      b0 = glob.b
+      a0p = glob.ap
+      b0p = glob.bp
+      a1 = glob.a
+      b1 = glob.b
+      a1p = glob.ap
+      b1p = glob.bp
     } else {
       const center = vec.med(N, Np)
 
@@ -556,14 +545,12 @@ export const commands = {
 
     newGlob = {
       ...createGlob(newStartNode, end),
-      options: {
-        D: D1,
-        Dp: D1p,
-        a: a1,
-        b: b1,
-        ap: a1p,
-        bp: b1p,
-      },
+      D: D1,
+      Dp: D1p,
+      a: a1,
+      b: b1,
+      ap: a1p,
+      bp: b1p,
     }
 
     try {
@@ -786,8 +773,8 @@ export const commands = {
 
           for (let globId of sGlobIds) {
             const glob = data.globs[globId]
-            glob.options.D = vec.add(glob.options.D, delta)
-            glob.options.Dp = vec.add(glob.options.Dp, delta)
+            glob.D = vec.add(glob.D, delta)
+            glob.Dp = vec.add(glob.Dp, delta)
           }
         },
         undo(data) {
@@ -799,8 +786,8 @@ export const commands = {
 
           for (let globId of sGlobIds) {
             const glob = data.globs[globId]
-            glob.options.D = vec.sub(glob.options.D, delta)
-            glob.options.Dp = vec.sub(glob.options.Dp, delta)
+            glob.D = vec.sub(glob.D, delta)
+            glob.Dp = vec.sub(glob.Dp, delta)
           }
         },
       })
@@ -821,7 +808,7 @@ export const commands = {
         do(data, initial) {
           if (initial) return
           restoreSelectionState(data)
-          RotateMover.rotate(data, center, angle, snapshot)
+          RotateSession.rotate(data, center, angle, snapshot)
           updateGlobPoints(data)
         },
         undo(data) {
@@ -836,7 +823,7 @@ export const commands = {
           for (let id in snapshot.globs) {
             const sGlob = snapshot.globs[id]
             const glob = data.globs[id]
-            Object.assign(glob.options, sGlob)
+            Object.assign(glob, sGlob)
           }
 
           updateGlobPoints(data)
@@ -849,11 +836,11 @@ export const commands = {
     type: "corner" | "edge",
     value: number,
     restore: ReturnType<typeof getPositionSnapshot>,
-    snapshot: ResizerMoverSnapshot,
+    snapshot: TransformSessionSnapshot,
     preserveRadii: boolean
   ) {
     const restoreSelectionState = saveSelectionState(data)
-    const current = ResizerMover.getSnapshot(data)
+    const current = TransformSession.getSnapshot(data)
 
     history.execute(
       data,
@@ -866,7 +853,7 @@ export const commands = {
           const { x: x0, y: y0, maxX: x1, maxY: y1 } = snapshot.bounds
           const { maxX: mx, maxY: my, width: mw, height: mh } = snapshot.bounds
 
-          ResizerMover.resize(
+          TransformSession.resize(
             data,
             type,
             current.point,
@@ -898,7 +885,7 @@ export const commands = {
           for (let id in restore.globs) {
             const sGlob = restore.globs[id]
             const glob = data.globs[id]
-            Object.assign(glob.options, sGlob)
+            Object.assign(glob, sGlob)
           }
 
           updateGlobPoints(data)
@@ -949,9 +936,9 @@ export const commands = {
       })
     )
   },
-  resizeNode(data: IData, id: string, initial: RadiusMoverSnapshot) {
+  resizeNode(data: IData, id: string, initial: ResizeSessionSnapshot) {
     const restoreSelectionState = saveSelectionState(data)
-    const current = RadiusMover.getSnapshot(data, id)
+    const current = ResizeSession.getSnapshot(data, id)
     history.execute(
       data,
       new Command({
@@ -1065,123 +1052,4 @@ export const commands = {
       })
     )
   },
-}
-
-/* -------------------- Utilities ------------------- */
-
-function screenToWorld(point: number[], camera: IData["camera"]) {
-  return vec.add(vec.div(point, camera.zoom), camera.point)
-}
-
-function createNode(point: number[], radius = 25): INode {
-  const id = "node_" + Math.random() * Date.now()
-
-  return {
-    id,
-    name: "Node",
-    point,
-    type: ICanvasItems.Node,
-    radius,
-    cap: "round",
-    zIndex: 1,
-    locked: false,
-  }
-}
-
-export function createGlob(A: INode, B: INode): IGlob {
-  const { point: C0, radius: r0 } = A
-  const { point: C1, radius: r1 } = B
-
-  const [E0, E1, E0p, E1p] = getOuterTangents(C0, r0, C1, r1)
-
-  const D = vec.med(E0, E1),
-    Dp = vec.med(E0p, E1p),
-    a = 0.5,
-    b = 0.5,
-    ap = 0.5,
-    bp = 0.5
-
-  const id = "glob_" + Math.random() * Date.now()
-
-  return {
-    id,
-    name: "Glob",
-    nodes: [A.id, B.id],
-    options: { D, Dp, a, b, ap, bp },
-    points: getGlob(C0, r0, C1, r1, D, Dp, a, b, ap, bp),
-    zIndex: 1,
-  }
-}
-
-function getSelectedBoundingBox(data: IData) {
-  const { selectedGlobs, selectedNodes, nodes, globs } = data
-
-  if (selectedGlobs.length + selectedNodes.length === 0) return null
-
-  return getCommonBounds(
-    ...selectedGlobs
-      .map((id) => globs[id])
-      .filter((glob) => glob.points !== null)
-      .map((glob) =>
-        getGlobBounds(glob, nodes[glob.nodes[0]], nodes[glob.nodes[1]])
-      ),
-    ...selectedNodes.map((id) => getNodeBounds(nodes[id]))
-  )
-}
-
-export function resizeBounds(
-  nodes: INode[],
-  globs: IGlob[],
-  bounds: IBounds,
-  pointDelta: number[],
-  sizeDelta: number[],
-  resizeRadius: boolean
-) {
-  const snapshots = getSnapshots(nodes, bounds)
-  const snapglobs = getSnapglobs(globs, bounds)
-
-  let { x: x0, y: y0, maxX: x1, maxY: y1 } = bounds
-  let { maxX: mx, maxY: my, width: mw, height: mh } = bounds
-
-  const [x, y] = [
-    bounds.x + bounds.width + sizeDelta[0],
-    bounds.y + bounds.height + sizeDelta[1],
-  ]
-
-  y1 = y
-  my = y0
-  mh = Math.abs(y1 - y0)
-
-  x1 = x
-  mx = x0
-  mw = Math.abs(x1 - x0)
-
-  for (let node of nodes) {
-    const { nx, nmx, ny, nmy, nw, nh } = snapshots[node.id]
-
-    node.point = vec.round(vec.add([mx + nx * mw, my + ny * mh], pointDelta))
-    if (resizeRadius) {
-      node.radius = (nw * mw + nh * mh) / 2
-    }
-  }
-
-  for (let glob of globs) {
-    const { D, Dp, a, ap, b, bp } = snapglobs[glob.id]
-
-    Object.assign(glob.options, {
-      a: a,
-      ap: ap,
-      b: b,
-      bp: bp,
-    })
-
-    Object.assign(glob.options, {
-      D: [mx + D.nx * mw, my + D.ny * mh],
-      Dp: [mx + Dp.nx * mw, my + Dp.ny * mh],
-      a,
-      ap,
-      b,
-      bp,
-    })
-  }
 }

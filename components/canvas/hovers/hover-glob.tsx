@@ -19,7 +19,7 @@ export default function HoverGlob({ id, isSelected }: Props) {
 
   if (!nodes.every(Boolean)) return null
 
-  const { D, Dp, a, b, ap, bp } = glob.options
+  const { D, Dp, a, b, ap, bp } = glob
 
   const [
     { point: C0, radius: r0, cap: cap0 },

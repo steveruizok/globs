@@ -1,16 +1,16 @@
 import { IBounds, IData } from "lib/types"
-import BaseMover from "./BaseMover"
+import BaseSession from "./BaseSession"
 import * as vec from "lib/vec"
 import {
   getPositionSnapshot,
   getSelectedBoundingBox,
   screenToWorld,
   updateGlobPoints,
-} from "./mover-utils"
+} from "./session-utils"
 import { keys, pointer } from "lib/state"
 import { commands } from "lib/history"
 
-export interface ResizerMoverSnapshot {
+export interface TransformSessionSnapshot {
   point: number[]
   bounds: IBounds
   nodes: Record<
@@ -55,7 +55,7 @@ export interface ResizerMoverSnapshot {
   >
 }
 
-export interface ResizerValues {
+export interface TransformValues {
   x0: number
   y0: number
   x1: number
@@ -66,17 +66,17 @@ export interface ResizerValues {
   mh: number
 }
 
-export default class ResizerMover extends BaseMover {
+export default class TransformSession extends BaseSession {
   type: "edge" | "corner"
   value: number
-  snapshot: ResizerMoverSnapshot
-  current: ResizerValues
+  snapshot: TransformSessionSnapshot
+  current: TransformValues
   restore: ReturnType<typeof getPositionSnapshot>
 
   constructor(data: IData, type: "edge" | "corner", value: number) {
-    super()
+    super(data)
     this.type = type
-    this.snapshot = ResizerMover.getSnapshot(data)
+    this.snapshot = TransformSession.getSnapshot(data)
     this.value = value
     this.restore = getPositionSnapshot(data)
 
@@ -95,8 +95,8 @@ export default class ResizerMover extends BaseMover {
     }
   }
 
-  update(data: IData) {
-    ResizerMover.resize(
+  update = (data: IData) => {
+    TransformSession.resize(
       data,
       this.type,
       screenToWorld(pointer.point, data.camera),
@@ -108,7 +108,7 @@ export default class ResizerMover extends BaseMover {
     updateGlobPoints(data)
   }
 
-  cancel(data: IData) {
+  cancel = (data: IData) => {
     for (let id in this.restore.nodes) {
       const sNode = this.restore.nodes[id]
       const node = data.nodes[id]
@@ -119,13 +119,13 @@ export default class ResizerMover extends BaseMover {
     for (let id in this.restore.globs) {
       const sGlob = this.restore.globs[id]
       const glob = data.globs[id]
-      Object.assign(glob.options, sGlob)
+      Object.assign(glob, sGlob)
     }
 
     updateGlobPoints(data)
   }
 
-  complete(data: IData) {
+  complete = (data: IData) => {
     commands.edgeOrCornerResizeBounds(
       data,
       this.type,
@@ -141,8 +141,8 @@ export default class ResizerMover extends BaseMover {
     type: "corner" | "edge",
     point: number[],
     value: number,
-    v: ResizerValues,
-    snapshot: ResizerMoverSnapshot,
+    v: TransformValues,
+    snapshot: TransformSessionSnapshot,
     preserveRadii: boolean
   ) {
     const nodes = data.selectedNodes.map((id) => data.nodes[id])
@@ -182,7 +182,7 @@ export default class ResizerMover extends BaseMover {
     for (let glob of globs) {
       const { D, Dp, a, ap, b, bp } = sGlobs[glob.id]
 
-      Object.assign(glob.options, {
+      Object.assign(glob, {
         a: a,
         ap: ap,
         b: b,
@@ -190,7 +190,7 @@ export default class ResizerMover extends BaseMover {
       })
 
       if (v.x1 < v.x0 && v.y1 < v.y0) {
-        Object.assign(glob.options, {
+        Object.assign(glob, {
           D: [v.mx + D.nmx * v.mw, v.my + D.nmy * v.mh],
           Dp: [v.mx + Dp.nmx * v.mw, v.my + Dp.nmy * v.mh],
           a,
@@ -199,7 +199,7 @@ export default class ResizerMover extends BaseMover {
           bp,
         })
       } else if (v.x1 < v.x0) {
-        Object.assign(glob.options, {
+        Object.assign(glob, {
           D: [v.mx + Dp.nmx * v.mw, v.my + Dp.ny * v.mh],
           Dp: [v.mx + D.nmx * v.mw, v.my + D.ny * v.mh],
           a: ap,
@@ -208,7 +208,7 @@ export default class ResizerMover extends BaseMover {
           bp: b,
         })
       } else if (v.y1 < v.y0) {
-        Object.assign(glob.options, {
+        Object.assign(glob, {
           D: [v.mx + Dp.nx * v.mw, v.my + Dp.nmy * v.mh],
           Dp: [v.mx + D.nx * v.mw, v.my + D.nmy * v.mh],
           a: ap,
@@ -217,7 +217,7 @@ export default class ResizerMover extends BaseMover {
           bp: b,
         })
       } else {
-        Object.assign(glob.options, {
+        Object.assign(glob, {
           D: [v.mx + D.nx * v.mw, v.my + D.ny * v.mh],
           Dp: [v.mx + Dp.nx * v.mw, v.my + Dp.ny * v.mh],
           a,
@@ -229,7 +229,7 @@ export default class ResizerMover extends BaseMover {
     }
   }
 
-  static getSnapshot(data: IData): ResizerMoverSnapshot {
+  static getSnapshot(data: IData): TransformSessionSnapshot {
     const bounds = getSelectedBoundingBox(data)
 
     const nodes = Object.fromEntries(
@@ -266,7 +266,7 @@ export default class ResizerMover extends BaseMover {
           b,
           ap,
           bp,
-        } = data.globs[id].options
+        } = data.globs[id]
 
         return [
           id,

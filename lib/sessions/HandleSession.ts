@@ -1,12 +1,12 @@
 import { IData, IHandle, ISnapTypes } from "lib/types"
 import { commands } from "lib/history"
 import * as vec from "lib/vec"
-import { getSafeHandlePoint, isInView, screenToWorld } from "./mover-utils"
+import { getSafeHandlePoint, isInView, screenToWorld } from "./session-utils"
 import { getGlob, projectPoint } from "lib/utils"
 import { keys, pointer } from "lib/state"
-import BaseMover from "./BaseMover"
+import BaseSession from "./BaseSession"
 
-export default class HandleMover extends BaseMover {
+export default class HandleSession extends BaseSession {
   globId: string
   primary: IHandle
   secondary: IHandle
@@ -24,7 +24,7 @@ export default class HandleMover extends BaseMover {
   }
 
   constructor(data: IData, globId: string, primary: IHandle) {
-    super()
+    super(data)
     const glob = data.globs[globId]
 
     this.origin = screenToWorld(pointer.point, data.camera)
@@ -32,21 +32,21 @@ export default class HandleMover extends BaseMover {
     this.primary = primary
     this.secondary = primary === "D" ? "Dp" : "D"
     this.initial = {
-      D: [...glob.options.D],
-      Dp: [...glob.options.Dp],
+      D: [...glob.D],
+      Dp: [...glob.Dp],
     }
     this.current = {
-      D: [...glob.options.D],
-      Dp: [...glob.options.Dp],
+      D: [...glob.D],
+      Dp: [...glob.Dp],
     }
 
-    this.snaps = HandleMover.getSnapPoints(data)
+    this.snaps = HandleSession.getSnapPoints(data)
   }
 
-  cancel(data: IData) {
+  cancel = (data: IData) => {
     const glob = data.globs[this.globId]
-    glob.options.D = this.initial.D
-    glob.options.Dp = this.initial.Dp
+    glob.D = this.initial.D
+    glob.Dp = this.initial.Dp
     const [start, end] = glob.nodes.map((id) => data.nodes[id])
     data.snaps.active = []
 
@@ -57,23 +57,23 @@ export default class HandleMover extends BaseMover {
         start.radius,
         end.point,
         end.radius,
-        glob.options.D,
-        glob.options.Dp,
-        glob.options.a,
-        glob.options.b,
-        glob.options.ap,
-        glob.options.bp
+        glob.D,
+        glob.Dp,
+        glob.a,
+        glob.b,
+        glob.ap,
+        glob.bp
       )
     } catch (e) {
       glob.points = null
     }
   }
 
-  complete(data: IData) {
+  complete = (data: IData) => {
     commands.moveHandle(data, this.globId, this.initial, this.current)
   }
 
-  update(data: IData) {
+  update = (data: IData) => {
     const { camera, nodes, globs, snaps, document } = data
 
     const handle = this.initial[this.primary]
@@ -194,6 +194,7 @@ export default class HandleMover extends BaseMover {
               from: next,
               to: vec.dist(next, a) > vec.dist(next, b) ? a : b,
             })
+            break
           } else if (
             (isInView(b, document) || isInView(c, document)) &&
             Math.abs(vec.distanceToLine(b, c, next) * camera.zoom) < 3
@@ -204,6 +205,7 @@ export default class HandleMover extends BaseMover {
               from: next,
               to: vec.dist(next, b) > vec.dist(next, c) ? b : c,
             })
+            break
           } else if (
             (isInView(ap, document) || isInView(bp, document)) &&
             Math.abs(vec.distanceToLine(ap, bp, next) * camera.zoom) < 3
@@ -214,6 +216,7 @@ export default class HandleMover extends BaseMover {
               from: next,
               to: vec.dist(next, ap) > vec.dist(next, bp) ? ap : bp,
             })
+            break
           } else if (
             (isInView(bp, document) || isInView(cp, document)) &&
             Math.abs(vec.distanceToLine(bp, cp, next) * camera.zoom) < 3
@@ -224,18 +227,19 @@ export default class HandleMover extends BaseMover {
               from: next,
               to: vec.dist(next, bp) > vec.dist(next, cp) ? bp : cp,
             })
+            break
           }
         }
       }
 
       // Apply the change to the handle
-      glob.options[this.primary] = vec.round(
+      glob[this.primary] = vec.round(
         getSafeHandlePoint(nodes[start], nodes[end], next)
       )
 
       // Move the other handle, too.
       if (keys.Meta) {
-        glob.options[this.secondary] = getSafeHandlePoint(
+        glob[this.secondary] = getSafeHandlePoint(
           nodes[start],
           nodes[end],
           vec.add(
@@ -252,19 +256,19 @@ export default class HandleMover extends BaseMover {
         nodes[start].radius,
         nodes[end].point,
         nodes[end].radius,
-        glob.options.D,
-        glob.options.Dp,
-        glob.options.a,
-        glob.options.b,
-        glob.options.ap,
-        glob.options.bp
+        glob.D,
+        glob.Dp,
+        glob.a,
+        glob.b,
+        glob.ap,
+        glob.bp
       )
     } catch (e) {
       glob.points = null
     }
 
-    this.current.D = [...glob.options.D]
-    this.current.Dp = [...glob.options.Dp]
+    this.current.D = [...glob.D]
+    this.current.Dp = [...glob.Dp]
   }
 
   static getSnapPoints(data: IData) {
@@ -277,10 +281,7 @@ export default class HandleMover extends BaseMover {
     }
 
     for (let key in globs) {
-      const {
-        options: { D, Dp },
-        points,
-      } = globs[key]
+      const { D, Dp, points } = globs[key]
 
       snaps.push([...D], [...Dp])
 

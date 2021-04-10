@@ -50,21 +50,17 @@ export interface ICanvasItem {
   zIndex: number
 }
 
-export interface IGlobOptions {
+export interface IGlob extends ICanvasItem {
+  id: string
+  nodes: string[]
+  points?: IGlobPoints
+  p0?: number[]
   D: number[]
   Dp: number[]
   a: number
   ap: number
   b: number
   bp: number
-}
-
-export interface IGlob extends ICanvasItem {
-  id: string
-  nodes: string[]
-  points?: IGlobPoints
-  options: IGlobOptions
-  p0?: number[]
 }
 
 export interface INode extends ICanvasItem {

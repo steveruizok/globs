@@ -36,7 +36,7 @@ export default function GlobsProps() {
   const handleDxChange = useCallback(
     (value: number) =>
       state.send("SET_GLOB_OPTIONS", {
-        D: [value, selectedGlobs[0].options.D[1]],
+        D: [value, selectedGlobs[0].D[1]],
       }),
     []
   )
@@ -44,7 +44,7 @@ export default function GlobsProps() {
   const handleDyChange = useCallback(
     (value: number) =>
       state.send("SET_GLOB_OPTIONS", {
-        D: [selectedGlobs[0].options.D[0], value],
+        D: [selectedGlobs[0].D[0], value],
       }),
     []
   )
@@ -52,7 +52,7 @@ export default function GlobsProps() {
   const handleDpxChange = useCallback(
     (value: number) =>
       state.send("SET_GLOB_OPTIONS", {
-        Dp: [value, selectedGlobs[0].options.D[1]],
+        Dp: [value, selectedGlobs[0].D[1]],
       }),
     []
   )
@@ -60,7 +60,7 @@ export default function GlobsProps() {
   const handleDpyChange = useCallback(
     (value: number) =>
       state.send("SET_GLOB_OPTIONS", {
-        Dp: [selectedGlobs[0].options.D[0], value],
+        Dp: [selectedGlobs[0].D[0], value],
       }),
     []
   )
@@ -68,23 +68,23 @@ export default function GlobsProps() {
   if (selectedGlobs.length === 0) return null
 
   const a = selectedGlobs.reduce(
-    (a, c) => (c.options.a === a ? a : "mixed"),
-    selectedGlobs[0].options.a
+    (a, c) => (c.a === a ? a : "mixed"),
+    selectedGlobs[0].a
   )
 
   const b = selectedGlobs.reduce(
-    (a, c) => (c.options.b === a ? a : "mixed"),
-    selectedGlobs[0].options.b
+    (a, c) => (c.b === a ? a : "mixed"),
+    selectedGlobs[0].b
   )
 
   const ap = selectedGlobs.reduce(
-    (a, c) => (c.options.ap === a ? a : "mixed"),
-    selectedGlobs[0].options.ap
+    (a, c) => (c.ap === a ? a : "mixed"),
+    selectedGlobs[0].ap
   )
 
   const bp = selectedGlobs.reduce(
-    (a, c) => (c.options.bp === a ? a : "mixed"),
-    selectedGlobs[0].options.bp
+    (a, c) => (c.bp === a ? a : "mixed"),
+    selectedGlobs[0].bp
   )
 
   return (
@@ -120,22 +120,22 @@ export default function GlobsProps() {
       {selectedGlobs.length === 1 && (
         <>
           <NumberInput
-            value={selectedGlobs[0].options.D[0]}
+            value={selectedGlobs[0].D[0]}
             label="Dx"
             onChange={handleDxChange}
           />
           <NumberInput
-            value={selectedGlobs[0].options.D[1]}
+            value={selectedGlobs[0].D[1]}
             label="Dy"
             onChange={handleDyChange}
           />
           <NumberInput
-            value={selectedGlobs[0].options.Dp[0]}
+            value={selectedGlobs[0].Dp[0]}
             label="Dpx"
             onChange={handleDpxChange}
           />
           <NumberInput
-            value={selectedGlobs[0].options.Dp[1]}
+            value={selectedGlobs[0].Dp[1]}
             label="Dpy"
             onChange={handleDpyChange}
           />

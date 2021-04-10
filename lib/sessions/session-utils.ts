@@ -72,7 +72,12 @@ export function createGlob(A: INode, B: INode): IGlob {
     id,
     name: "Glob",
     nodes: [A.id, B.id],
-    options: { D, Dp, a, b, ap, bp },
+    D,
+    Dp,
+    a,
+    b,
+    ap,
+    bp,
     points: getGlob(C0, r0, C1, r1, D, Dp, a, b, ap, bp),
     zIndex: 1,
   }
@@ -133,14 +138,14 @@ export function resizeBounds(
   for (let glob of globs) {
     const { D, Dp, a, ap, b, bp } = snapglobs[glob.id]
 
-    Object.assign(glob.options, {
+    Object.assign(glob, {
       a: a,
       ap: ap,
       b: b,
       bp: bp,
     })
 
-    Object.assign(glob.options, {
+    Object.assign(glob, {
       D: [mx + D.nx * mw, my + D.ny * mh],
       Dp: [mx + Dp.nx * mw, my + Dp.ny * mh],
       a,
@@ -179,12 +184,12 @@ export function updateGlobPoints(data: IData) {
         start.radius,
         end.point,
         end.radius,
-        glob.options.D,
-        glob.options.Dp,
-        glob.options.a,
-        glob.options.b,
-        glob.options.ap,
-        glob.options.bp
+        glob.D,
+        glob.Dp,
+        glob.a,
+        glob.b,
+        glob.ap,
+        glob.bp
       )
     } catch (e) {
       glob.points = null
@@ -232,7 +237,7 @@ export function getPositionSnapshot(data: IData) {
         b,
         ap,
         bp,
-      } = data.globs[id].options
+      } = data.globs[id]
 
       return [
         id,

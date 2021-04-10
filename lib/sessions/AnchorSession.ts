@@ -1,27 +1,27 @@
 import { IAnchor, IData } from "lib/types"
-import BaseMover from "./BaseMover"
+import BaseSession from "./BaseSession"
 import * as vec from "lib/vec"
-import { screenToWorld } from "./mover-utils"
+import { screenToWorld } from "./session-utils"
 import { keys, pointer } from "lib/state"
 import { getGlob } from "lib/utils"
 import { commands } from "lib/history"
 
-export interface AnchorMoverSnapshot {
+export interface AnchorSessionSnapshot {
   a: number
   b: number
   ap: number
   bp: number
 }
 
-export default class AnchorMover extends BaseMover {
+export default class AnchorSession extends BaseSession {
   globId: string
   primary: IAnchor
   secondary: IAnchor
-  snapshot: AnchorMoverSnapshot
+  snapshot: AnchorSessionSnapshot
   origin: number[]
 
   constructor(data: IData, globId: string, primary: IAnchor) {
-    super()
+    super(data)
     this.globId = globId
     this.primary = primary
     this.secondary =
@@ -32,11 +32,11 @@ export default class AnchorMover extends BaseMover {
         : primary === "ap"
         ? "bp"
         : "ap"
-    this.snapshot = AnchorMover.getSnapshot(data, globId)
+    this.snapshot = AnchorSession.getSnapshot(data, globId)
     this.origin = screenToWorld(pointer.point, data.camera)
   }
 
-  update(data: IData) {
+  update = (data: IData) => {
     const { camera, nodes, globs } = data
     const glob = globs[this.globId]
     const {
@@ -70,23 +70,23 @@ export default class AnchorMover extends BaseMover {
       }
     }
 
-    glob.options.a = this.snapshot.a
-    glob.options.b = this.snapshot.b
-    glob.options.ap = this.snapshot.ap
-    glob.options.bp = this.snapshot.bp
+    glob.a = this.snapshot.a
+    glob.b = this.snapshot.b
+    glob.ap = this.snapshot.ap
+    glob.bp = this.snapshot.bp
 
     if (keys.Meta) {
       if (keys.Shift) {
-        glob.options.a = n
-        glob.options.b = n
-        glob.options.ap = n
-        glob.options.bp = n
+        glob.a = n
+        glob.b = n
+        glob.ap = n
+        glob.bp = n
       } else {
-        glob.options[this.primary] = n
-        glob.options[this.secondary] = n
+        glob[this.primary] = n
+        glob[this.secondary] = n
       }
     } else {
-      glob.options[this.primary] = n
+      glob[this.primary] = n
     }
 
     glob.points = getGlob(
@@ -94,30 +94,31 @@ export default class AnchorMover extends BaseMover {
       nodes[start].radius,
       nodes[end].point,
       nodes[end].radius,
-      glob.options.D,
-      glob.options.Dp,
-      glob.options.a,
-      glob.options.b,
-      glob.options.ap,
-      glob.options.bp
+      glob.D,
+      glob.Dp,
+      glob.a,
+      glob.b,
+      glob.ap,
+      glob.bp
     )
   }
 
-  cancel(data: IData) {
+  cancel = (data: IData) => {
     const glob = data.globs[this.globId]
-    Object.assign(glob.options, this.snapshot)
+    Object.assign(glob, this.snapshot)
   }
 
-  complete(data: IData) {
+  complete = (data: IData) => {
     commands.moveAnchor(data, this.globId, this.snapshot)
   }
-  static getSnapshot(data: IData, globId: string): AnchorMoverSnapshot {
+
+  static getSnapshot(data: IData, globId: string): AnchorSessionSnapshot {
     const glob = data.globs[globId]
     return {
-      a: glob.options.a,
-      b: glob.options.b,
-      ap: glob.options.ap,
-      bp: glob.options.bp,
+      a: glob.a,
+      b: glob.b,
+      ap: glob.ap,
+      bp: glob.bp,
     }
   }
 }

@@ -1,23 +1,23 @@
 import { IAnchor, IData } from "lib/types"
-import BaseMover from "./BaseMover"
+import BaseSession from "./BaseSession"
 import * as vec from "lib/vec"
-import { screenToWorld, updateGlobPoints } from "./mover-utils"
+import { screenToWorld, updateGlobPoints } from "./session-utils"
 import { keys, pointer } from "lib/state"
 import { getGlob } from "lib/utils"
 import { commands } from "lib/history"
 
-export interface RadiusMoverSnapshot {
+export interface ResizeSessionSnapshot {
   radius: number
 }
 
-export default class RadiusMover extends BaseMover {
+export default class ResizeSession extends BaseSession {
   nodeId: string
   origin: number[]
   oDistance: number
-  snapshot: RadiusMoverSnapshot
+  snapshot: ResizeSessionSnapshot
 
   constructor(data: IData, nodeId: string) {
-    super()
+    super(data)
     this.nodeId = nodeId
 
     const node = data.nodes[nodeId]
@@ -27,12 +27,12 @@ export default class RadiusMover extends BaseMover {
       screenToWorld(pointer.point, data.camera)
     )
 
-    this.snapshot = RadiusMover.getSnapshot(data, nodeId)
+    this.snapshot = ResizeSession.getSnapshot(data, nodeId)
 
     this.origin = screenToWorld(pointer.point, data.camera)
   }
 
-  update(data: IData) {
+  update = (data: IData) => {
     const { camera, nodes } = data
     const node = nodes[this.nodeId]
     const dist = vec.dist(this.origin, screenToWorld(pointer.point, camera))
@@ -44,14 +44,14 @@ export default class RadiusMover extends BaseMover {
     updateGlobPoints(data)
   }
 
-  cancel(data: IData) {
+  cancel = (data: IData) => {
     const { camera, nodes } = data
     const node = nodes[this.nodeId]
     node.radius = this.snapshot.radius
     updateGlobPoints(data)
   }
 
-  complete(data: IData) {
+  complete = (data: IData) => {
     commands.resizeNode(data, this.nodeId, this.snapshot)
   }
 

@@ -6,13 +6,12 @@ import * as svg from "lib/svg"
 
 import { initialData } from "./data"
 import { commands, history } from "lib/history"
-import AnchorMover from "lib/movers/AnchorMover"
-import HandleMover from "lib/movers/HandleMover"
-import RadiusMover from "lib/movers/RadiusMover"
-import ResizeMover from "lib/movers/ResizeMover"
-import ResizerMover from "lib/movers/ResizeMover"
-import RotateMover from "lib/movers/RotateMover"
-import Mover from "./movers/Mover"
+import AnchorSession from "lib/sessions/AnchorSession"
+import HandleSession from "lib/sessions/HandleSession"
+import ResizeSession from "lib/sessions/ResizeSession"
+import TransformSession from "lib/sessions/TransformSession"
+import RotateSession from "lib/sessions/RotateSession"
+import MoveSession from "./sessions/MoveSession"
 import {
   ICanvasItems,
   INode,
@@ -37,6 +36,7 @@ import {
   getGlobInnerBounds,
   getNodeBounds,
 } from "./bounds-utils"
+import migrate from "./migrations"
 
 export const elms: Record<string, SVGPathElement> = {}
 
@@ -310,7 +310,7 @@ const state = createState({
           },
         },
         edgeResizing: {
-          onEnter: ["setEdgeResizer"],
+          onEnter: ["setEdgeTransform"],
           on: {
             MOVED_POINTER: ["updateEdgeResize"],
             WHEELED: ["updateEdgeResize"],
@@ -319,7 +319,7 @@ const state = createState({
           },
         },
         cornerResizing: {
-          onEnter: ["setCornerResizer"],
+          onEnter: ["setCornerTransform"],
           on: {
             MOVED_POINTER: ["updateCornerResize"],
             WHEELED: ["updateCornerResize"],
@@ -530,16 +530,16 @@ const state = createState({
 
     // MOVING STUFF
     beginMove(data) {
-      mover = new Mover(data)
+      moveSession = new MoveSession(data)
     },
     updateMove(data) {
-      mover.update(data)
+      moveSession.update(data)
     },
     cancelMove(data) {
-      mover.cancel(data)
+      moveSession.cancel(data)
     },
     completeMove(data) {
-      mover.complete(data)
+      moveSession.complete(data)
     },
     clearSnaps(data) {
       data.snaps.active = []
@@ -664,16 +664,16 @@ const state = createState({
       commands.reorderNodes(data, payload.from, payload.to)
     },
     beginRadiusMove(data) {
-      radiusMover = new RadiusMover(data, data.selectedNodes[0])
+      radiusSession = new ResizeSession(data, data.selectedNodes[0])
     },
     cancelRadiusMove(data) {
-      radiusMover.cancel(data)
+      radiusSession.cancel(data)
     },
     updateRadiusMove(data) {
-      radiusMover.update(data)
+      radiusSession.update(data)
     },
     completeRadiusMove(data) {
-      radiusMover.complete(data)
+      radiusSession.complete(data)
     },
     // TODO: Make a command
     toggleNodeLocked(data, payload: { id: string }) {
@@ -682,11 +682,11 @@ const state = createState({
 
     // GLOBS
     // TODO: Make a command
-    setSelectedGlobOptions(data, payload: Partial<IGlob["options"]>) {
+    setSelectedGlobOptions(data, payload: Partial<IGlob>) {
       const { globs, selectedGlobs } = data
       for (let id of selectedGlobs) {
         const glob = globs[id]
-        Object.assign(glob.options, payload)
+        Object.assign(glob, payload)
       }
     },
     // TODO: Remove once other commands are in
@@ -721,12 +721,12 @@ const state = createState({
             start.radius,
             end.point,
             end.radius,
-            glob.options.D,
-            glob.options.Dp,
-            glob.options.a,
-            glob.options.b,
-            glob.options.ap,
-            glob.options.bp
+            glob.D,
+            glob.Dp,
+            glob.a,
+            glob.b,
+            glob.ap,
+            glob.bp
           )
         } catch (e) {
           glob.points = null
@@ -749,16 +749,16 @@ const state = createState({
     // HANDLES
     beginHandleMove(data, payload: { id: string; handle: IHandle }) {
       data.selectedHandle = payload
-      handleMover = new HandleMover(data, payload.id, payload.handle)
+      handleSession = new HandleSession(data, payload.id, payload.handle)
     },
     updateHandleMove(data) {
-      handleMover.update(data)
+      handleSession.update(data)
     },
     cancelHandleMove(data) {
-      handleMover.cancel(data)
+      handleSession.cancel(data)
     },
     completeHandleMove(data) {
-      handleMover.complete(data)
+      handleSession.complete(data)
     },
     setSelectedHandle(data, payload: { id: string; handle: IHandle }) {
       data.selectedHandle = payload
@@ -769,16 +769,16 @@ const state = createState({
 
     // ANCHORS
     beginAnchorMove(data, payload: { id: string; anchor: IAnchor }) {
-      anchorMover = new AnchorMover(data, payload.id, payload.anchor)
+      anchorSession = new AnchorSession(data, payload.id, payload.anchor)
     },
     cancelAnchorMove(data) {
-      anchorMover.cancel(data)
+      anchorSession.cancel(data)
     },
     updateAnchorMove(data) {
-      anchorMover.update(data)
+      anchorSession.update(data)
     },
     completeAnchorMove(data) {
-      anchorMover.complete(data)
+      anchorSession.complete(data)
     },
 
     // BOUNDS / RESIZING
@@ -806,8 +806,8 @@ const state = createState({
       }
 
       for (let glob of sGlobs) {
-        glob.options.D[0] += dx
-        glob.options.Dp[0] += dx
+        glob.D[0] += dx
+        glob.Dp[0] += dx
       }
     },
     // TODO: Make a command
@@ -831,8 +831,8 @@ const state = createState({
       }
 
       for (let glob of sGlobs) {
-        glob.options.D[1] += dy
-        glob.options.Dp[1] += dy
+        glob.D[1] += dy
+        glob.Dp[1] += dy
       }
     },
     changeBoundsWidth(data, payload: { value: number }) {
@@ -841,41 +841,41 @@ const state = createState({
     changeBoundsHeight(data, payload: { value: number }) {
       commands.resizeBounds(data, [0, payload.value])
     },
-    setEdgeResizer(data, payload: { edge: number }) {
-      resizeMover = new ResizerMover(data, "edge", payload.edge)
+    setEdgeTransform(data, payload: { edge: number }) {
+      transformSession = new TransformSession(data, "edge", payload.edge)
     },
     cancelEdgeResize(data) {
-      resizeMover.cancel(data)
+      resizeSession.cancel(data)
     },
     updateEdgeResize(data) {
-      resizeMover.update(data)
+      resizeSession.update(data)
     },
     completeEdgeResize(data) {
-      resizeMover.complete(data)
+      resizeSession.complete(data)
     },
-    setCornerResizer(data, payload: { corner: number }) {
-      resizeMover = new ResizerMover(data, "corner", payload.corner)
+    setCornerTransform(data, payload: { corner: number }) {
+      transformSession = new TransformSession(data, "corner", payload.corner)
     },
     cancelCornerResize(data) {
-      resizeMover.cancel(data)
+      resizeSession.cancel(data)
     },
     updateCornerResize(data) {
-      resizeMover.update(data)
+      resizeSession.update(data)
     },
     completeCornerResize(data) {
-      resizeMover.complete(data)
+      resizeSession.complete(data)
     },
     beginRotate(data) {
-      rotateMover = new RotateMover(data)
+      rotateSession = new RotateSession(data)
     },
     updateRotate(data) {
-      rotateMover.update(data)
+      rotateSession.update(data)
     },
     cancelRotate(data) {
-      rotateMover.cancel(data)
+      rotateSession.cancel(data)
     },
     completeRotate(data) {
-      rotateMover.complete(data)
+      rotateSession.complete(data)
     },
 
     // BRUSH
@@ -978,7 +978,7 @@ const state = createState({
       if (typeof localStorage === "undefined") return
       const saved = localStorage.getItem("glob_aldata_v6")
       if (saved) {
-        Object.assign(data, JSON.parse(saved))
+        Object.assign(data, migrate(JSON.parse(saved)))
       }
 
       data.selectedNodes = []
@@ -1030,12 +1030,13 @@ const state = createState({
 
 /* -------------------- RESIZERS -------------------- */
 
-let handleMover: HandleMover
-let anchorMover: AnchorMover
-let radiusMover: RadiusMover
-let resizeMover: ResizeMover
-let rotateMover: RotateMover
-let mover: Mover
+let moveSession: MoveSession
+let handleSession: HandleSession
+let anchorSession: AnchorSession
+let radiusSession: ResizeSession
+let resizeSession: ResizeSession
+let rotateSession: RotateSession
+let transformSession: TransformSession
 
 /* --------------------- INPUTS --------------------- */
 
@@ -1117,6 +1118,7 @@ function handleWindowBlur(e) {
 function handleKeyDown(e: KeyboardEvent) {
   let { key } = e
   if (key === "Control" && !isMacintosh()) key = "Meta"
+  if (keys[key] && [" "].includes(key)) return
   keys[key] = true
 
   if (key in downCommands) {
@@ -1158,65 +1160,10 @@ function worldToScreen(point: number[], offset: number[], zoom: number) {
   return vec.mul(vec.sub(point, offset), zoom)
 }
 
-export function createGlob(A: INode, B: INode): IGlob {
-  const { point: C0, radius: r0 } = A
-  const { point: C1, radius: r1 } = B
-
-  const [E0, E1, E0p, E1p] = getOuterTangents(C0, r0, C1, r1)
-
-  const D = vec.med(E0, E1),
-    Dp = vec.med(E0p, E1p),
-    a = 0.5,
-    b = 0.5,
-    ap = 0.5,
-    bp = 0.5
-
-  const id = "glob_" + Math.random() * Date.now()
-
-  return {
-    id,
-    name: "Glob",
-    nodes: [A.id, B.id],
-    options: { D, Dp, a, b, ap, bp },
-    points: getGlob(C0, r0, C1, r1, D, Dp, a, b, ap, bp),
-    zIndex: 1,
-  }
-}
-
-function createNode(point: number[], radius = 25): INode {
-  const id = "node_" + Math.random() * Date.now()
-
-  return {
-    id,
-    name: "Node",
-    point,
-    type: ICanvasItems.Node,
-    radius,
-    cap: "round",
-    zIndex: 1,
-    locked: false,
-  }
-}
-
 export const useSelector = createSelectorHook(state)
 export default state
 
 // state.onUpdate((s) => console.log(s.active, s.log[0]))
-
-function getSafeHandlePoint(start: INode, end: INode, handle: number[]) {
-  const { point: C0, radius: r0 } = start
-  const { point: C1, radius: r1 } = end
-
-  if (vec.dist(handle, C0) < r0 + 1) {
-    handle = getClosestPointOnCircle(C0, r0, handle, 1)
-  }
-
-  if (vec.dist(handle, C1) < r1 + 1) {
-    handle = getClosestPointOnCircle(C1, r1, handle, 1)
-  }
-
-  return handle
-}
 
 function getSelectedBoundingBox(data: IData) {
   const { selectedGlobs, selectedNodes, nodes, globs } = data
@@ -1231,15 +1178,6 @@ function getSelectedBoundingBox(data: IData) {
         getGlobBounds(glob, nodes[glob.nodes[0]], nodes[glob.nodes[1]])
       ),
     ...selectedNodes.map((id) => getNodeBounds(nodes[id]))
-  )
-}
-
-function isInView(point: number[], document: IData["document"]) {
-  return !(
-    point[0] < document.point[0] ||
-    point[0] > document.point[0] + document.size[0] ||
-    point[1] < document.point[1] ||
-    point[1] > document.point[1] + document.size[1]
   )
 }
 

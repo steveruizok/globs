@@ -15,8 +15,6 @@ import { styled } from "stitches.config"
 import useTheme from "hooks/useTheme"
 
 export default function Toolbar() {
-  const canUndo = useSelector((s) => s.can("UNDO"))
-  const canRedo = useSelector((s) => s.can("REDO"))
   const hasSelectedNodes = useSelector((s) => s.data.selectedNodes.length > 0)
   const hasSelectedGlobs = useSelector((s) => s.data.selectedGlobs.length > 0)
   const isLinking = useSelector((s) => s.isIn("linkingNodes"))
