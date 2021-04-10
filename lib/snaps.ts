@@ -1,7 +1,7 @@
-import { IData, IGlob, INode, ISnap, ISnapTypes } from "./types"
-import { pointer } from "./state"
-import * as vec from "./vec"
-import { pointInRect } from "./utils"
+import { IData, IGlob, INode } from "lib/types"
+import inputs from "lib/inputs"
+import * as vec from "lib/vec"
+import { pointInRect } from "lib/utils"
 
 const MIN_SPEED = 5, // Min length of vector (in screen space) to start snapping
   SNAP_DISTANCE = 4 // Min distance (in screen space) to make a snap
@@ -47,7 +47,7 @@ export default function getNodeSnapper(
       sy = next[1]
 
     // Is the user skipping snaps? Is the user moving quickly? Return point.
-    if (skip || vec.len(pointer.delta) > MIN_SPEED)
+    if (skip || vec.len(inputs.pointer.delta) > MIN_SPEED)
       return { delta: vec.vec(iPoint, next), point: next, snaps: [] }
 
     // Get a rect 1.5x the size of the document.

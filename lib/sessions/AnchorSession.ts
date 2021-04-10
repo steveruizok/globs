@@ -1,7 +1,7 @@
 import { IAnchor, IData } from "lib/types"
 import BaseSession from "./BaseSession"
 import * as vec from "lib/vec"
-import { keys, pointer } from "lib/state"
+import inputs from "lib/inputs"
 import { screenToWorld, getGlobPoints } from "lib/utils"
 import { moveAnchor } from "lib/commands"
 
@@ -32,7 +32,7 @@ export default class AnchorSession extends BaseSession {
         ? "bp"
         : "ap"
     this.snapshot = AnchorSession.getSnapshot(data, globId)
-    this.origin = screenToWorld(pointer.point, data.camera)
+    this.origin = screenToWorld(inputs.pointer.point, data.camera)
   }
 
   update = (data: IData) => {
@@ -42,7 +42,7 @@ export default class AnchorSession extends BaseSession {
       points: { E0, D, E1, E0p, Dp, E1p },
     } = glob
 
-    let next = screenToWorld(pointer.point, camera)
+    let next = screenToWorld(inputs.pointer.point, camera)
     let n: number
 
     if (this.primary === "a") {
@@ -62,7 +62,7 @@ export default class AnchorSession extends BaseSession {
     n = Math.round(n * 100) / 100
 
     // Round to midpoint
-    if (!keys.Alt) {
+    if (!inputs.keys.Alt) {
       if (Math.abs(n - 0.5) < 0.025) {
         n = 0.5
       }
@@ -73,8 +73,8 @@ export default class AnchorSession extends BaseSession {
     glob.ap = this.snapshot.ap
     glob.bp = this.snapshot.bp
 
-    if (keys.Meta) {
-      if (keys.Shift) {
+    if (inputs.keys.Meta) {
+      if (inputs.keys.Shift) {
         glob.a = n
         glob.b = n
         glob.ap = n

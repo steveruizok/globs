@@ -1,4 +1,5 @@
-import state, { keys, mvPointer, pointer } from "lib/state"
+import state, { mvPointer } from "lib/state"
+import inputs from "lib/inputs"
 import {
   IAnchor,
   IData,
@@ -18,9 +19,9 @@ import {
 import { moveSelection } from "lib/commands"
 
 function updatePosition(e: PointerEvent) {
-  pointer.point[0] += e.movementX
+  inputs.pointer.point[0] += e.movementX
 
-  mvPointer.world.set(screenToWorld(pointer.point, state.data.camera))
+  mvPointer.world.set(screenToWorld(inputs.pointer.point, state.data.camera))
 
   const width = window.innerWidth
 
@@ -52,7 +53,7 @@ export default class TranslateSession extends BaseSession {
 
   constructor(data: IData, translation: ITranslation) {
     super(data)
-    this.origin = screenToWorld(pointer.point, data.camera)
+    this.origin = screenToWorld(inputs.pointer.point, data.camera)
     this.snapshot = getSelectionSnapshot(data)
     this.translation = translation
 
@@ -64,7 +65,10 @@ export default class TranslateSession extends BaseSession {
   update = (data: IData) => {
     const { camera } = data
 
-    this.delta = vec.vec(this.origin, screenToWorld(pointer.point, camera))
+    this.delta = vec.vec(
+      this.origin,
+      screenToWorld(inputs.pointer.point, camera)
+    )
 
     switch (this.translation.type) {
       case "anchor":
@@ -191,7 +195,7 @@ export default class TranslateSession extends BaseSession {
     for (let globId of selectedGlobs) {
       const sGlob = snapshot.globs[globId]
       let next = sGlob[anchor] + delta[0] / 100
-      if (!keys.Meta && Math.abs(0.5 - next) < 0.025) next = 0.5
+      if (!inputs.keys.Meta && Math.abs(0.5 - next) < 0.025) next = 0.5
       globs[globId][anchor] = round(clamp(next, 0, 1))
     }
 

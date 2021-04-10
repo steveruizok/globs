@@ -7,7 +7,7 @@ import {
   screenToWorld,
   updateGlobPoints,
 } from "lib/utils"
-import { keys, pointer } from "lib/state"
+import inputs from "lib/inputs"
 import { transformBounds } from "lib/commands"
 
 export interface TransformSessionSnapshot {
@@ -99,11 +99,11 @@ export default class TransformSession extends BaseSession {
     TransformSession.transformSelection(
       data,
       this.type,
-      screenToWorld(pointer.point, data.camera),
+      screenToWorld(inputs.pointer.point, data.camera),
       this.value,
       this.current,
       this.snapshot,
-      keys.Shift
+      inputs.keys.Shift
     )
     updateGlobPoints(data)
   }
@@ -132,7 +132,7 @@ export default class TransformSession extends BaseSession {
       this.value,
       this.restore,
       this.snapshot,
-      keys.Shift
+      inputs.keys.Shift
     )
   }
 
@@ -308,7 +308,7 @@ export default class TransformSession extends BaseSession {
     )
 
     return {
-      point: screenToWorld(pointer.point, data.camera),
+      point: screenToWorld(inputs.pointer.point, data.camera),
       bounds,
       nodes,
       globs,

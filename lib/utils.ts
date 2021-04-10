@@ -1844,3 +1844,7 @@ export function updateGlobPoints(data: IData) {
     }
   })
 }
+
+export function worldToScreen(point: number[], offset: number[], zoom: number) {
+  return vec.mul(vec.sub(point, offset), zoom)
+}

@@ -1,11 +1,15 @@
 import { motionValue } from "framer-motion"
 import { KeyCommand } from "types"
+import state from "lib/state"
 import * as vec from "lib/vec"
 
-class Inputs {
-  keys: Record<string, boolean>
+export const isDarwin = /Mac|iPod|iPhone|iPad/.test(window.navigator.platform)
+export const isWindows = /^Win/.test(window.navigator.platform)
 
-  modifiers: Record<string, boolean>
+class Inputs {
+  keys: Record<string, boolean> = {}
+
+  modifiers: Record<string, boolean> = {}
 
   pointer = {
     id: -1,
@@ -50,7 +54,7 @@ class Inputs {
     "“": [{ eventName: "MOVED_TO_BACK", modifiers: ["Meta", "Shift"] }],
   }
 
-  upCommands = {
+  upCommands: Record<string, KeyCommand[]> = {
     " ": [{ eventName: "RELEASED_SPACE", modifiers: [] }],
     Option: [{ eventName: "RELEASED_OPTION", modifiers: [] }],
     Shift: [{ eventName: "RELEASED_SHIFT", modifiers: [] }],
@@ -98,6 +102,9 @@ class Inputs {
     ctrlKey = false,
     metaKey = false
   ) => {
+    const ox = Math.abs(x - this.pointer.origin[0])
+    const oy = Math.abs(y - this.pointer.origin[1])
+
     Object.assign(this.pointer, {
       id,
       type,
@@ -105,6 +112,7 @@ class Inputs {
       direction: "any",
       origin: [x, y],
       point: [x, y],
+      axis: ox > oy ? "x" : "y",
       delta: vec.sub([x, y], this.pointer.point),
     })
 
@@ -177,6 +185,20 @@ class Inputs {
     ctrlKey = false,
     metaKey = false
   ) => {
+    if (key === "Control" && !isDarwin) key = "Meta"
+
+    if (this.keys[key] && !["z"].includes(key)) return
+
+    this.keys[key] = true
+
+    if (key in this.downCommands) {
+      for (let { modifiers, eventName } of this.downCommands[key]) {
+        if (modifiers.every((command) => this.keys[command])) {
+          return eventName
+        }
+      }
+    }
+
     this.keys[key] = true
 
     Object.assign(this.modifiers, {
@@ -185,6 +207,8 @@ class Inputs {
       ctrlKey: ctrlKey,
       metaKey: metaKey || ctrlKey,
     })
+
+    return false
   }
 
   handleKeyUp = (
@@ -194,7 +218,17 @@ class Inputs {
     ctrlKey = false,
     metaKey = false
   ) => {
+    if (key === "Control" && !isDarwin) key = "Meta"
+
     this.keys[key] = false
+
+    if (key in this.upCommands) {
+      for (let { modifiers, eventName } of this.upCommands[key]) {
+        if (modifiers.every((command) => this.keys[command])) {
+          return eventName
+        }
+      }
+    }
 
     Object.assign(this.modifiers, {
       shiftKey: shiftKey,
@@ -202,6 +236,23 @@ class Inputs {
       ctrlKey: ctrlKey,
       metaKey: metaKey || ctrlKey,
     })
+
+    return false
+  }
+
+  handleWindowBlur = () => {
+    this.keys = {}
+    this.pointer.id = -1
+    this.pointer.buttons = 0
+    this.pointer.points.clear()
+  }
+
+  handleThumbstickMove = (x: number, y: number) => {
+    this.pointer.delta = [x, y]
+    this.pointer.point = vec.add(this.pointer.point, [x, y])
+    const ox = Math.abs(this.pointer[0] - this.pointer.origin[0])
+    const oy = Math.abs(this.pointer[1] - this.pointer.origin[1])
+    this.pointer.axis = ox > oy ? "x" : "y"
   }
 }
 

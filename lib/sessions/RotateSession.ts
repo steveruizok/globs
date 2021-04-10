@@ -7,7 +7,7 @@ import {
   screenToWorld,
   updateGlobPoints,
 } from "lib/utils"
-import { keys, pointer } from "lib/state"
+import inputs from "lib/inputs"
 import { rotateSelection } from "lib/commands"
 import { angleDelta, rotatePoint } from "lib/utils"
 
@@ -20,7 +20,7 @@ export default class RotateSession extends BaseSession {
     super(data)
     this.snapshot = getSelectionSnapshot(data)
     const bounds = getSelectedBoundingBox(data)
-    const point = screenToWorld(pointer.point, data.camera)
+    const point = screenToWorld(inputs.pointer.point, data.camera)
     this.center = [bounds.x + bounds.width / 2, bounds.y + bounds.height / 2]
     this.angle = vec.angle(point, this.center)
   }
@@ -57,7 +57,7 @@ export default class RotateSession extends BaseSession {
     angle: number,
     snapshots: ReturnType<typeof getSelectionSnapshot>
   ) {
-    const point = screenToWorld(pointer.point, data.camera)
+    const point = screenToWorld(inputs.pointer.point, data.camera)
     const delta = angleDelta(angle, vec.angle(point, center))
 
     for (let nodeId of data.selectedNodes) {

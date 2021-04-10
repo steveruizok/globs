@@ -3,7 +3,7 @@ import { moveHandle } from "lib/commands"
 import * as vec from "lib/vec"
 import { getSafeHandlePoint, isInView, screenToWorld } from "lib/utils"
 import { getGlob, getGlobPoints, projectPoint } from "lib/utils"
-import { keys, pointer } from "lib/state"
+import inputs from "lib/inputs"
 import BaseSession from "./BaseSession"
 
 export default class HandleSession extends BaseSession {
@@ -27,7 +27,7 @@ export default class HandleSession extends BaseSession {
     super(data)
     const glob = data.globs[globId]
 
-    this.origin = screenToWorld(pointer.point, data.camera)
+    this.origin = screenToWorld(inputs.pointer.point, data.camera)
     this.globId = globId
     this.primary = primary
     this.secondary = primary === "D" ? "Dp" : "D"
@@ -70,11 +70,14 @@ export default class HandleSession extends BaseSession {
     const [start, end] = glob.nodes
     snaps.active = []
 
-    let delta = vec.vec(this.origin, screenToWorld(pointer.point, camera))
+    let delta = vec.vec(
+      this.origin,
+      screenToWorld(inputs.pointer.point, camera)
+    )
 
     // Lock to initial axis
-    if (keys.Shift) {
-      if (pointer.axis === "x") {
+    if (inputs.keys.Shift) {
+      if (inputs.pointer.axis === "x") {
         delta[1] = 0
       } else {
         delta[0] = 0
@@ -84,7 +87,7 @@ export default class HandleSession extends BaseSession {
     let next = vec.add(handle, delta)
 
     // Snapping
-    if (!keys.Alt) {
+    if (!inputs.keys.Alt) {
       let d: number
 
       const [A0, A1] =
@@ -220,17 +223,19 @@ export default class HandleSession extends BaseSession {
 
     // Apply the change to the handle
     glob[this.primary] = vec.round(
-      keys.Alt ? next : getSafeHandlePoint(nodes[start], nodes[end], next)
+      inputs.keys.Alt
+        ? next
+        : getSafeHandlePoint(nodes[start], nodes[end], next)
     )
 
     // Move the other handle, too.
-    if (keys.Meta) {
+    if (inputs.keys.Meta) {
       const nextSecondary = vec.add(
         this.initial[this.secondary],
         vec.sub(next, this.initial[this.primary])
       )
 
-      glob[this.secondary] = keys.Alt
+      glob[this.secondary] = inputs.keys.Alt
         ? nextSecondary
         : getSafeHandlePoint(nodes[start], nodes[end], nextSecondary)
     } else {

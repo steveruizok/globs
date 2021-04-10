@@ -3,7 +3,7 @@ import { moveSelection } from "lib/commands"
 import * as vec from "lib/vec"
 import { getSelectionSnapshot, screenToWorld } from "lib/utils"
 import { getGlobPoints } from "lib/utils"
-import { keys, pointer } from "lib/state"
+import inputs from "lib/inputs"
 import getNodeSnapper, { NodeSnapper } from "lib/snaps"
 import BaseSession from "./BaseSession"
 
@@ -20,7 +20,7 @@ export default class MoveSession extends BaseSession {
     const nodes = data.nodeIds.map((id) => data.nodes[id])
     const globs = data.globIds.map((id) => data.globs[id])
 
-    this.origin = screenToWorld(pointer.point, data.camera)
+    this.origin = screenToWorld(inputs.pointer.point, data.camera)
     this.snapshot = MoveSession.getSnapshot(data)
 
     const snapNode = MoveSession.getClosestNodeToPointer(data)
@@ -45,14 +45,17 @@ export default class MoveSession extends BaseSession {
   update = (data: IData) => {
     const { document, camera } = data
 
-    this.delta = vec.vec(this.origin, screenToWorld(pointer.point, camera))
+    this.delta = vec.vec(
+      this.origin,
+      screenToWorld(inputs.pointer.point, camera)
+    )
 
     if (this.nodeSnapper) {
       const snapResults = this.nodeSnapper(
         this.delta,
         camera,
         document,
-        keys.Alt
+        inputs.keys.Alt
       )
       this.delta = snapResults.delta
       data.snaps.active = snapResults.snaps as any
@@ -60,8 +63,8 @@ export default class MoveSession extends BaseSession {
       data.snaps.active = []
     }
 
-    if (keys.Shift) {
-      if (pointer.axis === "x") {
+    if (inputs.keys.Shift) {
+      if (inputs.pointer.axis === "x") {
         this.delta[1] = 0
       } else {
         this.delta[0] = 0
@@ -85,7 +88,7 @@ export default class MoveSession extends BaseSession {
       .map((id) => nodes[id])
       .find(
         (node) =>
-          vec.dist(node.point, screenToWorld(pointer.point, camera)) <
+          vec.dist(node.point, screenToWorld(inputs.pointer.point, camera)) <
           node.radius
       )
   }

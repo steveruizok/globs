@@ -1,7 +1,7 @@
-import state, { pointer } from "./state"
 import { IData, IGlob, INode } from "./types"
 import { current } from "immer"
 import * as vec from "./vec"
+import inputs from "lib/inputs"
 import {
   getGlob,
   getLineLineIntersection,
@@ -26,12 +26,12 @@ import TransformSession, {
 } from "./sessions/TransformSession"
 import RotateSession from "./sessions/RotateSession"
 
-import { Command, CommandType, history } from "./history"
+import history, { Command, CommandType } from "./history"
 
 /* -------------------- Commands -------------------- */
 
 export function createNode(data: IData) {
-  const point = screenToWorld(pointer.point, data.camera)
+  const point = screenToWorld(inputs.pointer.point, data.camera)
 
   const node = getNewNode(point)
 
@@ -264,7 +264,7 @@ export function splitGlob(data: IData, id: string) {
   const glob = sGlobs[id]
   const oldGlob = glob
 
-  const point = screenToWorld(pointer.point, sCamera)
+  const point = screenToWorld(inputs.pointer.point, sCamera)
 
   const { E0, E0p, E1, E1p, F0, F1, F0p, F1p, D, Dp } = glob.points
 

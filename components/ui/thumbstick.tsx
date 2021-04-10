@@ -2,7 +2,8 @@ import { styled } from "stitches.config"
 import { motion, PanInfo, transform, useMotionValue } from "framer-motion"
 import { memo, useCallback, useEffect, useRef } from "react"
 import { modulate, throttle } from "lib/utils"
-import state, { pointer } from "lib/state"
+import state from "lib/state"
+import inputs from "lib/inputs"
 import * as vec from "lib/vec"
 
 function Thumbstick() {
@@ -59,7 +60,7 @@ function Thumbstick() {
   const handleDragEnd = useCallback(() => {
     rLooping.current = false
     cancelAnimationFrame(rInterval.current)
-    state.send("STOPPED_MOVING_THUMBSTICK", { point: pointer.point })
+    state.send("STOPPED_MOVING_THUMBSTICK", { point: inputs.pointer.point })
   }, [])
 
   return (
@@ -129,11 +130,7 @@ const Control = styled(motion.div, {
 })
 
 const handleMove = throttle((x: number, y: number) => {
-  pointer.delta = [x, y]
-  pointer.point = vec.add(pointer.point, [x, y])
-  const ox = Math.abs(pointer[0] - pointer.origin[0])
-  const oy = Math.abs(pointer[1] - pointer.origin[1])
-  pointer.axis = ox > oy ? "x" : "y"
+  inputs.handleThumbstickMove(x, y)
   state.send("MOVED_THUMBSTICK")
 }, 16)
 

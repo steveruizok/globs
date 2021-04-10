@@ -1,6 +1,6 @@
-import { motion, PanInfo } from "framer-motion"
-import state, { pointer } from "lib/state"
+import { motion } from "framer-motion"
 import { clamp } from "lib/utils"
+import inputs from "lib/inputs"
 import React, { memo, useEffect, useRef, useState } from "react"
 import { PropContainer } from "./shared"
 
@@ -47,7 +47,7 @@ function NumberInput({
   }, [value])
 
   function handlePointerDown() {
-    rPoint.current = pointer.point
+    rPoint.current = inputs.pointer.point
     setIsPressed(true)
   }
 
@@ -63,7 +63,7 @@ function NumberInput({
     if (
       isPressed &&
       !isPanning &&
-      Math.abs(pointer.point[0] - rPoint.current[0]) > 3
+      Math.abs(inputs.pointer.point[0] - rPoint.current[0]) > 3
     ) {
       setIsPanning(true)
       onPanStart && onPanStart()

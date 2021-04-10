@@ -1,9 +1,10 @@
 import React, { useCallback, useEffect, useRef } from "react"
 import { styled } from "stitches.config"
-import state, { keys, pointer, useSelector } from "lib/state"
+import state, { useSelector } from "lib/state"
 import usePinchZoom from "hooks/usePinchZoom"
 import * as vec from "lib/vec"
 import { motion, PanInfo, TapInfo } from "framer-motion"
+import inputs from "lib/inputs"
 
 import ContextMenu, {
   ContextMenuRoot,
@@ -97,27 +98,42 @@ export default function Editor() {
     return () => void state.send("UNMOUNTED")
   }, [])
 
-  const handlePointerCancel = useCallback(() => {
-    for (let id in keys) {
-      keys[id] = false
-    }
-  }, [])
+  const handlePointerCancel = useCallback(
+    (e: React.PointerEvent<HTMLDivElement>) => {
+      inputs.handlePointerCancel(
+        e.clientX,
+        e.clientY,
+        e.pointerType,
+        e.buttons,
+        e.shiftKey,
+        e.altKey,
+        e.ctrlKey,
+        e.metaKey
+      )
+
+      state.send("CANCELLED_POINTER", {
+        shiftKey: e.shiftKey,
+        optionKey: e.altKey,
+        ctrlKey: e.ctrlKey,
+        metaKey: e.metaKey || e.ctrlKey,
+      })
+    },
+    []
+  )
 
   const handlePointerDown = useCallback((e: PointerEvent, info: TapInfo) => {
     // pointer.points.add(e.pointerId)
-
-    Object.assign(pointer, {
-      id: e.pointerId,
-      type: e.pointerType,
-      buttons: e.buttons,
-      direction: "any",
-    })
-
-    const { x, y } = info.point
-
-    pointer.origin = [x, y]
-    pointer.point = [x, y]
-    pointer.delta = [0, 0]
+    inputs.handlePointerDown(
+      e.clientX,
+      e.clientY,
+      e.pointerId,
+      e.pointerType,
+      e.buttons,
+      e.shiftKey,
+      e.altKey,
+      e.ctrlKey,
+      e.metaKey
+    )
 
     state.send("STARTED_POINTING", {
       shiftKey: e.shiftKey,
@@ -128,14 +144,16 @@ export default function Editor() {
   }, [])
 
   const handlePointerUp = useCallback((e: PointerEvent, info: TapInfo) => {
-    // pointer.points.clear()
-
-    const { x, y } = info.point
-
-    pointer.id = -1
-    pointer.delta = vec.sub([x, y], pointer.point)
-    pointer.point = [x, y]
-    pointer.axis = "any"
+    inputs.handlePointerUp(
+      e.clientX,
+      e.clientY,
+      e.pointerType,
+      e.buttons,
+      e.shiftKey,
+      e.altKey,
+      e.ctrlKey,
+      e.metaKey
+    )
 
     document.body.style.cursor = "default"
 
@@ -148,9 +166,27 @@ export default function Editor() {
   }, [])
 
   const handlePointerMove = useCallback((e: React.PointerEvent) => {
-    // if (!pointer.points.has(e.pointerId)) return
-    const { clientX: x, clientY: y } = e
-    handleMove(x, y, e)
+    if (state.isIn("draggingThumbstick")) return
+
+    inputs.handlePointerMove(
+      e.clientX,
+      e.clientY,
+      e.pointerId,
+      e.pointerType,
+      e.buttons,
+      e.shiftKey,
+      e.altKey,
+      e.ctrlKey,
+      e.metaKey
+    )
+
+    state.send("MOVED_POINTER", {
+      isPan: e.buttons === 4,
+      shiftKey: e.shiftKey,
+      optionKey: e.altKey,
+      metaKey: e.metaKey || e.ctrlKey,
+      ctrlKey: e.ctrlKey,
+    })
   }, [])
 
   const handleWheel = useCallback((e: React.WheelEvent<HTMLDivElement>) => {
@@ -356,24 +392,3 @@ const SVGWrapper = styled(ContextMenuTrigger, {
     },
   },
 })
-
-const handleMove = throttle((x: number, y: number, e: React.PointerEvent) => {
-  if (state.isIn("draggingThumbstick")) return
-
-  // if (pointer.id > -1 && pointerId !== pointer.id) return
-
-  const ox = Math.abs(x - pointer.origin[0])
-  const oy = Math.abs(y - pointer.origin[1])
-
-  pointer.axis = ox > oy ? "x" : "y"
-  pointer.buttons = e.buttons
-  pointer.delta = vec.sub([x, y], pointer.point)
-  pointer.point = [x, y]
-  state.send("MOVED_POINTER", {
-    isPan: e.buttons === 4,
-    shiftKey: e.shiftKey,
-    optionKey: e.altKey,
-    metaKey: e.metaKey || e.ctrlKey,
-    ctrlKey: e.ctrlKey,
-  })
-}, 16)
