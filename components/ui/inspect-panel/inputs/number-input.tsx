@@ -1,5 +1,5 @@
 import { motion, PanInfo } from "framer-motion"
-import state from "lib/state"
+import state, { pointer } from "lib/state"
 import { clamp } from "lib/utils"
 import React, { memo, useEffect, useRef, useState } from "react"
 import { PropContainer } from "./shared"
@@ -11,6 +11,7 @@ interface Props {
   max?: number
   step?: number
   onPanStart?: () => void
+  onPanEnd?: () => void
   onChange: (value: number) => void
 }
 
@@ -21,11 +22,15 @@ function NumberInput({
   value,
   label,
   onPanStart,
+  onPanEnd,
   onChange,
 }: Props) {
   const rInput = useRef<HTMLInputElement>(null)
+  const rPoint = useRef([0, 0])
   const [val, setVal] = useState(value === "mixed" ? 0 : value)
   const [isHovered, setIsHovered] = useState(false)
+  const [isPressed, setIsPressed] = useState(false)
+  const [isPanning, setIsPanning] = useState(false)
   const [isFocused, setIsFocused] = useState(false)
 
   let rWillEdit = useRef(true)
@@ -41,15 +46,43 @@ function NumberInput({
     }
   }, [value])
 
-  function handlePanStart() {
-    if (!isFocused) {
+  function handlePointerDown() {
+    rPoint.current = pointer.point
+    setIsPressed(true)
+  }
+
+  function handleEnd() {
+    onPanEnd && onPanEnd()
+    setIsPressed(false)
+    setIsPanning(false)
+
+    window.removeEventListener("pointerup", handleEnd)
+  }
+
+  function handePointerMove(e) {
+    if (
+      isPressed &&
+      !isPanning &&
+      Math.abs(pointer.point[0] - rPoint.current[0]) > 3
+    ) {
+      setIsPanning(true)
       onPanStart && onPanStart()
+
+      window.addEventListener("pointerup", handleEnd)
+      e.preventDefault()
+      e.stopPropagation()
+    }
+
+    if (isPanning) {
+      e.preventDefault()
+      e.stopPropagation()
     }
   }
 
-  function handlePanEnd() {
-    document.body.style.cursor = "default"
-    onPanStart && onPanStart()
+  function handlePointerUp() {
+    setIsPressed(false)
+    setIsPanning(false)
+    rInput.current.focus()
   }
 
   // function handlePan(_: PointerEvent, info: PanInfo) {
@@ -110,8 +143,9 @@ function NumberInput({
         className="dragWrapper"
         onPointerEnter={() => setIsHovered(true)}
         onPointerLeave={() => setIsHovered(false)}
-        onPanStart={handlePanStart}
-        onPanEnd={handlePanEnd}
+        onPointerDown={handlePointerDown}
+        onPointerUp={handlePointerUp}
+        onPointerMove={handePointerMove}
         onTap={handleTap}
       >
         <input

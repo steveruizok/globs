@@ -11,6 +11,7 @@ import ContextMenu, {
 } from "./ui/context-menu"
 
 import Canvas from "./canvas/canvas"
+import Cursor from "./ui/cursor"
 import InspectPanel from "./ui/inspect-panel/inspect-panel"
 import ContentPanel from "./ui/content-panel/content-panel"
 import Toolbar from "./ui/toolbar"
@@ -257,6 +258,7 @@ export default function Editor() {
           </Layout>
         </EditorContainer>
       </ContextMenuRoot>
+      <Cursor />
     </OuterWrapper>
   )
 }

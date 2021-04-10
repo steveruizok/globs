@@ -40,7 +40,7 @@ const StatusBarContainer = styled("div", {
   gridTemplateColumns: "auto 1fr auto",
   alignItems: "center",
   backgroundColor: "$panel",
-  font: "$mono",
+  font: "$debug",
   gridGap: 8,
   padding: "0 16px",
 

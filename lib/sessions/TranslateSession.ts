@@ -1,4 +1,4 @@
-import { keys, pointer } from "lib/state"
+import state, { keys, mvPointer, pointer } from "lib/state"
 import {
   IAnchor,
   IData,
@@ -17,6 +17,46 @@ import {
 } from "lib/utils"
 import { moveSelection } from "lib/commands"
 
+function updatePosition(e: PointerEvent) {
+  const {
+    size: [width, height],
+  } = state.data.viewport
+
+  pointer.point[0] += e.movementX
+
+  mvPointer.world.set(screenToWorld(pointer.point, state.data.camera))
+
+  const screen = vec.add(mvPointer.screen.get(), [e.movementX, 0])
+
+  if (screen[0] > width) {
+    screen[0] = 0
+  }
+  if (screen[1] > height) {
+    screen[1] = 0
+  }
+  if (screen[0] < 0) {
+    screen[0] = width
+  }
+  if (screen[1] < 0) {
+    screen[1] = height
+  }
+
+  state.send("MOVED_POINTER_IN_TRANSLATE", {
+    isPan: e.buttons === 4,
+    shiftKey: e.shiftKey,
+    optionKey: e.altKey,
+    metaKey: e.metaKey || e.ctrlKey,
+    ctrlKey: e.ctrlKey,
+  })
+
+  mvPointer.screen.set(screen)
+}
+
+function releasePointer() {
+  document.exitPointerLock()
+  state.send("STOPPED_POINTING")
+}
+
 export default class TranslateSession extends BaseSession {
   delta = [0, 0]
   origin: number[]
@@ -28,6 +68,10 @@ export default class TranslateSession extends BaseSession {
     this.origin = screenToWorld(pointer.point, data.camera)
     this.snapshot = getSelectionSnapshot(data)
     this.translation = translation
+
+    document.body.requestPointerLock()
+    document.addEventListener("pointermove", updatePosition, false)
+    document.addEventListener("pointerup", releasePointer, false)
   }
 
   update = (data: IData) => {
@@ -79,11 +123,17 @@ export default class TranslateSession extends BaseSession {
       globs[globId].D = snapshot.globs[globId].D
       globs[globId].Dp = snapshot.globs[globId].Dp
     }
+
+    document.removeEventListener("pointermove", updatePosition, false)
+    document.removeEventListener("pointerup", releasePointer, false)
   }
 
   complete = (data: IData) => {
     // Create a command
     moveSelection(data, this.delta, this.snapshot)
+
+    document.removeEventListener("pointermove", updatePosition, false)
+    document.removeEventListener("pointerup", releasePointer, false)
   }
 
   static getSnapshot(data: IData) {

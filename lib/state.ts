@@ -203,7 +203,7 @@ const state = createState({
             translating: {
               onEnter: "beginTranslation",
               on: {
-                MOVED_POINTER: {
+                MOVED_POINTER_IN_TRANSLATE: {
                   do: "updateTranslation",
                 },
                 STOPPED_POINTING: {
