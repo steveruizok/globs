@@ -31,7 +31,7 @@ import history, { Command, CommandType } from "./history"
 /* -------------------- Commands -------------------- */
 
 export function createNode(data: IData) {
-  const point = screenToWorld(inputs.pointer.point, data.camera)
+  const point = vec.round(screenToWorld(inputs.pointer.point, data.camera))
 
   const node = getNewNode(point)
 
