@@ -1,7 +1,30 @@
 {
-  "extends": "./tsconfig.base.json",
   "compilerOptions": {
-    "isolatedModules": true
+    "target": "es5",
+    "lib": ["dom", "dom.iterable", "esnext"],
+    "types": ["cypress"],
+    "allowJs": true,
+    "skipLibCheck": true,
+    "strict": false,
+    "forceConsistentCasingInFileNames": true,
+    "noEmit": true,
+    "esModuleInterop": true,
+    "downlevelIteration": true,
+    "module": "esnext",
+    "moduleResolution": "node",
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "jsx": "preserve",
+    "baseUrl": ".",
+    "rootDir": ".",
+    "paths": {
+      "components/*": ["components/*"],
+      "lib/*": ["lib/*"],
+      "public/*": ["public/*"],
+      "types": ["lib/types"],
+      "utils": ["lib/utils"]
+    }
   },
-  "exclude": ["cypress/*"]
+  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", "decs.d.ts"],
+  "exclude": ["node_modules", "cypress"]
 }
