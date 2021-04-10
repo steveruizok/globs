@@ -18,28 +18,17 @@ import {
 import { moveSelection } from "lib/commands"
 
 function updatePosition(e: PointerEvent) {
-  const {
-    size: [width, height],
-  } = state.data.viewport
-
   pointer.point[0] += e.movementX
 
   mvPointer.world.set(screenToWorld(pointer.point, state.data.camera))
 
+  const width = window.innerWidth
+
   const screen = vec.add(mvPointer.screen.get(), [e.movementX, 0])
 
-  if (screen[0] > width) {
-    screen[0] = 0
-  }
-  if (screen[1] > height) {
-    screen[1] = 0
-  }
-  if (screen[0] < 0) {
-    screen[0] = width
-  }
-  if (screen[1] < 0) {
-    screen[1] = height
-  }
+  screen[0] = (screen[0] + width) % width
+
+  mvPointer.screen.set(screen)
 
   state.send("MOVED_POINTER_IN_TRANSLATE", {
     isPan: e.buttons === 4,
@@ -48,8 +37,6 @@ function updatePosition(e: PointerEvent) {
     metaKey: e.metaKey || e.ctrlKey,
     ctrlKey: e.ctrlKey,
   })
-
-  mvPointer.screen.set(screen)
 }
 
 function releasePointer() {

@@ -28,6 +28,7 @@ import {
   getGlobPoints,
   getSelectedBoundingBox,
   rectContainsRect,
+  screenToWorld,
   throttle,
 } from "utils"
 import { getGlobInnerBounds, getNodeBounds } from "./bounds-utils"
@@ -512,7 +513,7 @@ const state = createState({
 
     // POINTER
     updateMvPointer(data) {
-      updateMvPointer(pointer, data.camera)
+      updateMvPointer(pointer.point, screenToWorld(pointer.point, data.camera))
     },
 
     // DISPLAY
@@ -572,15 +573,13 @@ const state = createState({
       const { viewport, camera, document } = data
       const c0 = screenToWorld(
         vec.add(document.point, vec.div(viewport.size, 2)),
-        camera.point,
-        camera.zoom
+        camera
       )
       viewport.size = payload.size
       document.size = vec.round(vec.div(viewport.size, camera.zoom))
       const c1 = screenToWorld(
         vec.add(document.point, vec.div(viewport.size, 2)),
-        camera.point,
-        camera.zoom
+        camera
       )
       document.point = vec.sub(document.point, vec.sub(c1, c0))
       camera.point = document.point
@@ -884,14 +883,14 @@ const state = createState({
       ]
 
       data.brush = {
-        start: screenToWorld(pointer.point, camera.point, camera.zoom),
-        end: screenToWorld(pointer.point, camera.point, camera.zoom),
+        start: screenToWorld(pointer.point, camera),
+        end: screenToWorld(pointer.point, camera),
         targets,
       }
     },
     updateBrush(data) {
       const { brush, camera } = data
-      brush.end = screenToWorld(pointer.point, camera.point, camera.zoom)
+      brush.end = screenToWorld(pointer.point, camera)
     },
     updateBrushSelection(data) {
       const { brush, nodes, globs } = data
@@ -1038,9 +1037,9 @@ export const pointer = {
   points: new Set<number>(),
 }
 
-function updateMvPointer(point: typeof pointer, camera: IData["camera"]) {
-  mvPointer.screen.set(pointer.point)
-  mvPointer.world.set(screenToWorld(pointer.point, camera.point, camera.zoom))
+function updateMvPointer(screen: number[], world: number[]) {
+  mvPointer.screen.set(screen)
+  mvPointer.world.set(world)
 }
 
 export const keys: Record<string, boolean> = {}
@@ -1135,10 +1134,6 @@ function handleKeyUp(e: KeyboardEvent) {
   }
 
   state.send("RELEASED_KEY", { key })
-}
-
-function screenToWorld(point: number[], offset: number[], zoom: number) {
-  return vec.add(vec.div(point, zoom), offset)
 }
 
 function worldToScreen(point: number[], offset: number[], zoom: number) {
