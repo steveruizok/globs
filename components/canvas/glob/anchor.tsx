@@ -5,7 +5,7 @@ interface Props {
   color?: string
   isSelected: boolean
   isPrime: boolean
-  onSelect?: () => void
+  onSelect?: (e: React.PointerEvent<SVGUseElement>) => void
 }
 
 export default function Anchor({

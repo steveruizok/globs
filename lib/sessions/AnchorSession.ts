@@ -1,10 +1,9 @@
 import { IAnchor, IData } from "lib/types"
 import BaseSession from "./BaseSession"
 import * as vec from "lib/vec"
-import { screenToWorld } from "./session-utils"
 import { keys, pointer } from "lib/state"
-import { getGlob } from "lib/utils"
-import { commands } from "lib/history"
+import { screenToWorld, getGlobPoints } from "lib/utils"
+import { moveAnchor } from "lib/commands"
 
 export interface AnchorSessionSnapshot {
   a: number
@@ -41,7 +40,6 @@ export default class AnchorSession extends BaseSession {
     const glob = globs[this.globId]
     const {
       points: { E0, D, E1, E0p, Dp, E1p },
-      nodes: [start, end],
     } = glob
 
     let next = screenToWorld(pointer.point, camera)
@@ -89,18 +87,8 @@ export default class AnchorSession extends BaseSession {
       glob[this.primary] = n
     }
 
-    glob.points = getGlob(
-      nodes[start].point,
-      nodes[start].radius,
-      nodes[end].point,
-      nodes[end].radius,
-      glob.D,
-      glob.Dp,
-      glob.a,
-      glob.b,
-      glob.ap,
-      glob.bp
-    )
+    const [start, end] = glob.nodes.map((id) => nodes[id])
+    glob.points = getGlobPoints(glob, start, end)
   }
 
   cancel = (data: IData) => {
@@ -109,7 +97,7 @@ export default class AnchorSession extends BaseSession {
   }
 
   complete = (data: IData) => {
-    commands.moveAnchor(data, this.globId, this.snapshot)
+    moveAnchor(data, this.globId, this.snapshot)
   }
 
   static getSnapshot(data: IData, globId: string): AnchorSessionSnapshot {

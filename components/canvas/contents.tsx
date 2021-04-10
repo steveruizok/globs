@@ -33,7 +33,10 @@ export default function HoveringNodes() {
       {selectedGlobIds.map((id) => (
         <Glob key={id} id={id} fill={fill} isSelected={true} />
       ))}
-      {selectedNodeIds.map((id) => (
+      {(fill
+        ? selectedNodeIds.filter((nodeId) => looseNodeIds.includes(nodeId))
+        : selectedNodeIds
+      ).map((id) => (
         <Node key={id} id={id} fill={fill} isSelected={true} />
       ))}
       {isLinking && <GhostGlob />}

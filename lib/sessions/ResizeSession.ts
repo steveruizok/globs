@@ -1,10 +1,9 @@
-import { IAnchor, IData } from "lib/types"
+import { IData } from "lib/types"
 import BaseSession from "./BaseSession"
 import * as vec from "lib/vec"
-import { screenToWorld, updateGlobPoints } from "./session-utils"
+import { round, screenToWorld, updateGlobPoints } from "lib/utils"
 import { keys, pointer } from "lib/state"
-import { getGlob } from "lib/utils"
-import { commands } from "lib/history"
+import { resizeNode } from "lib/commands"
 
 export interface ResizeSessionSnapshot {
   radius: number
@@ -13,8 +12,8 @@ export interface ResizeSessionSnapshot {
 export default class ResizeSession extends BaseSession {
   nodeId: string
   origin: number[]
-  oDistance: number
-  snapshot: ResizeSessionSnapshot
+  startDistance: number
+  startRadius: number
 
   constructor(data: IData, nodeId: string) {
     super(data)
@@ -22,12 +21,12 @@ export default class ResizeSession extends BaseSession {
 
     const node = data.nodes[nodeId]
 
-    this.oDistance = vec.dist(
+    this.startDistance = vec.dist(
       node.point,
       screenToWorld(pointer.point, data.camera)
     )
 
-    this.snapshot = ResizeSession.getSnapshot(data, nodeId)
+    this.startRadius = node.radius
 
     this.origin = screenToWorld(pointer.point, data.camera)
   }
@@ -35,24 +34,26 @@ export default class ResizeSession extends BaseSession {
   update = (data: IData) => {
     const { camera, nodes } = data
     const node = nodes[this.nodeId]
-    const dist = vec.dist(this.origin, screenToWorld(pointer.point, camera))
-    if (keys.Meta) {
+    const dist = vec.dist(node.point, screenToWorld(pointer.point, camera))
+
+    if (keys.Shift) {
       node.radius = dist
     } else {
-      node.radius = this.snapshot.radius + (dist - this.oDistance)
+      node.radius = round(this.startRadius + (dist - this.startDistance))
     }
+
     updateGlobPoints(data)
   }
 
   cancel = (data: IData) => {
     const { camera, nodes } = data
     const node = nodes[this.nodeId]
-    node.radius = this.snapshot.radius
+    node.radius = this.startRadius
     updateGlobPoints(data)
   }
 
   complete = (data: IData) => {
-    commands.resizeNode(data, this.nodeId, this.snapshot)
+    resizeNode(data, this.nodeId, this.startRadius)
   }
 
   static getSnapshot(data: IData, id: string) {

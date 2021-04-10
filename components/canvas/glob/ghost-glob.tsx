@@ -27,7 +27,7 @@ export default function GhostBranchGlob() {
     for (let id of selectedNodes) {
       const node = nodes[id]
 
-      const { point: C0, radius: r0 } = node
+      const { point: C0, radius: r0, cap: cap0 } = node
       const { point: C1, radius: r1 } = ghost
 
       const [E0, E1, E0p, E1p] = getOuterTangents(C0, r0, C1, r1)
@@ -39,11 +39,12 @@ export default function GhostBranchGlob() {
         ap = 0.5,
         bp = 0.5
 
-      try {
-        commands.push(
-          getGlobOutline(getGlob(C0, r0, C1, r1, D, Dp, a, b, ap, bp))
-        )
-      } catch (e) {}
+      // Don't try to ghost glob between two points
+      if (vec.isEqual(C0, C1)) continue
+
+      const glob = getGlob(C0, r0, cap0, C1, r1, cap0, D, Dp, a, b, ap, bp)
+      const outline = getGlobOutline(glob)
+      commands.push(outline)
     }
 
     return commands.join(" ")

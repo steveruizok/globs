@@ -2,13 +2,13 @@ import { IBounds, IData } from "lib/types"
 import BaseSession from "./BaseSession"
 import * as vec from "lib/vec"
 import {
-  getPositionSnapshot,
+  getSelectionSnapshot,
   getSelectedBoundingBox,
   screenToWorld,
   updateGlobPoints,
-} from "./session-utils"
+} from "lib/utils"
 import { keys, pointer } from "lib/state"
-import { commands } from "lib/history"
+import { transformBounds } from "lib/commands"
 
 export interface TransformSessionSnapshot {
   point: number[]
@@ -71,14 +71,14 @@ export default class TransformSession extends BaseSession {
   value: number
   snapshot: TransformSessionSnapshot
   current: TransformValues
-  restore: ReturnType<typeof getPositionSnapshot>
+  restore: ReturnType<typeof getSelectionSnapshot>
 
   constructor(data: IData, type: "edge" | "corner", value: number) {
     super(data)
     this.type = type
     this.snapshot = TransformSession.getSnapshot(data)
     this.value = value
-    this.restore = getPositionSnapshot(data)
+    this.restore = getSelectionSnapshot(data)
 
     const { x: x0, y: y0, maxX: x1, maxY: y1 } = this.snapshot.bounds
     const { maxX: mx, maxY: my, width: mw, height: mh } = this.snapshot.bounds
@@ -96,7 +96,7 @@ export default class TransformSession extends BaseSession {
   }
 
   update = (data: IData) => {
-    TransformSession.resize(
+    TransformSession.transformSelection(
       data,
       this.type,
       screenToWorld(pointer.point, data.camera),
@@ -126,7 +126,7 @@ export default class TransformSession extends BaseSession {
   }
 
   complete = (data: IData) => {
-    commands.edgeOrCornerResizeBounds(
+    transformBounds(
       data,
       this.type,
       this.value,
@@ -136,7 +136,7 @@ export default class TransformSession extends BaseSession {
     )
   }
 
-  static resize(
+  static transformSelection(
     data: IData,
     type: "corner" | "edge",
     point: number[],
@@ -150,19 +150,30 @@ export default class TransformSession extends BaseSession {
     const { nodes: sNodes, globs: sGlobs } = snapshot
     let [x, y] = point
 
-    if (type === "edge") {
-      if (value === 0 || value === 2) {
-        x = v.x1
-      } else {
-        y = v.y1
-      }
+    switch (value) {
+      case 0: // Top Edge or Top-Left Corner
+        v.y0 = y
+        if (type === "corner") v.x0 = x
+        break
+
+      case 1: // Right Edge or Top-Right Corner
+        v.x1 = x
+        if (type === "corner") v.y0 = y
+        break
+
+      case 2: // Bottom Edge or Bottom-Right corner
+        v.y1 = y
+        if (type === "corner") v.x1 = x
+        break
+
+      case 3: // Left Edge or Bottom-Left Corner
+        v.x0 = x
+        if (type === "corner") v.y1 = y
+        break
     }
 
-    value < 2 ? (v.y0 = y) : (v.y1 = y)
     v.my = v.y0 < v.y1 ? v.y0 : v.y1
     v.mh = Math.abs(v.y1 - v.y0)
-
-    value === 1 || value === 2 ? (v.x1 = x) : (v.x0 = x)
     v.mx = v.x0 < v.x1 ? v.x0 : v.x1
     v.mw = Math.abs(v.x1 - v.x0)
 

@@ -5,44 +5,22 @@ import * as svg from "lib/svg"
 export default function GlobNodeHints({ glob }: { glob: IGlob }) {
   if (!glob.points) return null
 
+  const { C0, r0, E0, E0p, C1, r1, E1, E1p } = glob.points
+
   return (
     <g
       pointerEvents="none"
       fill="none"
       className={classNames(["strokewidth-m", "dash-array-s", "stroke-hint"])}
     >
-      <path
-        d={[
-          svg.arcTo(
-            glob.points.C0,
-            glob.points.r0,
-            glob.points.E0,
-            glob.points.E0p
-          ),
-          svg.arcTo(
-            glob.points.C0,
-            glob.points.r0,
-            glob.points.E0p,
-            glob.points.E0
-          ),
-        ].join(" ")}
+      <circle cx={C0[0]} cy={C0[1]} r={r0} />
+      <circle cx={C1[0]} cy={C1[1]} r={r1} />
+      {/* <path
+        d={[svg.arcTo(C0, r0, E0, E0p), svg.arcTo(C0, r0, E0p, E0)].join(" ")}
       />
       <path
-        d={[
-          svg.arcTo(
-            glob.points.C1,
-            glob.points.r1,
-            glob.points.E1,
-            glob.points.E1p
-          ),
-          svg.arcTo(
-            glob.points.C1,
-            glob.points.r1,
-            glob.points.E1p,
-            glob.points.E1
-          ),
-        ].join(" ")}
-      />
+        d={[svg.arcTo(C1, r1, E1, E1p), svg.arcTo(C1, r1, E1p, E1)].join(" ")}
+      /> */}
     </g>
   )
 }

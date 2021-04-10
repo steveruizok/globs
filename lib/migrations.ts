@@ -11,4 +11,5 @@ function removeGlobOptions(data: any) {
 
 export default function migrate(data: any) {
   removeGlobOptions(data)
+  return data
 }

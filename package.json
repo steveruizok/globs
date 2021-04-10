@@ -9,7 +9,7 @@
   },
   "dependencies": {
     "@radix-ui/react-context-menu": "^0.0.10",
-    "@state-designer/react": "^1.6.9",
+    "@state-designer/react": "^1.7.1",
     "@stitches/react": "^0.1.4",
     "@types/gtag.js": "^0.0.4",
     "classnames": "^2.2.6",

@@ -1446,10 +1446,10 @@
   dependencies:
     type-detect "4.0.8"
 
-"@state-designer/core@^1.6.9":
-  version "1.6.9"
-  resolved "https://registry.yarnpkg.com/@state-designer/core/-/core-1.6.9.tgz#65e8a745937af67511a32f3666d47f9fc329c922"
-  integrity sha512-3cCf8pix1BbWgSxKOnFH8ohg2YihoEG3PS8hehvB601wYtMbCWFbs7AX7PtY8wGD0Uvg7Zc0U366C3PcRh9HQA==
+"@state-designer/core@latest":
+  version "1.7.1"
+  resolved "https://registry.yarnpkg.com/@state-designer/core/-/core-1.7.1.tgz#e9fbe52e5c02b659921ab2d21de3ccddf27f530b"
+  integrity sha512-4FVXaJAhOHdegHYTgsstQtNy/8hgMZJLWf+3DBOLYfVS2JxN5kPdSGUswMLkvP9xYNo/SWjc7tC/nAKbUKWcEg==
   dependencies:
     immer "^8.0.2"
     lodash "^4.17.21"
@@ -1458,12 +1458,12 @@
     object.fromentries "^2.0.4"
     tsdx "^0.14.1"
 
-"@state-designer/react@^1.6.9":
-  version "1.6.9"
-  resolved "https://registry.yarnpkg.com/@state-designer/react/-/react-1.6.9.tgz#53ecb2d84c5ac2d14b81224fd65ffa5103ccb306"
-  integrity sha512-syyer7sZSR2bnPtmUyMjV6E65/QeHHBJO72UG+8Z/fDzN/feXckO9h/GUqe1k7iTQB8SZEj685WEvhVPkcVHmg==
+"@state-designer/react@^1.7.1":
+  version "1.7.1"
+  resolved "https://registry.yarnpkg.com/@state-designer/react/-/react-1.7.1.tgz#05f00e0d790fc6f180b45fd805b60d8ff1b97391"
+  integrity sha512-N0VeufBjhGm+NicC/9V1z0iM+6XeYJtlZPo3U9mZlCciClzQ5D+m7z6P9t19gOqsmckkKzb4j0zIPKJ3pC2xAw==
   dependencies:
-    "@state-designer/core" "^1.6.9"
+    "@state-designer/core" latest
 
 "@stitches/core@^0.1.4":
   version "0.1.4"

@@ -41,13 +41,43 @@ const BaseNode = forwardRef<SVGCircleElement, Props>(
           r={Math.max(r, 8)}
           fill="transparent"
           stroke="transparent"
-          onPointerDown={() => state.send("POINTED_NODE", { id })}
-          onDoubleClick={() => state.send("TOGGLED_CAP", { id })}
+          onPointerDown={(e) =>
+            state.send("POINTED_NODE", {
+              id,
+              shiftKey: e.shiftKey,
+              optionKey: e.altKey,
+              metaKey: e.metaKey || e.ctrlKey,
+              ctrlKey: e.ctrlKey,
+            })
+          }
+          onDoubleClick={(e) =>
+            state.send("TOGGLED_CAP", {
+              id,
+              shiftKey: e.shiftKey,
+              optionKey: e.altKey,
+              metaKey: e.metaKey || e.ctrlKey,
+              ctrlKey: e.ctrlKey,
+            })
+          }
           onPointerEnter={(e) => {
             e.stopPropagation()
-            state.send("HOVERED_NODE", { id })
+            state.send("HOVERED_NODE", {
+              id,
+              shiftKey: e.shiftKey,
+              optionKey: e.altKey,
+              metaKey: e.metaKey || e.ctrlKey,
+              ctrlKey: e.ctrlKey,
+            })
           }}
-          onPointerOut={() => state.send("UNHOVERED_NODE", { id })}
+          onPointerOut={(e) =>
+            state.send("UNHOVERED_NODE", {
+              id,
+              shiftKey: e.shiftKey,
+              optionKey: e.altKey,
+              metaKey: e.metaKey || e.ctrlKey,
+              ctrlKey: e.ctrlKey,
+            })
+          }
         />
         {!isFilled &&
           (isLocked ? (

@@ -1,18 +1,13 @@
-import { IData } from "lib/types"
-import { commands } from "lib/history"
+import { IData, ISelectionSnapshot } from "lib/types"
+import { moveSelection } from "lib/commands"
 import * as vec from "lib/vec"
-import { isInView, screenToWorld } from "./session-utils"
-import { getGlob } from "lib/utils"
+import { getSelectionSnapshot, screenToWorld } from "lib/utils"
+import { getGlobPoints } from "lib/utils"
 import { keys, pointer } from "lib/state"
 import getNodeSnapper, { NodeSnapper } from "lib/snaps"
 import BaseSession from "./BaseSession"
 
-export interface MoveSessionSnapshot {
-  selectedNodes: string[]
-  selectedGlobs: string[]
-  nodes: Record<string, { id: string; point: number[]; radius: number }>
-  globs: Record<string, { id: string; D: number[]; Dp: number[] }>
-}
+export interface MoveSessionSnapshot extends ISelectionSnapshot {}
 
 export default class MoveSession extends BaseSession {
   nodeSnapper?: NodeSnapper
@@ -36,7 +31,7 @@ export default class MoveSession extends BaseSession {
   }
 
   complete = (data: IData) => {
-    commands.moveSelection(data, this.delta, this.snapshot)
+    moveSelection(data, this.delta, this.snapshot)
   }
 
   cancel = (data: IData) => {
@@ -78,57 +73,21 @@ export default class MoveSession extends BaseSession {
   }
 
   static getSnapshot(data: IData) {
-    const nodes = data.nodeIds.map((id) => data.nodes[id])
-    const globs = data.globIds.map((id) => data.globs[id])
-
-    return {
-      selectedNodes: [...data.selectedNodes],
-      selectedGlobs: [...data.selectedGlobs],
-      nodes: Object.fromEntries(
-        nodes.map((node) => [
-          node.id,
-          {
-            id: node.id,
-            point: [...node.point],
-            radius: node.radius,
-          },
-        ])
-      ),
-      globs: Object.fromEntries(
-        globs.map((glob) => [
-          glob.id,
-          {
-            id: glob.id,
-            D: [...glob.D],
-            Dp: [...glob.Dp],
-          },
-        ])
-      ),
-    }
+    return getSelectionSnapshot(data)
   }
 
   static getClosestNodeToPointer(data: IData) {
-    const { selectedNodes, nodes, camera, document } = data
+    const { selectedNodes, nodes, camera } = data
 
-    if (selectedNodes.length === 0) return false
+    if (selectedNodes.length === 0) return
 
-    const point = screenToWorld(pointer.point, camera)
-
-    let nodeUnderPointer = selectedNodes
+    return selectedNodes
       .map((id) => nodes[id])
-      .find((node) => vec.dist(node.point, point) < node.radius)
-
-    // 	let d = vec.dist(closestNodeToPointer.point, point)
-
-    // for (let i = 1; i < selectedNodes.length; i++) {
-    //   const node = nodes[selectedNodes[i]]
-    //   if (isInView(node.point, document)) {
-    //     const d1 = vec.dist(node.point, point)
-    //     if (d1 < d) closestNodeToPointer = node
-    //   }
-    // }
-
-    return nodeUnderPointer
+      .find(
+        (node) =>
+          vec.dist(node.point, screenToWorld(pointer.point, camera)) <
+          node.radius
+      )
   }
 
   static moveSelection(
@@ -139,9 +98,9 @@ export default class MoveSession extends BaseSession {
     const { globs, nodes } = data
 
     // Moving maybe nodes and globs
-    const nodesToMove = new Set(snapshot.selectedNodes)
+    const nodesToMove = new Set(data.selectedNodes)
 
-    for (let globId of snapshot.selectedGlobs) {
+    for (let globId of data.selectedGlobs) {
       const glob = globs[globId]
       for (let nodeId of glob.nodes) {
         nodesToMove.add(nodeId)
@@ -154,11 +113,11 @@ export default class MoveSession extends BaseSession {
     }
 
     // Move nodes
-    for (let id of nodesToMove) {
-      const node = nodes[id]
+    for (let nodeId of nodesToMove) {
+      const node = nodes[nodeId]
       if (node.locked) continue
 
-      let next = vec.round(vec.add(snapshot.nodes[id].point, delta), 2)
+      let next = vec.round(vec.add(snapshot.nodes[nodeId].point, delta), 2)
 
       node.point = next
     }
@@ -167,19 +126,14 @@ export default class MoveSession extends BaseSession {
     for (let id in globs) {
       const glob = globs[id]
       if (
-        snapshot.selectedGlobs.includes(id) ||
+        data.selectedGlobs.includes(id) ||
         nodesToMove.has(glob.nodes[0]) ||
         nodesToMove.has(glob.nodes[1])
       ) {
-        const { D, Dp, a, b, ap, bp } = glob
-
-        const [
-          { point: C0, radius: r0 },
-          { point: C1, radius: r1 },
-        ] = glob.nodes.map((id) => nodes[id])
+        const [start, end] = glob.nodes.map((id) => nodes[id])
 
         try {
-          glob.points = getGlob(C0, r0, C1, r1, D, Dp, a, b, ap, bp)
+          glob.points = getGlobPoints(glob, start, end)
         } catch (e) {
           glob.points = null
         }

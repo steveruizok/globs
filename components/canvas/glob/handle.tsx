@@ -3,7 +3,7 @@ import classNames from "classnames"
 interface Props {
   position?: number[]
   isPrime?: boolean
-  onSelect?: () => void
+  onSelect?: (e: React.PointerEvent<SVGUseElement>) => void
 }
 
 export default function Handle({

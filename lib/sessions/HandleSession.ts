@@ -1,8 +1,8 @@
 import { IData, IHandle, ISnapTypes } from "lib/types"
-import { commands } from "lib/history"
+import { moveHandle } from "lib/commands"
 import * as vec from "lib/vec"
-import { getSafeHandlePoint, isInView, screenToWorld } from "./session-utils"
-import { getGlob, projectPoint } from "lib/utils"
+import { getSafeHandlePoint, isInView, screenToWorld } from "lib/utils"
+import { getGlob, getGlobPoints, projectPoint } from "lib/utils"
 import { keys, pointer } from "lib/state"
 import BaseSession from "./BaseSession"
 
@@ -52,25 +52,14 @@ export default class HandleSession extends BaseSession {
 
     try {
       // Rebuild the glob points
-      glob.points = getGlob(
-        start.point,
-        start.radius,
-        end.point,
-        end.radius,
-        glob.D,
-        glob.Dp,
-        glob.a,
-        glob.b,
-        glob.ap,
-        glob.bp
-      )
+      glob.points = getGlobPoints(glob, start, end)
     } catch (e) {
       glob.points = null
     }
   }
 
   complete = (data: IData) => {
-    commands.moveHandle(data, this.globId, this.initial, this.current)
+    moveHandle(data, this.globId, this.initial, this.current)
   }
 
   update = (data: IData) => {
@@ -250,8 +239,10 @@ export default class HandleSession extends BaseSession {
       glob.points = getGlob(
         nodes[start].point,
         nodes[start].radius,
+        nodes[start].cap,
         nodes[end].point,
         nodes[end].radius,
+        nodes[end].cap,
         glob.D,
         glob.Dp,
         glob.a,

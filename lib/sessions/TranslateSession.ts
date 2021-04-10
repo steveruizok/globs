@@ -2,17 +2,18 @@ import { pointer } from "lib/state"
 import { IData } from "lib/types"
 import * as vec from "lib/vec"
 import BaseSession from "./BaseSession"
-import { getPositionSnapshot, screenToWorld } from "./session-utils"
+import { getSelectionSnapshot, screenToWorld } from "lib/utils"
+import { moveSelection } from "lib/commands"
 
 export default class TranslateSession extends BaseSession {
   delta = [0, 0]
   origin: number[]
-  snapshot: ReturnType<typeof getPositionSnapshot>
+  snapshot: ReturnType<typeof getSelectionSnapshot>
 
   constructor(data: IData) {
     super(data)
     this.origin = screenToWorld(pointer.point, data.camera)
-    this.snapshot = getPositionSnapshot(data)
+    this.snapshot = getSelectionSnapshot(data)
   }
 
   update = (data: IData) => {
@@ -31,14 +32,25 @@ export default class TranslateSession extends BaseSession {
   }
 
   cancel = (data: IData) => {
-    // Clean up the change
+    const { snapshot } = this
+    const { nodes, globs, selectedNodes, selectedGlobs } = data
+
+    for (let nodeId of selectedNodes) {
+      nodes[nodeId].point = snapshot.nodes[nodeId].point
+    }
+
+    for (let globId of selectedGlobs) {
+      globs[globId].D = snapshot.globs[globId].D
+      globs[globId].Dp = snapshot.globs[globId].Dp
+    }
   }
 
   complete = (data: IData) => {
     // Create a command
+    moveSelection(data, this.delta, this.snapshot)
   }
 
   static getSnapshot(data: IData) {
-    return getPositionSnapshot(data)
+    return getSelectionSnapshot(data)
   }
 }

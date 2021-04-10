@@ -33,12 +33,24 @@ export default function Glob({ id, fill, isSelected }: Props) {
 
   const rPrevPts = useRef<IGlobPoints>()
 
-  const handleUnhoverGlob = useCallback(() => {
-    state.send("UNHOVERED_GLOB", { id })
+  const handleUnhoverGlob = useCallback((e) => {
+    state.send("UNHOVERED_GLOB", {
+      id,
+      shiftKey: e.shiftKey,
+      optionKey: e.altKey,
+      metaKey: e.metaKey || e.ctrlKey,
+      ctrlKey: e.ctrlKey,
+    })
   }, [])
 
-  const handleHoverGlob = useCallback(() => {
-    state.send("HOVERED_GLOB", { id })
+  const handleHoverGlob = useCallback((e) => {
+    state.send("HOVERED_GLOB", {
+      id,
+      shiftKey: e.shiftKey,
+      optionKey: e.altKey,
+      metaKey: e.metaKey || e.ctrlKey,
+      ctrlKey: e.ctrlKey,
+    })
   }, [])
 
   if (!glob) return null
@@ -65,23 +77,6 @@ export default function Glob({ id, fill, isSelected }: Props) {
         ) : (
           <BrokenGlob start={start} end={end} />
         )}
-        {!fill && safe && (
-          <>
-            <Handles
-              glob={glob}
-              isPrime={false}
-              isSelected={isSelected}
-              isDragging={isDraggingD}
-            />
-            <Handles
-              glob={glob}
-              isPrime={true}
-              isSelected={isSelected}
-              isDragging={isDraggingDp}
-            />
-            {/* <Combs id={glob.id} points={glob.points} /> */}
-          </>
-        )}
       </g>
       {!fill && (
         <>
@@ -106,6 +101,23 @@ export default function Glob({ id, fill, isSelected }: Props) {
             isLocked={end.locked}
           />
           <GlobNodeHints glob={glob} />
+          {safe && (
+            <>
+              <Handles
+                glob={glob}
+                isPrime={false}
+                isSelected={isSelected}
+                isDragging={isDraggingD}
+              />
+              <Handles
+                glob={glob}
+                isPrime={true}
+                isSelected={isSelected}
+                isDragging={isDraggingDp}
+              />
+              {/* <Combs id={glob.id} points={glob.points} /> */}
+            </>
+          )}
         </>
       )}
     </g>

@@ -60,7 +60,13 @@ export default function Bounds() {
         height={p}
         onSelect={(e) => {
           e.stopPropagation()
-          state.send("POINTED_BOUNDS_EDGE", { edge: 0 })
+          state.send("POINTED_BOUNDS_EDGE", {
+            edge: 0,
+            shiftKey: e.shiftKey,
+            optionKey: e.altKey,
+            metaKey: e.metaKey || e.ctrlKey,
+            ctrlKey: e.ctrlKey,
+          })
           document.body.style.cursor = "ns-resize"
         }}
       />
@@ -71,7 +77,13 @@ export default function Bounds() {
         height={Math.max(0, height - p * 2)}
         onSelect={(e) => {
           e.stopPropagation()
-          state.send("POINTED_BOUNDS_EDGE", { edge: 1 })
+          state.send("POINTED_BOUNDS_EDGE", {
+            edge: 1,
+            shiftKey: e.shiftKey,
+            optionKey: e.altKey,
+            metaKey: e.metaKey || e.ctrlKey,
+            ctrlKey: e.ctrlKey,
+          })
           document.body.style.cursor = "ew-resize"
         }}
       />
@@ -82,7 +94,13 @@ export default function Bounds() {
         height={p}
         onSelect={(e) => {
           e.stopPropagation()
-          state.send("POINTED_BOUNDS_EDGE", { edge: 2 })
+          state.send("POINTED_BOUNDS_EDGE", {
+            edge: 2,
+            shiftKey: e.shiftKey,
+            optionKey: e.altKey,
+            metaKey: e.metaKey || e.ctrlKey,
+            ctrlKey: e.ctrlKey,
+          })
           document.body.style.cursor = "ns-resize"
         }}
       />
@@ -93,7 +111,13 @@ export default function Bounds() {
         height={Math.max(0, height - p * 2)}
         onSelect={(e) => {
           e.stopPropagation()
-          state.send("POINTED_BOUNDS_EDGE", { edge: 3 })
+          state.send("POINTED_BOUNDS_EDGE", {
+            edge: 3,
+            shiftKey: e.shiftKey,
+            optionKey: e.altKey,
+            metaKey: e.metaKey || e.ctrlKey,
+            ctrlKey: e.ctrlKey,
+          })
           document.body.style.cursor = "ew-resize"
         }}
       />
@@ -131,7 +155,13 @@ function Corner({
         onTap={restoreCursor}
         onPointerDown={(e) => {
           e.stopPropagation()
-          state.send("POINTED_ROTATE_CORNER", { corner })
+          state.send("POINTED_ROTATE_CORNER", {
+            corner,
+            shiftKey: e.shiftKey,
+            optionKey: e.altKey,
+            metaKey: e.metaKey || e.ctrlKey,
+            ctrlKey: e.ctrlKey,
+          })
           document.body.style.cursor = "grabbing"
         }}
         style={{ cursor: "grab" }}
@@ -146,7 +176,13 @@ function Corner({
         onPointerEnter={onHover}
         onPointerDown={(e) => {
           e.stopPropagation()
-          state.send("POINTED_BOUNDS_CORNER", { corner })
+          state.send("POINTED_BOUNDS_CORNER", {
+            corner,
+            shiftKey: e.shiftKey,
+            optionKey: e.altKey,
+            metaKey: e.metaKey || e.ctrlKey,
+            ctrlKey: e.ctrlKey,
+          })
           document.body.style.cursor = "nesw-resize"
         }}
         onPanEnd={restoreCursor}

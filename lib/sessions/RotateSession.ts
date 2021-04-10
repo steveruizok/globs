@@ -2,23 +2,23 @@ import { IBounds, IData } from "lib/types"
 import BaseSession from "./BaseSession"
 import * as vec from "lib/vec"
 import {
-  getPositionSnapshot,
+  getSelectionSnapshot,
   getSelectedBoundingBox,
   screenToWorld,
   updateGlobPoints,
-} from "./session-utils"
+} from "lib/utils"
 import { keys, pointer } from "lib/state"
-import { commands } from "lib/history"
+import { rotateSelection } from "lib/commands"
 import { angleDelta, rotatePoint } from "lib/utils"
 
 export default class RotateSession extends BaseSession {
-  snapshot: ReturnType<typeof getPositionSnapshot>
+  snapshot: ReturnType<typeof getSelectionSnapshot>
   center: number[]
   angle: number
 
   constructor(data: IData) {
     super(data)
-    this.snapshot = getPositionSnapshot(data)
+    this.snapshot = getSelectionSnapshot(data)
     const bounds = getSelectedBoundingBox(data)
     const point = screenToWorld(pointer.point, data.camera)
     this.center = [bounds.x + bounds.width / 2, bounds.y + bounds.height / 2]
@@ -48,19 +48,17 @@ export default class RotateSession extends BaseSession {
   }
 
   complete = (data: IData) => {
-    commands.rotateSelection(data, this.center, this.angle, this.snapshot)
+    rotateSelection(data, this.center, this.angle, this.snapshot)
   }
 
   static rotate(
     data: IData,
     center: number[],
     angle: number,
-    snapshots: ReturnType<typeof getPositionSnapshot>
+    snapshots: ReturnType<typeof getSelectionSnapshot>
   ) {
     const point = screenToWorld(pointer.point, data.camera)
     const delta = angleDelta(angle, vec.angle(point, center))
-
-    console.log(delta)
 
     for (let nodeId of data.selectedNodes) {
       const snap = snapshots.nodes[nodeId]

@@ -39,6 +39,7 @@ export default function Editor() {
   const rSnap = useRef<SVGPathElement>(null)
   const rMain = useRef<HTMLDivElement>(null)
 
+  const isLoading = useSelector((state) => state.isIn("loading"))
   const isFilled = useSelector((state) => state.data.fill)
 
   // When we zoom or pan, manually update the svg's viewbox
@@ -117,7 +118,12 @@ export default function Editor() {
     pointer.point = [x, y]
     pointer.delta = [0, 0]
 
-    state.send("STARTED_POINTING")
+    state.send("STARTED_POINTING", {
+      shiftKey: e.shiftKey,
+      optionKey: e.altKey,
+      ctrlKey: e.ctrlKey,
+      metaKey: e.metaKey || e.ctrlKey,
+    })
   }, [])
 
   const handlePointerUp = useCallback((e: PointerEvent, info: TapInfo) => {
@@ -132,32 +138,39 @@ export default function Editor() {
 
     document.body.style.cursor = "default"
 
-    state.send("STOPPED_POINTING")
+    state.send("STOPPED_POINTING", {
+      shiftKey: e.shiftKey,
+      optionKey: e.altKey,
+      ctrlKey: e.ctrlKey,
+      metaKey: e.metaKey || e.ctrlKey,
+    })
   }, [])
 
   const handlePointerMove = useCallback((e: React.PointerEvent) => {
     // if (!pointer.points.has(e.pointerId)) return
     const { clientX: x, clientY: y } = e
-    handleMove(x, y, e.pointerId, e.buttons)
-  }, [])
-
-  const handlePan = useCallback((e: PointerEvent, info: PanInfo) => {
-    // if (!pointer.points.has(e.pointerId)) return
-    const { x, y } = info.point
-    handleMove(x, y, e.pointerId, e.buttons)
+    handleMove(x, y, e)
   }, [])
 
   const handleWheel = useCallback((e: React.WheelEvent<HTMLDivElement>) => {
     state.send("WHEELED", {
-      ctrlKey: e.ctrlKey,
       delta: [e.deltaX, e.deltaY],
+      shiftKey: e.shiftKey,
+      optionKey: e.altKey,
+      metaKey: e.metaKey || e.ctrlKey,
+      ctrlKey: e.ctrlKey,
     })
   }, [])
 
   const handleWrapperPointerDown = useCallback(
     (e: React.PointerEvent<HTMLDivElement>) => {
       if (e.target.constructor.name !== "SVGSVGElement") return
-      state.send("POINTED_CANVAS")
+      state.send("POINTED_CANVAS", {
+        shiftKey: e.shiftKey,
+        optionKey: e.altKey,
+        metaKey: e.metaKey || e.ctrlKey,
+        ctrlKey: e.ctrlKey,
+      })
     },
     []
   )
@@ -167,7 +180,6 @@ export default function Editor() {
   return (
     <OuterWrapper
       onTapStart={handlePointerDown}
-      onPan={handlePan}
       onPointerCancel={handlePointerCancel}
       onPointerLeave={handlePointerCancel}
       onPointerMove={handlePointerMove}
@@ -229,7 +241,7 @@ export default function Editor() {
                     className="strokewidth-s stroke-selected"
                   />
                 </defs>
-                <Canvas />
+                {!isLoading && <Canvas />}
               </svg>
               <ContextMenu />
             </SVGWrapper>
@@ -343,22 +355,23 @@ const SVGWrapper = styled(ContextMenuTrigger, {
   },
 })
 
-const handleMove = throttle(
-  (x: number, y: number, pointerId: number, buttons: number) => {
-    if (state.isIn("draggingThumbstick")) return
+const handleMove = throttle((x: number, y: number, e: React.PointerEvent) => {
+  if (state.isIn("draggingThumbstick")) return
 
-    // if (pointer.id > -1 && pointerId !== pointer.id) return
+  // if (pointer.id > -1 && pointerId !== pointer.id) return
 
-    const ox = Math.abs(x - pointer.origin[0])
-    const oy = Math.abs(y - pointer.origin[1])
+  const ox = Math.abs(x - pointer.origin[0])
+  const oy = Math.abs(y - pointer.origin[1])
 
-    pointer.axis = ox > oy ? "x" : "y"
-    pointer.buttons = buttons
-    pointer.delta = vec.sub([x, y], pointer.point)
-    pointer.point = [x, y]
-    state.send("MOVED_POINTER", {
-      isPan: buttons === 4,
-    })
-  },
-  16
-)
+  pointer.axis = ox > oy ? "x" : "y"
+  pointer.buttons = e.buttons
+  pointer.delta = vec.sub([x, y], pointer.point)
+  pointer.point = [x, y]
+  state.send("MOVED_POINTER", {
+    isPan: e.buttons === 4,
+    shiftKey: e.shiftKey,
+    optionKey: e.altKey,
+    metaKey: e.metaKey || e.ctrlKey,
+    ctrlKey: e.ctrlKey,
+  })
+}, 16)

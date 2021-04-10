@@ -87,10 +87,14 @@ export default function Handles({
         position={isPrime ? points.F0p : points.F0}
         isSelected={isSelected}
         isPrime={isPrime}
-        onSelect={() =>
+        onSelect={(e) =>
           state.send("POINTED_ANCHOR", {
             id,
             anchor: isPrime ? "ap" : "a",
+            shiftKey: e.shiftKey,
+            optionKey: e.altKey,
+            metaKey: e.metaKey || e.ctrlKey,
+            ctrlKey: e.ctrlKey,
           })
         }
       />
@@ -98,10 +102,14 @@ export default function Handles({
         position={isPrime ? points.F1p : points.F1}
         isSelected={isSelected}
         isPrime={isPrime}
-        onSelect={() =>
+        onSelect={(e) =>
           state.send("POINTED_ANCHOR", {
             id,
             anchor: isPrime ? "bp" : "b",
+            shiftKey: e.shiftKey,
+            optionKey: e.altKey,
+            metaKey: e.metaKey || e.ctrlKey,
+            ctrlKey: e.ctrlKey,
           })
         }
       />
@@ -109,10 +117,14 @@ export default function Handles({
       <Handle
         isPrime={isPrime}
         position={position}
-        onSelect={() =>
+        onSelect={(e) =>
           state.send("POINTED_HANDLE", {
             id,
             handle: isPrime ? "Dp" : "D",
+            shiftKey: e.shiftKey,
+            optionKey: e.altKey,
+            metaKey: e.metaKey || e.ctrlKey,
+            ctrlKey: e.ctrlKey,
           })
         }
       />

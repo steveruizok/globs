@@ -1,5 +1,5 @@
 import { ICanvasItems, IData } from "lib/types"
-import { getGlob } from "./utils"
+import { getGlob, getGlobPoints } from "./utils"
 
 export const initialData: IData = {
   viewport: {
@@ -8,11 +8,11 @@ export const initialData: IData = {
     scroll: [0, 0],
   },
   document: {
-    point: [0, 0],
+    point: [400, 300],
     size: [0, 0],
   },
   camera: {
-    point: [300, 300],
+    point: [400, 300],
     zoom: 1,
   },
   fill: false,
@@ -128,16 +128,5 @@ export const initialData: IData = {
 for (let key in initialData.globs) {
   const glob = initialData.globs[key]
   const [start, end] = glob.nodes.map((id) => initialData.nodes[id])
-  glob.points = getGlob(
-    start.point,
-    start.radius,
-    end.point,
-    end.radius,
-    glob.D,
-    glob.Dp,
-    glob.a,
-    glob.b,
-    glob.ap,
-    glob.bp
-  )
+  glob.points = getGlobPoints(glob, start, end)
 }

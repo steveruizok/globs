@@ -20,7 +20,14 @@ export default function BoundsBg() {
       y={y}
       width={width}
       height={height}
-      onPointerDown={() => state.send("POINTED_BOUNDS")}
+      onPointerDown={(e) =>
+        state.send("POINTED_BOUNDS", {
+          shiftKey: e.shiftKey,
+          optionKey: e.altKey,
+          metaKey: e.metaKey || e.ctrlKey,
+          ctrlKey: e.ctrlKey,
+        })
+      }
       fill="transparent"
       className="strokewidth-ui stroke-bounds fill-bounds-bg"
     />

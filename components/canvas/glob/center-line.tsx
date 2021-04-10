@@ -72,7 +72,15 @@ export default function CenterLine({ glob }: Props) {
           stroke="blue"
           fill="none"
           className="strokewidth-m stroke-outline"
-          onPointerDown={() => state.send("SPLIT_GLOB", { id: glob.id })}
+          onPointerDown={(e) =>
+            state.send("SPLIT_GLOB", {
+              id: glob.id,
+              shiftKey: e.shiftKey,
+              optionKey: e.altKey,
+              metaKey: e.metaKey || e.ctrlKey,
+              ctrlKey: e.ctrlKey,
+            })
+          }
         />
       )}
     </>

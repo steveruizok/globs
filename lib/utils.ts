@@ -4,6 +4,7 @@ import {
   IBounds,
   ICanvasItem,
   ICanvasItems,
+  ISelectionSnapshot,
   IData,
   IGlob,
   IGlobPoints,
@@ -411,21 +412,11 @@ export function getSweep(C: number[], A: number[], B: number[]) {
 }
 
 export function getGlobPath(glob: IGlob, start: INode, end: INode) {
-  const { D, Dp, a, b, ap, bp } = glob
+  if (!glob.points) return ""
+
   const { point: C0, radius: r0 } = start
   const { point: C1, radius: r1 } = end
-  const { E0, E0p, F0, F0p, E1, E1p, F1, F1p } = getGlob(
-    C0,
-    r0,
-    C1,
-    r1,
-    D,
-    Dp,
-    a,
-    b,
-    ap,
-    bp
-  )
+  const { E0, E0p, F0, F0p, E1, E1p, F1, F1p } = glob.points
 
   return [
     svg.moveTo(E0),
@@ -437,11 +428,30 @@ export function getGlobPath(glob: IGlob, start: INode, end: INode) {
   ].join(" ")
 }
 
+export function getGlobPoints(glob: IGlob, start: INode, end: INode) {
+  return getGlob(
+    start.point,
+    start.radius,
+    start.cap,
+    end.point,
+    end.radius,
+    end.cap,
+    glob.D,
+    glob.Dp,
+    glob.a,
+    glob.b,
+    glob.ap,
+    glob.bp
+  )
+}
+
 export function getGlob(
   C0: number[],
   r0: number,
+  cap0: "round" | "flat",
   C1: number[],
   r1: number,
+  cap1: "round" | "flat",
   D: number[],
   Dp: number[],
   a: number,
@@ -450,10 +460,28 @@ export function getGlob(
   bp: number
 ): IGlobPoints {
   // Get end points
-  const E0 = getCircleTangentToPoint(C0, r0, D, 0),
+  let E0 = getCircleTangentToPoint(C0, r0, D, 0),
     E0p = getCircleTangentToPoint(C0, r0, Dp, 1),
     E1 = getCircleTangentToPoint(C1, r1, D, 1),
     E1p = getCircleTangentToPoint(C1, r1, Dp, 0)
+
+  if (!(E0 || E0p)) {
+    E0 = C0
+    E0p = C0
+  } else if (!E0) {
+    E0 = E0p
+  } else if (!E0p) {
+    E0p = E0
+  }
+
+  if (!(E1 || E1p)) {
+    E1 = C1
+    E1p = C1
+  } else if (!E1) {
+    E1 = E1p
+  } else if (!E1p) {
+    E1p = E1
+  }
 
   // Get control points
   const F0 = vec.round(vec.lrp(E0, D, a)),
@@ -1399,7 +1427,7 @@ export function getNodeTransform(node: INode, point: number[]) {
 
 export type NodeTransform = ReturnType<typeof getNodeTransform>
 
-export function createGlob(A: INode, B: INode): IGlob {
+export function getNewGlob(A: INode, B: INode): IGlob {
   const { point: C0, radius: r0 } = A
   const { point: C1, radius: r1 } = B
 
@@ -1424,7 +1452,7 @@ export function createGlob(A: INode, B: INode): IGlob {
     b,
     ap,
     bp,
-    points: getGlob(C0, r0, C1, r1, D, Dp, a, b, ap, bp),
+    points: getGlob(C0, r0, A.cap, C1, r1, B.cap, D, Dp, a, b, ap, bp),
     zIndex: 1,
   }
 }
@@ -1433,7 +1461,7 @@ export function screenToWorld(point: number[], camera: IData["camera"]) {
   return vec.add(vec.div(point, camera.zoom), camera.point)
 }
 
-export function createNode(point: number[], radius = 25): INode {
+export function getNewNode(point: number[], radius = 25): INode {
   const id = "node_" + Math.random() * Date.now()
 
   return {
@@ -1449,7 +1477,7 @@ export function createNode(point: number[], radius = 25): INode {
 }
 
 export function getSelectedBoundingBox(data: IData) {
-  const { selectedGlobs, selectedNodes, nodes, globs } = data
+  const { selectedGlobs, selectedNodes, nodeIds, nodes, globs } = data
 
   if (selectedGlobs.length + selectedNodes.length === 0) return null
 
@@ -1464,7 +1492,7 @@ export function getSelectedBoundingBox(data: IData) {
   )
 }
 
-export function resizeBounds(
+export function getResizedBounds(
   nodes: INode[],
   globs: IGlob[],
   bounds: IBounds,
@@ -1709,4 +1737,119 @@ export function getGlobBounds(glob: IGlob, start: INode, end: INode) {
   const eb = getNodeBounds(end)
 
   return getCommonBounds(b, bp, sb, eb)
+}
+
+export function getSafeHandlePoint(start: INode, end: INode, handle: number[]) {
+  return handle
+
+  // const { point: C0, radius: r0 } = start
+  // const { point: C1, radius: r1 } = end
+
+  // if (vec.dist(handle, C0) < r0 + 1) {
+  //   handle = getClosestPointOnCircle(C0, r0, handle, 1)
+  // }
+
+  // if (vec.dist(handle, C1) < r1 + 1) {
+  //   handle = getClosestPointOnCircle(C1, r1, handle, 1)
+  // }
+
+  // return handle
+}
+
+export function isInView(point: number[], document: IData["document"]) {
+  return !(
+    point[0] < document.point[0] ||
+    point[0] > document.point[0] + document.size[0] ||
+    point[1] < document.point[1] ||
+    point[1] > document.point[1] + document.size[1]
+  )
+}
+
+// Essential when deleting or restoring nodes / globs
+export function saveSelectionState(data: IData) {
+  const sHighlightedNodes = [...data.highlightNodes]
+  const sHoveredNodes = [...data.hoveredNodes]
+  const sSelectedNodes = [...data.selectedNodes]
+  const sHighlightedGlobs = [...data.highlightGlobs]
+  const sHoveredGlobs = [...data.hoveredGlobs]
+  const sSelectedGlobs = [...data.selectedGlobs]
+
+  return function restore(data: IData) {
+    data.highlightNodes = sHighlightedNodes
+    data.hoveredNodes = sHoveredNodes
+    data.selectedNodes = sSelectedNodes
+    data.highlightGlobs = sHighlightedGlobs
+    data.hoveredGlobs = sHoveredGlobs
+    data.selectedGlobs = sSelectedGlobs
+  }
+}
+
+export function getSelectionSnapshot(data: IData): ISelectionSnapshot {
+  const nodesToSnapshot = new Set(data.selectedNodes)
+
+  for (let globId of data.selectedGlobs) {
+    nodesToSnapshot.add(data.globs[globId].nodes[0])
+    nodesToSnapshot.add(data.globs[globId].nodes[1])
+  }
+
+  const nodes = Object.fromEntries(
+    Array.from(nodesToSnapshot.values()).map((id) => {
+      const { radius, point } = data.nodes[id]
+      return [id, { id, point: [...point], radius }]
+    })
+  )
+
+  const globs = Object.fromEntries(
+    data.selectedGlobs.map((id) => {
+      let { D, Dp, a, b, ap, bp } = data.globs[id]
+
+      return [
+        id,
+        {
+          id,
+          D: [...D],
+          Dp: [...Dp],
+          a,
+          b,
+          ap,
+          bp,
+        },
+      ]
+    })
+  )
+
+  return {
+    nodes,
+    globs,
+  }
+}
+
+export function updateGlobPoints(data: IData) {
+  const { globs, globIds, nodes, selectedNodes, selectedGlobs } = data
+
+  const nodesToUpdate = new Set(selectedNodes)
+
+  const globsToUpdate = new Set(selectedGlobs.map((id) => globs[id]))
+
+  const sGlobs = globIds.map((id) => globs[id])
+
+  for (let glob of sGlobs) {
+    nodesToUpdate.add(glob.nodes[0])
+    nodesToUpdate.add(glob.nodes[1])
+  }
+
+  for (let glob of sGlobs) {
+    if (nodesToUpdate.has(glob.nodes[0]) || nodesToUpdate.has(glob.nodes[1])) {
+      globsToUpdate.add(glob)
+    }
+  }
+
+  globsToUpdate.forEach((glob) => {
+    const [start, end] = glob.nodes.map((id) => nodes[id])
+    try {
+      glob.points = getGlobPoints(glob, start, end)
+    } catch (e) {
+      glob.points = null
+    }
+  })
 }

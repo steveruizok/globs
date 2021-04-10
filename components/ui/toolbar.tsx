@@ -51,23 +51,21 @@ export default function Toolbar() {
         >
           <Disc />
         </button>
-        {hasSelectedNodes && (
-          <button
-            title="Create Globs (L)"
-            data-active={isLinking}
-            onClick={() => state.send("STARTED_LINKING_NODES")}
-          >
-            <ArrowRight />
-          </button>
-        )}
-        {(hasSelectedNodes || hasSelectedGlobs) && (
-          <button
-            title="Delete Selected Items (Backspace)"
-            onClick={() => state.send("DELETED")}
-          >
-            <X />
-          </button>
-        )}
+        <button
+          title="Create Globs (L)"
+          disabled={!hasSelectedNodes}
+          data-active={isLinking}
+          onClick={() => state.send("STARTED_LINKING_NODES")}
+        >
+          <ArrowRight />
+        </button>
+        <button
+          title="Delete Selected Items (Backspace)"
+          disabled={!(hasSelectedNodes || hasSelectedGlobs)}
+          onClick={() => state.send("DELETED")}
+        >
+          <X />
+        </button>
       </section>
       <Spacer />
       <section>

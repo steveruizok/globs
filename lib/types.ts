@@ -179,3 +179,26 @@ export interface KeyCommand {
   eventName: string
   modifiers: string[]
 }
+
+export interface ISelectionSnapshot {
+  nodes: Record<
+    string,
+    {
+      id: string
+      point: number[]
+      radius: number
+    }
+  >
+  globs: Record<
+    string,
+    {
+      id: string
+      D: number[]
+      Dp: number[]
+      a: number
+      b: number
+      ap: number
+      bp: number
+    }
+  >
+}
