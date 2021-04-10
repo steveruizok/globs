@@ -400,10 +400,8 @@ export function splitGlob(data: IData, id: string) {
     getGlob(
       start.point,
       start.radius,
-      start.cap,
       newStartNode.point,
       newStartNode.radius,
-      newStartNode.cap,
       D0,
       D0p,
       a0,
@@ -417,10 +415,8 @@ export function splitGlob(data: IData, id: string) {
     newGlob.points = getGlob(
       newStartNode.point,
       newStartNode.radius,
-      newStartNode.cap,
       end.point,
       end.radius,
-      end.cap,
       D1,
       D1p,
       a1,

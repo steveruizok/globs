@@ -241,10 +241,8 @@ export default class HandleSession extends BaseSession {
       glob.points = getGlob(
         nodes[start].point,
         nodes[start].radius,
-        nodes[start].cap,
         nodes[end].point,
         nodes[end].radius,
-        nodes[end].cap,
         glob.D,
         glob.Dp,
         glob.a,

@@ -432,10 +432,8 @@ export function getGlobPoints(glob: IGlob, start: INode, end: INode) {
   return getGlob(
     start.point,
     start.radius,
-    start.cap,
     end.point,
     end.radius,
-    end.cap,
     glob.D,
     glob.Dp,
     glob.a,
@@ -448,10 +446,8 @@ export function getGlobPoints(glob: IGlob, start: INode, end: INode) {
 export function getGlob(
   C0: number[],
   r0: number,
-  cap0: "round" | "flat",
   C1: number[],
   r1: number,
-  cap1: "round" | "flat",
   D: number[],
   Dp: number[],
   a: number,
@@ -1452,7 +1448,7 @@ export function getNewGlob(A: INode, B: INode): IGlob {
     b,
     ap,
     bp,
-    points: getGlob(C0, r0, A.cap, C1, r1, B.cap, D, Dp, a, b, ap, bp),
+    points: getGlob(C0, r0, C1, r1, D, Dp, a, b, ap, bp),
     zIndex: 1,
   }
 }
