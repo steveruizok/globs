@@ -1740,20 +1740,15 @@ export function getGlobBounds(glob: IGlob, start: INode, end: INode) {
 }
 
 export function getSafeHandlePoint(start: INode, end: INode, handle: number[]) {
+  const { point: C0, radius: r0 } = start
+  const { point: C1, radius: r1 } = end
+  if (vec.dist(handle, C0) < r0 + 1) {
+    handle = getClosestPointOnCircle(C0, r0, handle, 1)
+  }
+  if (vec.dist(handle, C1) < r1 + 1) {
+    handle = getClosestPointOnCircle(C1, r1, handle, 1)
+  }
   return handle
-
-  // const { point: C0, radius: r0 } = start
-  // const { point: C1, radius: r1 } = end
-
-  // if (vec.dist(handle, C0) < r0 + 1) {
-  //   handle = getClosestPointOnCircle(C0, r0, handle, 1)
-  // }
-
-  // if (vec.dist(handle, C1) < r1 + 1) {
-  //   handle = getClosestPointOnCircle(C1, r1, handle, 1)
-  // }
-
-  // return handle
 }
 
 export function isInView(point: number[], document: IData["document"]) {

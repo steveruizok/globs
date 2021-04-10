@@ -216,23 +216,25 @@ export default class HandleSession extends BaseSession {
           }
         }
       }
+    }
 
-      // Apply the change to the handle
-      glob[this.primary] = vec.round(
-        getSafeHandlePoint(nodes[start], nodes[end], next)
+    // Apply the change to the handle
+    glob[this.primary] = vec.round(
+      keys.Alt ? next : getSafeHandlePoint(nodes[start], nodes[end], next)
+    )
+
+    // Move the other handle, too.
+    if (keys.Meta) {
+      const nextSecondary = vec.add(
+        this.initial[this.secondary],
+        vec.sub(next, this.initial[this.primary])
       )
 
-      // Move the other handle, too.
-      if (keys.Meta) {
-        glob[this.secondary] = getSafeHandlePoint(
-          nodes[start],
-          nodes[end],
-          vec.add(
-            this.initial[this.secondary],
-            vec.sub(next, this.initial[this.primary])
-          )
-        )
-      }
+      glob[this.secondary] = keys.Alt
+        ? nextSecondary
+        : getSafeHandlePoint(nodes[start], nodes[end], nextSecondary)
+    } else {
+      glob[this.secondary] = this.initial[this.secondary]
     }
 
     try {

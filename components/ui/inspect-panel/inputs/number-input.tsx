@@ -48,6 +48,7 @@ function NumberInput({
   }
 
   function handlePanEnd() {
+    document.body.style.cursor = "default"
     onPanStart && onPanStart()
   }
 
@@ -111,7 +112,6 @@ function NumberInput({
         onPointerLeave={() => setIsHovered(false)}
         onPanStart={handlePanStart}
         onPanEnd={handlePanEnd}
-        // onPan={handlePan}
         onTap={handleTap}
       >
         <input
