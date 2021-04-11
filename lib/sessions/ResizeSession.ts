@@ -1,8 +1,8 @@
 import { IData } from "lib/types"
 import BaseSession from "./BaseSession"
 import * as vec from "lib/vec"
+import inputs from "lib/sinputs"
 import { round, screenToWorld, updateGlobPoints } from "lib/utils"
-import { keys, pointer } from "lib/state"
 import { resizeNode } from "lib/commands"
 
 export interface ResizeSessionSnapshot {
@@ -23,20 +23,23 @@ export default class ResizeSession extends BaseSession {
 
     this.startDistance = vec.dist(
       node.point,
-      screenToWorld(pointer.point, data.camera)
+      screenToWorld(inputs.pointer.point, data.camera)
     )
 
     this.startRadius = node.radius
 
-    this.origin = screenToWorld(pointer.point, data.camera)
+    this.origin = screenToWorld(inputs.pointer.point, data.camera)
   }
 
   update = (data: IData) => {
     const { camera, nodes } = data
     const node = nodes[this.nodeId]
-    const dist = vec.dist(node.point, screenToWorld(pointer.point, camera))
+    const dist = vec.dist(
+      node.point,
+      screenToWorld(inputs.pointer.point, camera)
+    )
 
-    if (keys.Shift) {
+    if (inputs.keys.Shift) {
       node.radius = dist
     } else {
       node.radius = round(this.startRadius + (dist - this.startDistance))

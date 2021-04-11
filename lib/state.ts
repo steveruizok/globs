@@ -5,7 +5,8 @@ import * as vec from "lib/vec"
 import * as svg from "lib/svg"
 
 import { initialData } from "./data"
-import { history } from "lib/history"
+import history from "lib/history"
+import inputs from "lib/sinputs"
 import * as commands from "lib/commands"
 import AnchorSession from "lib/sessions/AnchorSession"
 import HandleSession from "lib/sessions/HandleSession"
@@ -16,7 +17,6 @@ import RotateSession from "lib/sessions/RotateSession"
 import MoveSession from "./sessions/MoveSession"
 import {
   IGlob,
-  IData,
   IBounds,
   KeyCommand,
   IHandle,
@@ -25,7 +25,6 @@ import {
 } from "lib/types"
 import {
   getGlobPath,
-  getGlobPoints,
   getSelectedBoundingBox,
   rectContainsRect,
   screenToWorld,
@@ -228,6 +227,8 @@ const state = createState({
               on: {
                 CANCELLED: { do: "cancelMove", to: "notPointing" },
                 WHEELED: "updateMove",
+                PRESSED_OPTION: ["updateMove"],
+                RELEASED_OPTION: ["updateMove"],
                 MOVED_POINTER: "updateMove",
                 STOPPED_POINTING: {
                   do: ["completeMove", "saveData"],
@@ -270,6 +271,8 @@ const state = createState({
                       do: "cancelMove",
                       to: "notPointing",
                     },
+                    PRESSED_OPTION: ["updateMove"],
+                    RELEASED_OPTION: ["updateMove"],
                     WHEELED: ["updateMove"],
                     MOVED_POINTER: ["updateMove"],
                     STOPPED_POINTING: {
@@ -473,25 +476,25 @@ const state = createState({
       return data.selectedGlobs.includes(payload.id)
     },
     isTrackpadZoom(data, payload: { ctrlKey: boolean }) {
-      return keys.Alt || payload.ctrlKey
+      return inputs.keys.Alt || payload.ctrlKey
     },
     hasMiddleButton(data, payload: { isPan: boolean }) {
       return payload.isPan
     },
     isLeftClick(data) {
-      return pointer.buttons === 1
+      return inputs.pointer.buttons === 1
     },
     hasMeta() {
-      return keys.Meta
+      return inputs.keys.Meta
     },
     hasShift() {
-      return keys.Shift
+      return inputs.keys.Shift
     },
     hasSpace() {
-      return keys[" "]
+      return inputs.keys[" "]
     },
     isMultitouch(data) {
-      return pointer.points.size > 1
+      return inputs.pointer.points.size > 1
     },
   },
   actions: {
@@ -513,7 +516,8 @@ const state = createState({
 
     // POINTER
     updateMvPointer(data) {
-      updateMvPointer(pointer.point, screenToWorld(pointer.point, data.camera))
+      mvPointer.screen.set(inputs.pointer.point)
+      mvPointer.world.set(screenToWorld(inputs.pointer.point, data.camera))
     },
 
     // DISPLAY
@@ -530,7 +534,7 @@ const state = createState({
     // CAMERA / VIEWPORT
     panCamera(data) {
       const { camera, document } = data
-      const delta = vec.div(pointer.delta, camera.zoom)
+      const delta = vec.div(inputs.pointer.delta, camera.zoom)
       camera.point = vec.round(vec.add(camera.point, vec.neg(delta)))
       document.point = camera.point
     },
@@ -538,12 +542,12 @@ const state = createState({
       const { camera, document } = data
       const delta = vec.div(vec.neg(payload.delta), camera.zoom)
       camera.point = vec.round(vec.sub(camera.point, delta))
-      pointer.delta = vec.mul(vec.neg(delta), camera.zoom)
+      inputs.pointer.delta = vec.mul(vec.neg(delta), camera.zoom)
       document.point = camera.point
     },
     zoomCamera(data, payload: { delta: number[] }) {
       const { camera, viewport, document } = data
-      const { point } = pointer
+      const { point } = inputs.pointer
 
       const delta =
         (vec.mul(vec.neg(payload.delta), 5)[1] / 500) *
@@ -742,7 +746,7 @@ const state = createState({
       commands.updateGlobOptions(data, payload)
     },
     createGlobToNewNode(data) {
-      commands.createGlobToNewNode(data, pointer.point)
+      commands.createGlobToNewNode(data, inputs.pointer.point)
     },
     createGlobBetweenNodes(data, payload: { id: string }) {
       commands.createGlobBetweenNodes(data, payload.id)
@@ -883,14 +887,14 @@ const state = createState({
       ]
 
       data.brush = {
-        start: screenToWorld(pointer.point, camera),
-        end: screenToWorld(pointer.point, camera),
+        start: screenToWorld(inputs.pointer.point, camera),
+        end: screenToWorld(inputs.pointer.point, camera),
         targets,
       }
     },
     updateBrush(data) {
       const { brush, camera } = data
-      brush.end = screenToWorld(pointer.point, camera)
+      brush.end = screenToWorld(inputs.pointer.point, camera)
     },
     updateBrushSelection(data) {
       const { brush, nodes, globs } = data
@@ -1026,23 +1030,23 @@ export const mvPointer = {
   world: motionValue([0, 0]),
 }
 
-export const pointer = {
-  id: -1,
-  type: "mouse",
-  point: [0, 0],
-  delta: [0, 0],
-  origin: [0, 0],
-  buttons: 0,
-  axis: "any" as "any" | "x" | "y",
-  points: new Set<number>(),
-}
+// export const pointer = {
+//   id: -1,
+//   type: "mouse",
+//   point: [0, 0],
+//   delta: [0, 0],
+//   origin: [0, 0],
+//   buttons: 0,
+//   axis: "any" as "any" | "x" | "y",
+//   points: new Set<number>(),
+// }
 
 function updateMvPointer(screen: number[], world: number[]) {
   mvPointer.screen.set(screen)
   mvPointer.world.set(world)
 }
 
-export const keys: Record<string, boolean> = {}
+// export const keys: Record<string, boolean> = {}
 
 /* ------------------ INPUT EVENTS ------------------ */
 
@@ -1052,92 +1056,41 @@ const handleResize = throttle(() => {
   }
 }, 16)
 
-const downCommands: Record<string, KeyCommand[]> = {
-  z: [
-    { eventName: "REDO", modifiers: ["Meta", "Shift"] },
-    { eventName: "UNDO", modifiers: ["Meta"] },
-  ],
-  a: [{ eventName: "SELECTED_ALL", modifiers: ["Meta"] }],
-  s: [{ eventName: "SAVED", modifiers: ["Meta"] }],
-  c: [{ eventName: "COPIED", modifiers: ["Meta"] }],
-  v: [{ eventName: "PASTED", modifiers: ["Meta"] }],
-  g: [{ eventName: "STARTED_LINKING_NODES", modifiers: [] }],
-  l: [{ eventName: "LOCKED_NODES", modifiers: ["Meta"] }],
-  n: [{ eventName: "STARTED_CREATING_NODES", modifiers: [] }],
-  Option: [{ eventName: "PRESSED_OPTION", modifiers: [] }],
-  Shift: [{ eventName: "PRESSED_SHIFT", modifiers: [] }],
-  Alt: [{ eventName: "PRESSED_ALT", modifiers: [] }],
-  Meta: [{ eventName: "PRESSED_META", modifiers: [] }],
-  Escape: [{ eventName: "CANCELLED", modifiers: [] }],
-  Enter: [{ eventName: "CONFIRMED", modifiers: [] }],
-  Delete: [{ eventName: "DELETED", modifiers: [] }],
-  Backspace: [{ eventName: "DELETED", modifiers: [] }],
-  " ": [{ eventName: "PRESSED_SPACE", modifiers: [] }],
-  "]": [{ eventName: "MOVED_FORWARD", modifiers: ["Meta"] }],
-  "[": [{ eventName: "MOVED_BACKWARD", modifiers: ["Meta"] }],
-  "‘": [{ eventName: "MOVED_TO_FRONT", modifiers: ["Meta", "Shift"] }],
-  "“": [{ eventName: "MOVED_TO_BACK", modifiers: ["Meta", "Shift"] }],
-}
-
-const upCommands = {
-  " ": [{ eventName: "RELEASED_SPACE", modifiers: [] }],
-  Option: [{ eventName: "RELEASED_OPTION", modifiers: [] }],
-  Shift: [{ eventName: "RELEASED_SHIFT", modifiers: [] }],
-  Alt: [{ eventName: "RELEASED_ALT", modifiers: [] }],
-  Meta: [{ eventName: "RELEASED_META", modifiers: [] }],
-}
-
-function handleWindowBlur(e) {
-  for (let key in keys) {
-    keys[key] = false
-  }
-  pointer.id = -1
-  pointer.buttons = 0
-  pointer.points.clear()
+function handleWindowBlur() {
+  inputs.handleWindowBlur()
 }
 
 function handleKeyDown(e: KeyboardEvent) {
-  let { key } = e
-  if (key === "Control" && !isDarwin) key = "Meta"
-
-  if (keys[key] && !["z"].includes(key)) return
-
-  keys[key] = true
-
-  if (key in downCommands) {
-    for (let { modifiers, eventName } of downCommands[key]) {
-      if (modifiers.every((command) => keys[command])) {
-        e.preventDefault()
-        state.send(eventName)
-        break
-      }
-    }
+  const eventName = inputs.handleKeyDown(
+    e.key,
+    e.shiftKey,
+    e.altKey,
+    e.ctrlKey,
+    e.metaKey
+  )
+  if (eventName) {
+    state.send(eventName)
+    e.preventDefault()
   }
 
-  state.send("PRESSED_KEY", { key })
+  state.send("PRESSED_KEY", { key: e.key })
 }
 
 function handleKeyUp(e: KeyboardEvent) {
-  let { key } = e
-  if (key === "Control" && !isDarwin) key = "Meta"
+  const eventName = inputs.handleKeyUp(
+    e.key,
+    e.shiftKey,
+    e.altKey,
+    e.ctrlKey,
+    e.metaKey
+  )
 
-  keys[key] = false
-
-  if (key in upCommands) {
-    for (let { modifiers, eventName } of upCommands[key]) {
-      if (modifiers.every((command) => keys[command])) {
-        e.preventDefault()
-        state.send(eventName)
-        break
-      }
-    }
+  if (eventName) {
+    state.send(eventName)
+    e.preventDefault()
   }
 
-  state.send("RELEASED_KEY", { key })
-}
-
-function worldToScreen(point: number[], offset: number[], zoom: number) {
-  return vec.mul(vec.sub(point, offset), zoom)
+  state.send("RELEASED_KEY", { key: e.key })
 }
 
 export const useSelector = createSelectorHook(state)

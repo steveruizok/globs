@@ -1,7 +1,7 @@
-import state, { pointer } from "./state"
 import { IData, IGlob, INode } from "./types"
 import { current } from "immer"
 import * as vec from "./vec"
+import inputs from "lib/sinputs"
 import {
   getGlob,
   getLineLineIntersection,
@@ -16,7 +16,10 @@ import {
   getGlobPoints,
 } from "./utils"
 
-import Session, { MoveSessionSnapshot } from "./sessions/MoveSession"
+import MoveSession, {
+  MoveSessionSnapshot,
+  MoveSessionClones,
+} from "./sessions/MoveSession"
 import AnchorSession, { AnchorSessionSnapshot } from "./sessions/AnchorSession"
 
 import { getClosestPointOnCurve, getNormalOnCurve } from "./bez"
@@ -26,12 +29,12 @@ import TransformSession, {
 } from "./sessions/TransformSession"
 import RotateSession from "./sessions/RotateSession"
 
-import { Command, CommandType, history } from "./history"
+import history, { Command, CommandType } from "./history"
 
 /* -------------------- Commands -------------------- */
 
 export function createNode(data: IData) {
-  const point = screenToWorld(pointer.point, data.camera)
+  const point = vec.round(screenToWorld(inputs.pointer.point, data.camera))
 
   const node = getNewNode(point)
 
@@ -144,12 +147,75 @@ export function createGlobBetweenNodes(data: IData, targetId: string) {
   )
 }
 
+export function cloneSelection(
+  data: IData,
+  clones: {
+    nodes: string[]
+    globs: string[]
+    hoveredNodes: string[]
+    hoveredGlobs: string[]
+  },
+  snapshot: MoveSessionSnapshot
+) {
+  const {
+    nodes: sNodes,
+    globs: sGlobs,
+    selectedNodes: sSelectedNodes,
+    selectedGlobs: sSelectedGlobs,
+  } = current(data)
+
+  const sCloneNodes = clones.nodes.map((id) => sNodes[id])
+  const sCloneGlobs = clones.globs.map((id) => sGlobs[id])
+
+  history.execute(
+    data,
+    new Command({
+      type: CommandType.Move,
+      manualSelection: true,
+      do(data, initial) {
+        // When first executed, the items will already be in the correct position
+        if (initial) return
+
+        for (let node of sCloneNodes) {
+          data.nodes[node.id] = node
+        }
+        for (let glob of sCloneGlobs) {
+          data.globs[glob.id] = glob
+        }
+        data.nodeIds = Object.keys(data.nodes)
+        data.globIds = Object.keys(data.globs)
+        data.selectedNodes = sSelectedNodes
+        data.selectedGlobs = sSelectedGlobs
+
+        data.hoveredNodes = clones.hoveredNodes
+        data.hoveredGlobs = clones.hoveredGlobs
+      },
+      undo(data) {
+        console.log("undoing")
+        for (let node of sCloneNodes) {
+          delete data.nodes[node.id]
+        }
+        for (let glob of sCloneGlobs) {
+          delete data.globs[glob.id]
+        }
+        data.nodeIds = Object.keys(data.nodes)
+        data.globIds = Object.keys(data.globs)
+        data.selectedNodes = snapshot.selectedNodes
+        data.selectedGlobs = snapshot.selectedGlobs
+        data.hoveredNodes = []
+        data.hoveredGlobs = []
+      },
+    })
+  )
+}
+
 export function moveSelection(
   data: IData,
   delta: number[],
-  snapshot: MoveSessionSnapshot
+  snapshot: MoveSessionSnapshot,
+  clones?: MoveSessionClones
 ) {
-  const sSnapshot = Session.getSnapshot(data)
+  const sSnapshot = MoveSession.getSnapshot(data)
 
   history.execute(
     data,
@@ -158,11 +224,10 @@ export function moveSelection(
       do(data, initial) {
         // When first executed, the items will already be in the correct position
         if (initial) return
-
-        Session.moveSelection(data, delta, snapshot)
+        MoveSession.moveSelection(data, delta, snapshot)
       },
       undo(data) {
-        Session.moveSelection(data, vec.neg(delta), sSnapshot)
+        MoveSession.moveSelection(data, vec.neg(delta), sSnapshot)
       },
     })
   )
@@ -264,7 +329,7 @@ export function splitGlob(data: IData, id: string) {
   const glob = sGlobs[id]
   const oldGlob = glob
 
-  const point = screenToWorld(pointer.point, sCamera)
+  const point = screenToWorld(inputs.pointer.point, sCamera)
 
   const { E0, E0p, E1, E1p, F0, F1, F0p, F1p, D, Dp } = glob.points
 

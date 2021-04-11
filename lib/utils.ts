@@ -1453,8 +1453,18 @@ export function getNewGlob(A: INode, B: INode): IGlob {
   }
 }
 
-export function screenToWorld(point: number[], camera: IData["camera"]) {
-  return vec.add(vec.div(point, camera.zoom), camera.point)
+export function getGlobClone(glob: IGlob) {
+  const id = "glob_c_" + Math.random() * Date.now()
+  const { D, Dp, nodes } = glob
+
+  return {
+    ...glob,
+    id,
+    nodes: [...nodes],
+    D: [...D],
+    Dp: [...Dp],
+    zIndex: glob.zIndex + 1,
+  }
 }
 
 export function getNewNode(point: number[], radius = 25): INode {
@@ -1470,6 +1480,21 @@ export function getNewNode(point: number[], radius = 25): INode {
     zIndex: 1,
     locked: false,
   }
+}
+
+export function getNodeClone(node: INode) {
+  const id = "node_c_" + Math.random() * Date.now()
+
+  return {
+    ...node,
+    id,
+    point: [...node.point],
+    zIndex: node.zIndex + 1,
+  }
+}
+
+export function screenToWorld(point: number[], camera: IData["camera"]) {
+  return vec.add(vec.div(point, camera.zoom), camera.point)
 }
 
 export function getSelectedBoundingBox(data: IData) {
@@ -1664,6 +1689,7 @@ export function getNodeBounds(node: INode): IBounds {
     point: [x, y],
     radius,
   } = node
+
   return getCircleBounds(x, y, radius)
 }
 
@@ -1812,6 +1838,10 @@ export function getSelectionSnapshot(data: IData): ISelectionSnapshot {
   return {
     nodes,
     globs,
+    selectedNodes: [...data.selectedNodes],
+    selectedGlobs: [...data.selectedGlobs],
+    hoveredNodes: [...data.hoveredNodes],
+    hoveredGlobs: [...data.hoveredGlobs],
   }
 }
 
@@ -1843,4 +1873,8 @@ export function updateGlobPoints(data: IData) {
       glob.points = null
     }
   })
+}
+
+export function worldToScreen(point: number[], offset: number[], zoom: number) {
+  return vec.mul(vec.sub(point, offset), zoom)
 }
