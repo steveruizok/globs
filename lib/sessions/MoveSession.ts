@@ -1,4 +1,4 @@
-import { IData, ISelectionSnapshot } from "lib/types"
+import { IData, IGlob, INode, ISelectionSnapshot } from "lib/types"
 import { moveSelection } from "lib/commands"
 import * as vec from "lib/vec"
 import {
@@ -19,6 +19,8 @@ export default class MoveSession extends BaseSession {
   private snapshot: MoveSessionSnapshot
   private origin = [0, 0]
   private delta = [0, 0]
+  private clones: { nodes: Record<string, INode>; globs: Record<string, IGlob> }
+
   private isCloning = false
 
   constructor(data: IData) {
@@ -56,8 +58,47 @@ export default class MoveSession extends BaseSession {
       screenToWorld(inputs.pointer.point, camera)
     )
 
-    if (inputs.modifiers.optionKey) {
-      console.log("yep")
+    if (inputs.modifiers.optionKey && !this.isCloning) {
+      // Create clones
+      this.clones = MoveSession.getClones(data)
+
+      // Add clones to data
+      for (let nodeId in this.clones.nodes) {
+        data.nodes[nodeId] = this.clones.nodes[nodeId]
+        data.nodeIds.push(nodeId)
+      }
+
+      for (let globId in this.clones.globs) {
+        data.globs[globId] = this.clones.globs[globId]
+        data.globIds.push(globId)
+      }
+
+      // Move snapshot nodes back to original locations
+      for (let nodeId in this.snapshot.nodes) {
+        Object.assign(data.nodes[nodeId], this.snapshot.nodes[nodeId])
+      }
+      for (let globId in this.snapshot.globs) {
+        Object.assign(data.nodes[globId], this.snapshot.globs[globId])
+      }
+
+      // Select clones
+      data.selectedNodes = Object.keys(this.clones.nodes)
+      data.selectedGlobs = Object.keys(this.clones.globs)
+    } else if (!inputs.modifiers.optionKey && this.isCloning) {
+      // Delete clones
+      for (let nodeId in this.clones.nodes) {
+        delete data.nodes[nodeId]
+      }
+      for (let globId in this.clones.globs) {
+        delete data.nodes[globId]
+      }
+
+      data.nodeIds = Object.keys(data.nodes)
+      data.globIds = Object.keys(data.globs)
+
+      // Re-select original nodes from snapshot
+      data.selectedNodes = Object.keys(this.snapshot.nodes)
+      data.selectedGlobs = Object.keys(this.snapshot.globs)
     }
 
     if (this.nodeSnapper) {
