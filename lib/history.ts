@@ -30,19 +30,27 @@ class BaseCommand<T extends any> {
   protected restoreBeforeSelectionState: (data: T) => void
   protected restoreAfterSelectionState: (data: T) => void
   protected saveSelectionState: (data: T) => (data: T) => void
+  protected manualSelection: boolean
 
   constructor(options: {
     type: CommandType
     do: CommandFn<T>
     undo: CommandFn<T>
+    manualSelection?: boolean
   }) {
     this.doFn = options.do
     this.undoFn = options.undo
+    this.manualSelection = options.manualSelection || false
     this.restoreBeforeSelectionState = (data: T) => () => {}
     this.restoreAfterSelectionState = (data: T) => () => {}
   }
 
   undo = (data: T) => {
+    if (this.manualSelection) {
+      this.undoFn(data)
+      return
+    }
+
     // We need to set the selection state to what it was before we after we did the command
     this.restoreAfterSelectionState(data)
     this.undoFn(data)

@@ -1454,12 +1454,13 @@ export function getNewGlob(A: INode, B: INode): IGlob {
 }
 
 export function getGlobClone(glob: IGlob) {
-  const id = "glob_" + Math.random() * Date.now()
-  const { D, Dp } = glob
+  const id = "glob_c_" + Math.random() * Date.now()
+  const { D, Dp, nodes } = glob
 
   return {
     ...glob,
     id,
+    nodes: [...nodes],
     D: [...D],
     Dp: [...Dp],
     zIndex: glob.zIndex + 1,
@@ -1482,11 +1483,12 @@ export function getNewNode(point: number[], radius = 25): INode {
 }
 
 export function getNodeClone(node: INode) {
-  const id = "node_" + Math.random() * Date.now()
+  const id = "node_c_" + Math.random() * Date.now()
 
   return {
     ...node,
     id,
+    point: [...node.point],
     zIndex: node.zIndex + 1,
   }
 }
@@ -1687,6 +1689,7 @@ export function getNodeBounds(node: INode): IBounds {
     point: [x, y],
     radius,
   } = node
+
   return getCircleBounds(x, y, radius)
 }
 
@@ -1835,6 +1838,10 @@ export function getSelectionSnapshot(data: IData): ISelectionSnapshot {
   return {
     nodes,
     globs,
+    selectedNodes: [...data.selectedNodes],
+    selectedGlobs: [...data.selectedGlobs],
+    hoveredNodes: [...data.hoveredNodes],
+    hoveredGlobs: [...data.hoveredGlobs],
   }
 }
 

@@ -227,6 +227,8 @@ const state = createState({
               on: {
                 CANCELLED: { do: "cancelMove", to: "notPointing" },
                 WHEELED: "updateMove",
+                PRESSED_OPTION: ["updateMove"],
+                RELEASED_OPTION: ["updateMove"],
                 MOVED_POINTER: "updateMove",
                 STOPPED_POINTING: {
                   do: ["completeMove", "saveData"],
@@ -269,6 +271,8 @@ const state = createState({
                       do: "cancelMove",
                       to: "notPointing",
                     },
+                    PRESSED_OPTION: ["updateMove"],
+                    RELEASED_OPTION: ["updateMove"],
                     WHEELED: ["updateMove"],
                     MOVED_POINTER: ["updateMove"],
                     STOPPED_POINTING: {
@@ -955,7 +959,7 @@ const state = createState({
       if (typeof localStorage === "undefined") return
       const saved = localStorage.getItem("glob_aldata_v6")
       if (saved) {
-        Object.assign(data, migrate(JSON.parse(saved)))
+        // Object.assign(data, migrate(JSON.parse(saved)))
       }
 
       data.selectedNodes = []

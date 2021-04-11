@@ -181,6 +181,10 @@ export interface KeyCommand {
 }
 
 export interface ISelectionSnapshot {
+  selectedNodes: string[]
+  selectedGlobs: string[]
+  hoveredNodes: string[]
+  hoveredGlobs: string[]
   nodes: Record<
     string,
     {

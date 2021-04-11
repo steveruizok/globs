@@ -42,7 +42,6 @@ export default class ResizeSession extends BaseSession {
     if (inputs.keys.Shift) {
       node.radius = dist
     } else {
-      console.log(this.startRadius, dist - this.startDistance)
       node.radius = round(this.startRadius + (dist - this.startDistance))
     }
 

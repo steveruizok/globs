@@ -39,9 +39,9 @@ class Inputs {
     g: [{ eventName: "STARTED_LINKING_NODES", modifiers: [] }],
     l: [{ eventName: "LOCKED_NODES", modifiers: ["Meta"] }],
     n: [{ eventName: "STARTED_CREATING_NODES", modifiers: [] }],
-    Option: [{ eventName: "PRESSED_OPTION", modifiers: [] }],
     Shift: [{ eventName: "PRESSED_SHIFT", modifiers: [] }],
-    Alt: [{ eventName: "PRESSED_ALT", modifiers: [] }],
+    Option: [{ eventName: "PRESSED_OPTION", modifiers: [] }],
+    Alt: [{ eventName: "PRESSED_OPTION", modifiers: [] }],
     Meta: [{ eventName: "PRESSED_META", modifiers: [] }],
     Escape: [{ eventName: "CANCELLED", modifiers: [] }],
     Enter: [{ eventName: "CONFIRMED", modifiers: [] }],
@@ -56,9 +56,9 @@ class Inputs {
 
   upCommands: Record<string, KeyCommand[]> = {
     " ": [{ eventName: "RELEASED_SPACE", modifiers: [] }],
-    Option: [{ eventName: "RELEASED_OPTION", modifiers: [] }],
     Shift: [{ eventName: "RELEASED_SHIFT", modifiers: [] }],
-    Alt: [{ eventName: "RELEASED_ALT", modifiers: [] }],
+    Option: [{ eventName: "RELEASED_OPTION", modifiers: [] }],
+    Alt: [{ eventName: "PRESSED_OPTION", modifiers: [] }],
     Meta: [{ eventName: "RELEASED_META", modifiers: [] }],
   }
 
@@ -191,6 +191,13 @@ class Inputs {
 
     this.keys[key] = true
 
+    Object.assign(this.modifiers, {
+      shiftKey: shiftKey,
+      optionKey: altKey,
+      ctrlKey: ctrlKey,
+      metaKey: metaKey || ctrlKey,
+    })
+
     if (key in this.downCommands) {
       for (let { modifiers, eventName } of this.downCommands[key]) {
         if (modifiers.every((command) => this.keys[command])) {
@@ -198,15 +205,6 @@ class Inputs {
         }
       }
     }
-
-    this.keys[key] = true
-
-    Object.assign(this.modifiers, {
-      shiftKey: shiftKey,
-      optionKey: altKey,
-      ctrlKey: ctrlKey,
-      metaKey: metaKey || ctrlKey,
-    })
 
     return false
   }
@@ -222,6 +220,13 @@ class Inputs {
 
     this.keys[key] = false
 
+    Object.assign(this.modifiers, {
+      shiftKey: shiftKey,
+      optionKey: altKey,
+      ctrlKey: ctrlKey,
+      metaKey: metaKey || ctrlKey,
+    })
+
     if (key in this.upCommands) {
       for (let { modifiers, eventName } of this.upCommands[key]) {
         if (modifiers.every((command) => this.keys[command])) {
@@ -229,13 +234,6 @@ class Inputs {
         }
       }
     }
-
-    Object.assign(this.modifiers, {
-      shiftKey: shiftKey,
-      optionKey: altKey,
-      ctrlKey: ctrlKey,
-      metaKey: metaKey || ctrlKey,
-    })
 
     return false
   }
