@@ -35,6 +35,7 @@ class Inputs {
     a: [{ eventName: "SELECTED_ALL", modifiers: ["Meta"] }],
     s: [{ eventName: "SAVED", modifiers: ["Meta"] }],
     c: [{ eventName: "COPIED", modifiers: ["Meta"] }],
+    x: [{ eventName: "CUT", modifiers: ["Meta"] }],
     v: [{ eventName: "PASTED", modifiers: ["Meta"] }],
     g: [{ eventName: "STARTED_LINKING_NODES", modifiers: [] }],
     l: [{ eventName: "LOCKED_NODES", modifiers: ["Meta"] }],
@@ -187,7 +188,7 @@ class Inputs {
   ) => {
     if (key === "Control" && !isDarwin) key = "Meta"
 
-    if (this.keys[key] && !["z", "c", "v"].includes(key)) return
+    if (this.keys[key] && !["z", "c", "x", "v"].includes(key)) return
 
     this.keys[key] = true
 
