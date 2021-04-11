@@ -4,7 +4,7 @@ import state, { useSelector } from "lib/state"
 import usePinchZoom from "hooks/usePinchZoom"
 import * as vec from "lib/vec"
 import { motion, PanInfo, TapInfo } from "framer-motion"
-import inputs from "lib/inputs"
+import inputs from "lib/Inputs"
 
 import ContextMenu, {
   ContextMenuRoot,
