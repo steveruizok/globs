@@ -865,10 +865,12 @@ export function circleFromThreePoints(A: number[], B: number[], C: number[]) {
 
 export function throttle<P extends any[], T extends (...args: P) => any>(
   fn: T,
-  wait: number
+  wait: number,
+  preventDefault?: boolean
 ) {
   let inThrottle: boolean, lastFn: any, lastTime: number
   return function(...args: P) {
+    if (preventDefault) args[0].preventDefault()
     const context = this
     if (!inThrottle) {
       fn.apply(context, args)

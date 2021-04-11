@@ -32,6 +32,7 @@ import {
 } from "utils"
 import { getGlobInnerBounds, getNodeBounds } from "./bounds-utils"
 import migrate from "./migrations"
+import clipboard from "./clipboard"
 
 export const elms: Record<string, SVGPathElement> = {}
 
@@ -70,6 +71,9 @@ const state = createState({
           to: "draggingThumbstick",
         },
         ZOOMED_TO_FIT: "zoomToFit",
+        COPIED: "copyToClipboard",
+        PASTED: "startPasteFromClipboard",
+        FINISHED_PASTE: "finishPasteFromClipboard",
       },
       initial: "selecting",
       states: {
@@ -478,6 +482,9 @@ const state = createState({
     isTrackpadZoom(data, payload: { ctrlKey: boolean }) {
       return inputs.keys.Alt || payload.ctrlKey
     },
+    isScaleZoom(data, payload: { scale: number }) {
+      return payload.scale !== undefined
+    },
     hasMiddleButton(data, payload: { isPan: boolean }) {
       return payload.isPan
     },
@@ -498,6 +505,16 @@ const state = createState({
     },
   },
   actions: {
+    // CLIPBOARD
+    copyToClipboard(data) {
+      clipboard.copy(data)
+    },
+    startPasteFromClipboard(data) {
+      clipboard.startPaste()
+    },
+    finishPasteFromClipboard(data, copied) {
+      clipboard.finishPaste(data, copied)
+    },
     // HISTORY
     undo(data) {
       history.undo(data)
@@ -976,6 +993,9 @@ const state = createState({
         window.addEventListener("keyup", handleKeyUp)
         window.addEventListener("resize", handleResize)
         window.addEventListener("blur", handleWindowBlur)
+        window.addEventListener("gesturestart", handleGestureStart)
+        window.addEventListener("gesturechange", handleGestureEvent)
+        window.addEventListener("gestureend", handleGestureEvent)
       }
     },
     teardown() {
@@ -984,6 +1004,9 @@ const state = createState({
         window.removeEventListener("keyup", handleKeyUp)
         window.removeEventListener("resize", handleResize)
         window.removeEventListener("blur", handleWindowBlur)
+        window.removeEventListener("gesturestart", handleGestureStart)
+        window.removeEventListener("gesturechange", handleGestureEvent)
+        window.removeEventListener("gestureend", handleGestureEvent)
       }
     },
     hardReset(data) {
@@ -1041,14 +1064,29 @@ export const mvPointer = {
 //   points: new Set<number>(),
 // }
 
-function updateMvPointer(screen: number[], world: number[]) {
-  mvPointer.screen.set(screen)
-  mvPointer.world.set(world)
-}
-
 // export const keys: Record<string, boolean> = {}
 
 /* ------------------ INPUT EVENTS ------------------ */
+
+let prevScale = 1
+
+const handleGestureStart = (e: any) => {
+  prevScale = 1
+  e.preventDefault()
+}
+
+const handleGestureEvent = throttle(
+  (e: any) => {
+    const scale = e.scale
+    let delta = scale - prevScale
+    if (scale < 1) delta *= 2
+    prevScale = scale
+    // console.log(delta * -200)
+    state.send("WHEELED", { ctrlKey: true, delta: [0, delta * -50] })
+  },
+  16,
+  true
+)
 
 const handleResize = throttle(() => {
   if (typeof window !== "undefined") {

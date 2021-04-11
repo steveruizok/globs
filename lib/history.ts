@@ -17,6 +17,7 @@ export enum CommandType {
   MoveAnchor,
   ReorderGlobs,
   ReorderNodes,
+  Paste,
 }
 
 /**

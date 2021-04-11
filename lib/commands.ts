@@ -147,6 +147,68 @@ export function createGlobBetweenNodes(data: IData, targetId: string) {
   )
 }
 
+export function pasteSelection(
+  data: IData,
+  pasted: { nodes: Record<string, INode>; globs: Record<string, IGlob> }
+) {
+  history.execute(
+    data,
+    new Command({
+      type: CommandType.Paste,
+      do(data) {
+        Object.assign(data.nodes, pasted.nodes)
+        Object.assign(data.globs, pasted.globs)
+
+        data.nodeIds = Object.keys(data.nodes)
+        data.globIds = Object.keys(data.globs)
+
+        data.selectedNodes = Object.keys(pasted.nodes)
+        data.selectedGlobs = Object.keys(pasted.globs)
+
+        const bounds = getSelectedBoundingBox(data)
+
+        const point = screenToWorld(vec.div(data.viewport.size, 2), data.camera)
+
+        const delta = vec.sub(
+          point,
+          vec.add(
+            [bounds.x, bounds.y],
+            vec.div([bounds.width, bounds.height], 2)
+          )
+        )
+
+        const { globs, nodes } = data
+
+        for (let globId of data.selectedGlobs) {
+          const glob = globs[globId]
+          const { D, Dp } = globs[glob.id]
+          glob.D = vec.round(vec.add(D, delta))
+          glob.Dp = vec.round(vec.add(Dp, delta))
+        }
+
+        // Move nodes
+        for (let nodeId of data.selectedNodes) {
+          const node = nodes[nodeId]
+          let next = vec.round(vec.add(nodes[node.id].point, delta), 2)
+          node.point = next
+        }
+
+        updateGlobPoints(data)
+      },
+      undo(data) {
+        for (let nodeId in pasted.nodes) {
+          delete data.nodes[nodeId]
+        }
+        for (let globId in pasted.globs) {
+          delete data.globs[globId]
+        }
+        data.nodeIds = Object.keys(data.nodes)
+        data.globIds = Object.keys(data.globs)
+      },
+    })
+  )
+}
+
 export function cloneSelection(
   data: IData,
   clones: {
@@ -191,7 +253,6 @@ export function cloneSelection(
         data.hoveredGlobs = clones.hoveredGlobs
       },
       undo(data) {
-        console.log("undoing")
         for (let node of sCloneNodes) {
           delete data.nodes[node.id]
         }

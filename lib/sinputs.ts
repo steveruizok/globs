@@ -187,7 +187,7 @@ class Inputs {
   ) => {
     if (key === "Control" && !isDarwin) key = "Meta"
 
-    if (this.keys[key] && !["z"].includes(key)) return
+    if (this.keys[key] && !["z", "c", "v"].includes(key)) return
 
     this.keys[key] = true
 
