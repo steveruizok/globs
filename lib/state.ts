@@ -959,7 +959,7 @@ const state = createState({
       if (typeof localStorage === "undefined") return
       const saved = localStorage.getItem("glob_aldata_v6")
       if (saved) {
-        // Object.assign(data, migrate(JSON.parse(saved)))
+        Object.assign(data, migrate(JSON.parse(saved)))
       }
 
       data.selectedNodes = []
