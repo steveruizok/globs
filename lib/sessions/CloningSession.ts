@@ -1,7 +1,7 @@
 import { IAnchor, IData, IGlob, INode, ISelectionSnapshot } from "lib/types"
 import BaseSession from "./BaseSession"
 import * as vec from "lib/vec"
-import inputs from "lib/inputs"
+import inputs from "lib/sinputs"
 import {
   screenToWorld,
   getGlobPoints,

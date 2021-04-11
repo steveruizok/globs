@@ -1,7 +1,7 @@
 import { IData } from "lib/types"
 import BaseSession from "./BaseSession"
 import * as vec from "lib/vec"
-import inputs from "lib/inputs"
+import inputs from "lib/sinputs"
 import { round, screenToWorld, updateGlobPoints } from "lib/utils"
 import { resizeNode } from "lib/commands"
 

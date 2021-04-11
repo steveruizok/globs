@@ -3,7 +3,7 @@ import { motion, PanInfo, transform, useMotionValue } from "framer-motion"
 import { memo, useCallback, useEffect, useRef } from "react"
 import { modulate, throttle } from "lib/utils"
 import state from "lib/state"
-import inputs from "lib/inputs"
+import inputs from "lib/sinputs"
 import * as vec from "lib/vec"
 
 function Thumbstick() {

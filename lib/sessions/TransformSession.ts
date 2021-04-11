@@ -7,7 +7,7 @@ import {
   screenToWorld,
   updateGlobPoints,
 } from "lib/utils"
-import inputs from "lib/inputs"
+import inputs from "lib/sinputs"
 import { transformBounds } from "lib/commands"
 
 export interface TransformSessionSnapshot {

@@ -1,5 +1,5 @@
 import state, { mvPointer } from "lib/state"
-import inputs from "lib/inputs"
+import inputs from "lib/sinputs"
 import {
   IAnchor,
   IData,

@@ -1,7 +1,7 @@
 import { IAnchor, IData } from "lib/types"
 import BaseSession from "./BaseSession"
 import * as vec from "lib/vec"
-import inputs from "lib/inputs"
+import inputs from "lib/sinputs"
 import { screenToWorld, getGlobPoints } from "lib/utils"
 import { moveAnchor } from "lib/commands"
 

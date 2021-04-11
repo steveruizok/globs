@@ -1,7 +1,7 @@
 import { IData, IGlob, INode } from "./types"
 import { current } from "immer"
 import * as vec from "./vec"
-import inputs from "lib/inputs"
+import inputs from "lib/sinputs"
 import {
   getGlob,
   getLineLineIntersection,

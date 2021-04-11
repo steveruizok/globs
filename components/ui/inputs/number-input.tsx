@@ -1,6 +1,6 @@
 import { motion } from "framer-motion"
 import { clamp } from "lib/utils"
-import inputs from "lib/inputs"
+import inputs from "lib/sinputs"
 import React, { memo, useEffect, useRef, useState } from "react"
 import { PropContainer } from "./shared"
 

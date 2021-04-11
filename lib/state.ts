@@ -6,7 +6,7 @@ import * as svg from "lib/svg"
 
 import { initialData } from "./data"
 import history from "lib/history"
-import inputs from "lib/inputs"
+import inputs from "lib/sinputs"
 import * as commands from "lib/commands"
 import AnchorSession from "lib/sessions/AnchorSession"
 import HandleSession from "lib/sessions/HandleSession"

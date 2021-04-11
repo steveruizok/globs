@@ -1,5 +1,5 @@
 import { IData } from "types"
-import inputs from "lib/inputs"
+import inputs from "lib/sinputs"
 import MoveSession from "lib/sessions/MoveSession"
 
 describe("Move Session.", () => {
