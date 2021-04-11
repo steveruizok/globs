@@ -1081,7 +1081,6 @@ const handleGestureEvent = throttle(
     let delta = scale - prevScale
     if (scale < 1) delta *= 2
     prevScale = scale
-    // console.log(delta * -200)
     state.send("WHEELED", { ctrlKey: true, delta: [0, delta * -50] })
   },
   16,
