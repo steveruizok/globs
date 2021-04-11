@@ -4,7 +4,7 @@ import state, { useSelector } from "lib/state"
 import usePinchZoom from "hooks/usePinchZoom"
 import * as vec from "lib/vec"
 import { motion, PanInfo, TapInfo } from "framer-motion"
-import inputs from "lib/Inputs"
+import inputs from "lib/inputs"
 
 import ContextMenu, {
   ContextMenuRoot,
@@ -20,7 +20,6 @@ import StatusBar from "./ui/statusbar"
 import LearnPanel from "./ui/learn-panel"
 import ZoomPanel from "./ui/zoom-panel"
 import Thumbstick from "./ui/thumbstick"
-import { throttle } from "lib/utils"
 
 const DOT_RADIUS = 2,
   ANCHOR_RADIUS = 4,

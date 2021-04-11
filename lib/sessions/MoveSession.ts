@@ -1,7 +1,12 @@
 import { IData, ISelectionSnapshot } from "lib/types"
 import { moveSelection } from "lib/commands"
 import * as vec from "lib/vec"
-import { getSelectionSnapshot, screenToWorld } from "lib/utils"
+import {
+  getGlobClone,
+  getNodeClone,
+  getSelectionSnapshot,
+  screenToWorld,
+} from "lib/utils"
 import { getGlobPoints } from "lib/utils"
 import inputs from "lib/inputs"
 import getNodeSnapper, { NodeSnapper } from "lib/snaps"
@@ -11,9 +16,10 @@ export interface MoveSessionSnapshot extends ISelectionSnapshot {}
 
 export default class MoveSession extends BaseSession {
   private nodeSnapper?: NodeSnapper
-  private delta = [0, 0]
   private snapshot: MoveSessionSnapshot
-  private origin: number[]
+  private origin = [0, 0]
+  private delta = [0, 0]
+  private isCloning = false
 
   constructor(data: IData) {
     super(data)
@@ -49,6 +55,10 @@ export default class MoveSession extends BaseSession {
       this.origin,
       screenToWorld(inputs.pointer.point, camera)
     )
+
+    if (inputs.modifiers.optionKey) {
+      console.log("yep")
+    }
 
     if (this.nodeSnapper) {
       const snapResults = this.nodeSnapper(
@@ -141,6 +151,34 @@ export default class MoveSession extends BaseSession {
           glob.points = null
         }
       }
+    }
+  }
+
+  static getClones(data: IData) {
+    const nodesToSnapshot = new Set(data.selectedNodes)
+
+    for (let globId of data.selectedGlobs) {
+      nodesToSnapshot.add(data.globs[globId].nodes[0])
+      nodesToSnapshot.add(data.globs[globId].nodes[1])
+    }
+
+    const nodes = Object.fromEntries(
+      Array.from(nodesToSnapshot.values()).map((nodeId) => {
+        const node = getNodeClone(data.nodes[nodeId])
+        return [node.id, node]
+      })
+    )
+
+    const globs = Object.fromEntries(
+      data.selectedGlobs.map((globId) => {
+        const glob = getGlobClone(data.globs[globId])
+        return [glob.id, glob]
+      })
+    )
+
+    return {
+      nodes,
+      globs,
     }
   }
 }

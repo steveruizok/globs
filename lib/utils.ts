@@ -1453,8 +1453,17 @@ export function getNewGlob(A: INode, B: INode): IGlob {
   }
 }
 
-export function screenToWorld(point: number[], camera: IData["camera"]) {
-  return vec.add(vec.div(point, camera.zoom), camera.point)
+export function getGlobClone(glob: IGlob) {
+  const id = "glob_" + Math.random() * Date.now()
+  const { D, Dp } = glob
+
+  return {
+    ...glob,
+    id,
+    D: [...D],
+    Dp: [...Dp],
+    zIndex: glob.zIndex + 1,
+  }
 }
 
 export function getNewNode(point: number[], radius = 25): INode {
@@ -1470,6 +1479,20 @@ export function getNewNode(point: number[], radius = 25): INode {
     zIndex: 1,
     locked: false,
   }
+}
+
+export function getNodeClone(node: INode) {
+  const id = "node_" + Math.random() * Date.now()
+
+  return {
+    ...node,
+    id,
+    zIndex: node.zIndex + 1,
+  }
+}
+
+export function screenToWorld(point: number[], camera: IData["camera"]) {
+  return vec.add(vec.div(point, camera.zoom), camera.point)
 }
 
 export function getSelectedBoundingBox(data: IData) {
