@@ -512,10 +512,8 @@ export function splitGlob(data: IData, id: string) {
     newStartNode = getNewNode(C, r)
   }
 
-  const [start, end] = glob.nodes.map((id) => sNodes[id])
-
   newGlob = {
-    ...getNewGlob(newStartNode, end),
+    ...getNewGlob(newStartNode, data.nodes[glob.nodes[1]]),
     D: D1,
     Dp: D1p,
     a: a1,
@@ -523,6 +521,12 @@ export function splitGlob(data: IData, id: string) {
     ap: a1p,
     bp: b1p,
   }
+
+  newGlob.points = getGlobPoints(
+    newGlob,
+    newStartNode,
+    data.nodes[glob.nodes[1]]
+  )
 
   history.execute(
     data,
