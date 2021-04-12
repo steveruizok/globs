@@ -373,7 +373,6 @@ export function splitGlob(data: IData, id: string) {
 
   let newStartNode: INode,
     newGlob: IGlob,
-    isValid = false,
     D0: number[],
     D1: number[],
     D0p: number[],
@@ -484,6 +483,11 @@ export function splitGlob(data: IData, id: string) {
     D0p = getLineLineIntersection(PLp[0], PLp[1], E0p, Dp)
     D1p = getLineLineIntersection(PLp[0], PLp[1], E1p, Dp)
 
+    if (!D0 && D1 && D0p && D1p) {
+      console.log("Could not split glob there.")
+      return
+    }
+
     // The radio of distances between old and new handles
     const d0 = vec.dist(E0, D0) / vec.dist(E0, D)
     const d0p = vec.dist(E0p, D0p) / vec.dist(E0p, Dp)
@@ -520,60 +524,31 @@ export function splitGlob(data: IData, id: string) {
     bp: b1p,
   }
 
-  try {
-    // Old glob
-
-    getGlob(
-      start.point,
-      start.radius,
-      newStartNode.point,
-      newStartNode.radius,
-      D0,
-      D0p,
-      a0,
-      b0,
-      a0p,
-      b0p
-    )
-
-    // New Glob
-
-    newGlob.points = getGlob(
-      newStartNode.point,
-      newStartNode.radius,
-      end.point,
-      end.radius,
-      D1,
-      D1p,
-      a1,
-      b1,
-      a1p,
-      b1p
-    )
-
-    isValid = true
-  } catch (e) {
-    console.warn("Could not create glob.", e.message)
-  }
-
-  if (!isValid) return
-
   history.execute(
     data,
     new Command({
       type: CommandType.Split,
       do(data) {
+        // Old glob
         const glob = data.globs[oldGlob.id]
         glob.nodes[1] = newStartNode.id
 
         Object.assign(glob, {
-          options: { D: D0, Dp: D0p, a: a0, b: b0, ap: a0p, bp: b0p },
+          D: D0,
+          Dp: D0p,
+          a: a0,
+          b: b0,
+          ap: a0p,
+          bp: b0p,
         })
 
-        const [start, end] = glob.nodes.map((id) => data.nodes[id])
+        glob.points = getGlobPoints(
+          glob,
+          data.nodes[glob.nodes[0]],
+          newStartNode
+        )
 
-        glob.points = getGlobPoints(glob, start, newStartNode)
-
+        // New Glob
         data.nodeIds.push(newStartNode.id)
         data.nodes[newStartNode.id] = newStartNode
 
