@@ -1,4 +1,4 @@
-import { IData, IGlob, INode } from "./types"
+import { IData, IGlob, INode, ISelectionSnapshot } from "./types"
 import { current } from "immer"
 import * as vec from "./vec"
 import inputs from "lib/sinputs"
@@ -890,8 +890,9 @@ export function resizeBounds(data: IData, size: number[]) {
   )
 }
 
-export function resizeNode(data: IData, id: string, prevRadius: number) {
-  const current = ResizeSession.getSnapshot(data, id)
+export function resizeNode(data: IData, snapshot: ISelectionSnapshot) {
+  const current = getSelectionSnapshot(data)
+
   history.execute(
     data,
     new Command({
@@ -900,14 +901,17 @@ export function resizeNode(data: IData, id: string, prevRadius: number) {
         if (initial) return
 
         const { nodes } = data
-        const node = nodes[id]
-        node.radius = current.radius
+        for (let nodeId in snapshot.nodes) {
+          nodes[nodeId].radius = current.nodes[nodeId].radius
+        }
         updateGlobPoints(data)
       },
       undo(data) {
         const { nodes } = data
-        const node = nodes[id]
-        node.radius = prevRadius
+        for (let nodeId in snapshot.nodes) {
+          nodes[nodeId].radius = snapshot.nodes[nodeId].radius
+        }
+
         updateGlobPoints(data)
       },
     })

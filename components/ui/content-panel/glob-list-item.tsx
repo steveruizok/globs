@@ -29,7 +29,7 @@ export default function GlobListItem({
   return (
     <button
       data-selected={selected}
-      onClick={handleSelect}
+      onPointerDown={handleSelect}
       onPointerLeave={handlePointerLeave}
       onPointerEnter={handlePointerEnter}
     >

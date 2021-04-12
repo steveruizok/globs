@@ -36,7 +36,7 @@ export default function NodeListItem({
     <>
       <button
         data-selected={selected}
-        onClick={handleSelect}
+        onPointerDown={handleSelect}
         onPointerLeave={handlePointerLeave}
         onPointerEnter={handlePointerEnter}
       >

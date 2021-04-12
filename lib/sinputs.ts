@@ -111,7 +111,6 @@ class Inputs {
       type,
       buttons,
       direction: "any",
-      origin: [x, y],
       point: [x, y],
       axis: ox > oy ? "x" : "y",
       delta: vec.sub([x, y], this.pointer.point),

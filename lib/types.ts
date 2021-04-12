@@ -142,6 +142,7 @@ export interface IData {
   nodes: Record<string, INode>
   globs: Record<string, IGlob>
   selectedGlobs: string[]
+  pointingId: string
   hoveredNodes: string[]
   hoveredGlobs: string[]
   highlightNodes: string[]

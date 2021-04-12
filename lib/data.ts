@@ -116,6 +116,7 @@ export const initialData: IData = {
   },
   nodeIds: ["0", "1", "2", "3", "4"],
   globIds: ["g0", "g1", "g2"],
+  pointingId: undefined,
   hoveredNodes: [],
   hoveredGlobs: [],
   highlightNodes: [],
