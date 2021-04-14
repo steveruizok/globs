@@ -29,7 +29,7 @@ export function bezierTo(A: number[], B: number[], C: number[]) {
 
 export function arcTo(C: number[], r: number, A: number[], B: number[]) {
   return [
-    moveTo(A),
+    // moveTo(A),
     "A",
     r,
     r,

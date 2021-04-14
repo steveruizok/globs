@@ -20,7 +20,13 @@ class Exports {
 
     const globbedNodes = new Set<string>([])
 
-    const globIdsToCopy = selectedGlobs.length ? selectedGlobs : globIds
+    const hasSelected = globIds.length + nodeIds.length > 0
+
+    const globIdsToCopy = hasSelected
+      ? selectedGlobs.length
+        ? selectedGlobs
+        : []
+      : globIds
 
     for (let globId of globIdsToCopy) {
       globbedNodes.add(globs[globId].nodes[0])
@@ -33,8 +39,10 @@ class Exports {
       }
     }
 
-    const nodeIdsToCopy = (data.selectedNodes.length
-      ? selectedNodes
+    const nodeIdsToCopy = (hasSelected
+      ? data.selectedNodes.length
+        ? selectedNodes
+        : []
       : nodeIds
     ).filter((id) => !globbedNodes.has(id))
 
