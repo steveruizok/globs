@@ -10,6 +10,7 @@ import {
   X,
   Menu,
   Circle,
+  Share,
 } from "react-feather"
 import { styled } from "stitches.config"
 import useTheme from "hooks/useTheme"
@@ -72,9 +73,12 @@ export default function Toolbar() {
         <button title="Toggle Fill" onClick={() => state.send("TOGGLED_FILL")}>
           <Circle className="fill-flat" />
         </button>
-        {/* <button disabled={true}>
-          <Copy />
-        </button> */}
+        <button
+          title="Copy SVG to Clipboard"
+          onClick={() => state.send("EXPORTED")}
+        >
+          <Share />
+        </button>
         <button onClick={toggle}>
           <Sun />
         </button>

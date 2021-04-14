@@ -34,7 +34,10 @@ class Inputs {
     ],
     a: [{ eventName: "SELECTED_ALL", modifiers: ["Meta"] }],
     s: [{ eventName: "SAVED", modifiers: ["Meta"] }],
-    c: [{ eventName: "COPIED", modifiers: ["Meta"] }],
+    c: [
+      { eventName: "EXPORTED", modifiers: ["Shift", "Meta"] },
+      { eventName: "COPIED", modifiers: ["Meta"] },
+    ],
     x: [{ eventName: "CUT", modifiers: ["Meta"] }],
     v: [{ eventName: "PASTED", modifiers: ["Meta"] }],
     g: [{ eventName: "STARTED_LINKING_NODES", modifiers: [] }],

@@ -9,6 +9,7 @@ import BaseNode from "../node/base-node"
 import GlobNodeHints from "./glob-node-hints"
 import * as svg from "lib/svg"
 import classNames from "classnames"
+import useRegisteredElement from "hooks/useRegisteredElement"
 
 interface Props {
   id: string
@@ -20,6 +21,8 @@ export default function Glob({ id, fill, isSelected }: Props) {
   const glob = useSelector((s) => s.data.globs[id], deepCompare)
   const start = useSelector((s) => s.data.nodes[glob?.nodes[0]])
   const end = useSelector((s) => s.data.nodes[glob?.nodes[1]])
+
+  const ref = useRegisteredElement<SVGPathElement>(id)
 
   const isDraggingD = useSelector(
     ({ data: { selectedHandle } }) =>
@@ -67,6 +70,7 @@ export default function Glob({ id, fill, isSelected }: Props) {
       <g onPointerLeave={handleUnhoverGlob} onPointerEnter={handleHoverGlob}>
         {safe ? (
           <BaseGlob
+            ref={ref}
             id={glob.id}
             points={globPts}
             startCap={start.cap}

@@ -7,6 +7,7 @@ import * as svg from "lib/svg"
 import { initialData } from "./data"
 import history from "lib/history"
 import inputs from "lib/sinputs"
+import exports from "lib/exports"
 import * as commands from "lib/commands"
 import AnchorSession from "lib/sessions/AnchorSession"
 import HandleSession from "lib/sessions/HandleSession"
@@ -33,8 +34,9 @@ import {
 import { getGlobInnerBounds, getNodeBounds } from "./bounds-utils"
 import migrate from "./migrations"
 import clipboard from "./clipboard"
+import { MutableRefObject } from "react"
 
-export const elms: Record<string, SVGPathElement> = {}
+export const elms: Record<string, MutableRefObject<SVGElement>> = {}
 
 const state = createState({
   data: initialData,
@@ -54,6 +56,7 @@ const state = createState({
     ready: {
       on: {
         UNMOUNTED: { do: "teardown", to: "loading" },
+        EXPORTED: { do: "copySvgToClipboard" },
         RESIZED: "setViewport",
         PRESSED_SPACE: "toggleFill",
         RELEASED_SPACE: "toggleFill",
@@ -626,6 +629,10 @@ const state = createState({
     },
   },
   actions: {
+    copySvgToClipboard(data) {
+      exports.copyToSvg(data, elms)
+    },
+
     // CLIPBOARD
     copyToClipboard(data) {
       clipboard.copy(data)
@@ -645,7 +652,10 @@ const state = createState({
     },
 
     // ELEMENT REFERENCES
-    mountElement(data, payload: { id: string; elm: SVGPathElement }) {
+    mountElement(
+      _,
+      payload: { id: string; elm: MutableRefObject<SVGElement> }
+    ) {
       elms[payload.id] = payload.elm
     },
     deleteElement(data, payload: { id: string }) {
