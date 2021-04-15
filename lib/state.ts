@@ -162,9 +162,12 @@ const state = createState({
                 POINTED_CANVAS: [
                   { unless: "isLeftClick", break: true },
                   {
-                    if: "isLeftClick",
-                    do: "clearSelection",
-                    to: "brushSelecting",
+                    if: ["hasSelection", "hasShift"],
+                    to: "pointingCanvas",
+                    else: {
+                      do: "clearSelection",
+                      to: "brushSelecting",
+                    },
                   },
                 ],
                 POINTED_ANCHOR: [
@@ -228,12 +231,14 @@ const state = createState({
                 },
               },
             },
-            canvasPanning: {
+            pointingCanvas: {
               on: {
                 MOVED_POINTER: {
-                  do: "panCamera",
+                  if: "distanceImpliesDrag",
+                  to: "brushSelecting",
                 },
                 STOPPED_POINTING: {
+                  do: "clearSelection",
                   to: "notPointing",
                 },
               },
@@ -295,7 +300,7 @@ const state = createState({
                       then: {
                         if: "pointingIsSelectedGlob",
                         do: "pullPointingFromSelectedGlobs",
-                        else: "setPointingToSelectedGlobs",
+                        else: "pushPointingToSelectedGlobs",
                       },
                       else: "setPointingToSelectedGlobs",
                     },
@@ -322,11 +327,7 @@ const state = createState({
                     STOPPED_POINTING: [
                       {
                         if: "hasShift",
-                        then: {
-                          if: "pointingIsSelectedGlob",
-                          do: "pullPointingFromSelectedGlobs",
-                          else: "pushPointingToSelectedGlobs",
-                        },
+                        then: "pullPointingFromSelectedGlobs",
                         else: "setPointingToSelectedGlobs",
                       },
                       { to: "notPointing" },
@@ -805,7 +806,9 @@ const state = createState({
       data.selectedNodes = []
     },
     pullPointingFromSelectedGlobs(data, payload: { id: string }) {
-      data.selectedGlobs = data.selectedGlobs.filter((id) => id !== payload.id)
+      data.selectedGlobs = data.selectedGlobs.filter(
+        (id) => id !== data.pointingId
+      )
     },
     // highlights
     pushHighlightNode(data, payload: { id: string }) {

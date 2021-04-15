@@ -42,7 +42,7 @@ export default class BrushSession extends BaseSession {
   constructor(data: IData) {
     super(data)
 
-    this.origin = vec.round(screenToWorld(inputs.pointer.point, data.camera))
+    this.origin = vec.round(screenToWorld(inputs.pointer.origin, data.camera))
 
     this.snapshot = BrushSession.getSnapshot(data)
   }
@@ -62,11 +62,11 @@ export default class BrushSession extends BaseSession {
     // If the user is holding Shift, then start from the originally selected items.
 
     const selectedNodeIds = new Set(
-      inputs.modifiers.Shift ? snapshot.selectedNodeIds : []
+      inputs.modifiers.shiftKey ? snapshot.selectedNodeIds : []
     )
 
     const selectedGlobIds = new Set(
-      inputs.modifiers.Shift ? snapshot.selectedGlobIds : []
+      inputs.modifiers.shiftKey ? snapshot.selectedGlobIds : []
     )
 
     // Our snapshot already contains an optimized R-tree containing all of the
