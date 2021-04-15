@@ -7,7 +7,7 @@ import {
   screenToWorld,
   updateGlobPoints,
 } from "lib/utils"
-import inputs from "lib/sinputs"
+import inputs from "lib/inputs"
 import { transformBounds } from "lib/commands"
 
 export interface TransformSessionSnapshot {
@@ -80,7 +80,7 @@ export default class TransformSession extends BaseSession {
     this.value = value
     this.restore = getSelectionSnapshot(data)
 
-    const { x: x0, y: y0, maxX: x1, maxY: y1 } = this.snapshot.bounds
+    const { minX: x0, minY: y0, maxX: x1, maxY: y1 } = this.snapshot.bounds
     const { maxX: mx, maxY: my, width: mw, height: mh } = this.snapshot.bounds
 
     this.current = {
@@ -256,10 +256,10 @@ export default class TransformSession extends BaseSession {
             id,
             x: x,
             y: y,
-            nx: (x - bounds.x) / bounds.width,
-            ny: (y - bounds.y) / bounds.height,
-            nmx: 1 - (x - bounds.x) / bounds.width,
-            nmy: 1 - (y - bounds.y) / bounds.height,
+            nx: (x - bounds.minX) / bounds.width,
+            ny: (y - bounds.minY) / bounds.height,
+            nmx: 1 - (x - bounds.minX) / bounds.width,
+            nmy: 1 - (y - bounds.minY) / bounds.height,
             nw: radius / bounds.width,
             nh: radius / bounds.height,
             radius,
@@ -285,18 +285,18 @@ export default class TransformSession extends BaseSession {
             D: {
               x: dx,
               y: dy,
-              nx: (dx - bounds.x) / bounds.width,
-              ny: (dy - bounds.y) / bounds.height,
-              nmx: 1 - (dx - bounds.x) / bounds.width,
-              nmy: 1 - (dy - bounds.y) / bounds.height,
+              nx: (dx - bounds.minX) / bounds.width,
+              ny: (dy - bounds.minY) / bounds.height,
+              nmx: 1 - (dx - bounds.minX) / bounds.width,
+              nmy: 1 - (dy - bounds.minY) / bounds.height,
             },
             Dp: {
               x: dpx,
               y: dpy,
-              nx: (dpx - bounds.x) / bounds.width,
-              ny: (dpy - bounds.y) / bounds.height,
-              nmx: 1 - (dpx - bounds.x) / bounds.width,
-              nmy: 1 - (dpy - bounds.y) / bounds.height,
+              nx: (dpx - bounds.minX) / bounds.width,
+              ny: (dpy - bounds.minY) / bounds.height,
+              nmx: 1 - (dpx - bounds.minX) / bounds.width,
+              nmy: 1 - (dpy - bounds.minY) / bounds.height,
             },
             a,
             ap,

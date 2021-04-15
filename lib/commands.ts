@@ -1,7 +1,7 @@
 import { IData, IGlob, INode, ISelectionSnapshot } from "./types"
 import { current } from "immer"
 import * as vec from "./vec"
-import inputs from "lib/sinputs"
+import inputs from "lib/inputs"
 import {
   getGlob,
   getLineLineIntersection,
@@ -172,7 +172,7 @@ export function pasteSelection(
         const delta = vec.sub(
           point,
           vec.add(
-            [bounds.x, bounds.y],
+            [bounds.minX, bounds.minY],
             vec.div([bounds.width, bounds.height], 2)
           )
         )
@@ -806,7 +806,7 @@ export function transformBounds(
       do(data, initial) {
         if (initial) return
 
-        const { x: x0, y: y0, maxX: x1, maxY: y1 } = snapshot.bounds
+        const { minX: x0, minY: y0, maxX: x1, maxY: y1 } = snapshot.bounds
         const { maxX: mx, maxY: my, width: mw, height: mh } = snapshot.bounds
 
         TransformSession.transformSelection(

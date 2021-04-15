@@ -12,9 +12,7 @@ export default function Bounds() {
   if (selectedGlobs.length === 0 && selectedNodes.length === 1) return null
   if (selectedGlobs.length === 1 && selectedNodes.length === 0) return null
 
-  const { x, maxX, y, maxY } = bounds,
-    width = Math.abs(maxX - x),
-    height = Math.abs(maxY - y)
+  const { minX, maxX, minY, maxY, width, height } = bounds
 
   const p = 4 / zoom
   const cp = p * 2
@@ -22,8 +20,8 @@ export default function Bounds() {
   return (
     <g>
       <Corner
-        x={x}
-        y={y}
+        x={minX}
+        y={minY}
         corner={0}
         width={cp}
         height={cp}
@@ -31,7 +29,7 @@ export default function Bounds() {
       />
       <Corner
         x={maxX}
-        y={y}
+        y={minY}
         corner={1}
         width={cp}
         height={cp}
@@ -46,7 +44,7 @@ export default function Bounds() {
         cursor="nwse-resize"
       />
       <Corner
-        x={x}
+        x={minX}
         y={maxY}
         corner={3}
         width={cp}
@@ -54,8 +52,8 @@ export default function Bounds() {
         cursor="nesw-resize"
       />
       <EdgeHorizontal
-        x={x + p}
-        y={y}
+        x={minX + p}
+        y={minY}
         width={Math.max(0, width - p * 2)}
         height={p}
         onSelect={(e) => {
@@ -72,7 +70,7 @@ export default function Bounds() {
       />
       <EdgeVertical
         x={maxX}
-        y={y + p}
+        y={minY + p}
         width={p}
         height={Math.max(0, height - p * 2)}
         onSelect={(e) => {
@@ -88,7 +86,7 @@ export default function Bounds() {
         }}
       />
       <EdgeHorizontal
-        x={x + p}
+        x={minX + p}
         y={maxY}
         width={Math.max(0, width - p * 2)}
         height={p}
@@ -105,8 +103,8 @@ export default function Bounds() {
         }}
       />
       <EdgeVertical
-        x={x}
-        y={y + p}
+        x={minX}
+        y={minY + p}
         width={p}
         height={Math.max(0, height - p * 2)}
         onSelect={(e) => {
@@ -166,7 +164,6 @@ function Corner({
         }}
         style={{ cursor: "grab" }}
         fill="transparent"
-        className="strokewidth-s"
       />
       <motion.rect
         x={x + width * -0.5}
@@ -220,6 +217,7 @@ function EdgeHorizontal({
       onPanEnd={restoreCursor}
       onTap={restoreCursor}
       style={{ cursor: "ns-resize" }}
+      className="strokewidth-ui"
       fill="none"
     />
   )
@@ -251,6 +249,7 @@ function EdgeVertical({
       onPanEnd={restoreCursor}
       onTap={restoreCursor}
       style={{ cursor: "ew-resize" }}
+      className="strokewidth-ui"
       fill="none"
     />
   )

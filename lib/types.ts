@@ -127,11 +127,7 @@ export interface IData {
     zoom: number
     point: number[]
   }
-  brush?: {
-    start: number[]
-    end: number[]
-    targets: { id: string; type: "glob" | "handle" | "node"; path: string }[]
-  }
+  brush?: IBounds
   bounds?: IBounds
   snaps: {
     active: ISnap[]
@@ -155,8 +151,8 @@ export type IAnchor = "a" | "ap" | "b" | "bp"
 export type IHandle = "D" | "Dp"
 
 export type IBounds = {
-  x: number
-  y: number
+  minX: number
+  minY: number
   maxX: number
   maxY: number
   width: number

@@ -1,5 +1,5 @@
 import { MutableRefObject } from "react"
-import { getCommonBounds, getNodeBounds, getGlobBounds } from "lib/utils"
+import { getCommonBounds, getNodeBounds, getGlobBounds } from "lib/bounds-utils"
 import { IData } from "./types"
 
 class Exports {
@@ -60,9 +60,14 @@ class Exports {
         .map((id) => globs[id])
         .filter((glob) => glob.points !== null)
         .map((glob) =>
-          getGlobBounds(glob, nodes[glob.nodes[0]], nodes[glob.nodes[1]])
+          getGlobBounds(
+            glob,
+            nodes[glob.nodes[0]],
+            nodes[glob.nodes[1]],
+            data.camera.zoom
+          )
         ),
-      ...nodeIdsToCopy.map((id) => getNodeBounds(nodes[id]))
+      ...nodeIdsToCopy.map((id) => getNodeBounds(nodes[id], data.camera.zoom))
     )
 
     const padding = 16
@@ -71,8 +76,8 @@ class Exports {
     svg.setAttribute(
       "viewBox",
       [
-        bounds.x - padding,
-        bounds.y - padding,
+        bounds.minX - padding,
+        bounds.minY - padding,
         bounds.width + padding * 2,
         bounds.height + padding * 2,
       ].join(" ")

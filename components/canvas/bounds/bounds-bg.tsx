@@ -10,14 +10,12 @@ export default function BoundsBg() {
   if (selectedGlobs.length === 0 && selectedNodes.length === 1) return null
   if (selectedGlobs.length === 1 && selectedNodes.length === 0) return null
 
-  const { x, maxX, y, maxY } = bounds,
-    width = Math.abs(maxX - x),
-    height = Math.abs(maxY - y)
+  const { minX, minY, width, height } = bounds
 
   return (
     <rect
-      x={x}
-      y={y}
+      x={minX}
+      y={minY}
       width={width}
       height={height}
       onPointerDown={(e) =>

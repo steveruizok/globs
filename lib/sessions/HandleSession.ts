@@ -3,7 +3,7 @@ import { moveHandle } from "lib/commands"
 import * as vec from "lib/vec"
 import { getSafeHandlePoint, isInView, screenToWorld } from "lib/utils"
 import { getGlob, getGlobPoints, projectPoint } from "lib/utils"
-import inputs from "lib/sinputs"
+import inputs from "lib/inputs"
 import BaseSession from "./BaseSession"
 
 export default class HandleSession extends BaseSession {

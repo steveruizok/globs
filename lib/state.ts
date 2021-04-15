@@ -6,7 +6,7 @@ import * as svg from "lib/svg"
 
 import { initialData } from "./data"
 import history from "lib/history"
-import inputs from "lib/sinputs"
+import inputs from "lib/inputs"
 import exports from "lib/exports"
 import * as commands from "lib/commands"
 import AnchorSession from "lib/sessions/AnchorSession"
@@ -27,14 +27,19 @@ import {
 import {
   getGlobPath,
   getSelectedBoundingBox,
-  rectContainsRect,
   screenToWorld,
   throttle,
 } from "utils"
-import { getGlobInnerBounds, getNodeBounds } from "./bounds-utils"
+import {
+  boundsCollide,
+  getGlobInnerBounds,
+  getNodeBounds,
+  roundBounds,
+} from "./bounds-utils"
 import migrate from "./migrations"
 import clipboard from "./clipboard"
 import { MutableRefObject } from "react"
+import BrushSession from "./sessions/BrushSession"
 
 export const elms: Record<string, MutableRefObject<SVGElement>> = {}
 
@@ -102,30 +107,20 @@ const state = createState({
                 UNHOVERED_NODE: "pullHoveredNode",
                 MOVED_NODE_ORDER: "moveNodeOrder",
                 MOVED_GLOB_ORDER: "moveGlobOrder",
-                SET_NODES_X: ["setPointingToSelectedNodessPointX"],
-                SET_NODES_Y: ["setPointingToSelectedNodessPointY"],
-                SET_NODES_RADIUS: ["setPointingToSelectedNodessRadius"],
-                SET_NODES_CAP: ["setPointingToSelectedNodessCap"],
+                SET_NODES_X: "setPointingToSelectedNodessPointX",
+                SET_NODES_Y: "setPointingToSelectedNodessPointY",
+                SET_NODES_RADIUS: "setPointingToSelectedNodessRadius",
+                SET_NODES_CAP: "setPointingToSelectedNodessCap",
                 SET_NODES_LOCKED: "setPointingToSelectedNodessLocked",
                 TOGGLED_NODE_LOCKED: "toggleNodeLocked",
                 SET_GLOB_OPTIONS: "setPointingToSelectedGlobsOptions",
-                CHANGED_BOUNDS_X: ["changeBoundsX"],
-                CHANGED_BOUNDS_Y: ["changeBoundsY"],
-                CHANGED_BOUNDS_WIDTH: ["changeBoundsWidth"],
-                CHANGED_BOUNDS_HEIGHT: ["changeBoundsHeight"],
-                HARD_RESET: { do: ["hardReset", "saveData"] },
+                CHANGED_BOUNDS_X: "changeBoundsX",
+                CHANGED_BOUNDS_Y: "changeBoundsY",
+                CHANGED_BOUNDS_WIDTH: "changeBoundsWidth",
+                CHANGED_BOUNDS_HEIGHT: "changeBoundsHeight",
+                HARD_RESET: ["hardReset", "saveData"],
                 SELECTED_ALL: "selectAll",
                 LOCKED_NODES: "lockSelectedNodes",
-                STARTED_CREATING_NODES: {
-                  to: "creatingNodes",
-                },
-                STARTED_LINKING_NODES: {
-                  if: "hasSelectedNodes",
-                  to: "linkingNodes",
-                  else: {
-                    to: "creatingNodes.glob",
-                  },
-                },
                 POINTED_NODE: [
                   { unless: "isLeftClick", break: true },
                   "setPointingId",
@@ -164,37 +159,36 @@ const state = createState({
                     },
                   },
                 ],
-                POINTED_ANCHOR: {
-                  if: "isLeftClick",
-                  do: "setPointingId",
-                  to: "pointingAnchor",
-                },
+                POINTED_CANVAS: [
+                  { unless: "isLeftClick", break: true },
+                  {
+                    if: "isLeftClick",
+                    do: "clearSelection",
+                    to: "brushSelecting",
+                  },
+                ],
+                POINTED_ANCHOR: [
+                  {
+                    if: "isLeftClick",
+                    do: "setPointingId",
+                    to: "pointingAnchor",
+                  },
+                ],
                 POINTED_HANDLE: {
                   if: "isLeftClick",
                   do: "setPointingId",
                   to: "pointingHandle",
                 },
-                POINTED_CANVAS: [
-                  { unless: "isLeftClick", break: true },
-                  { if: "hasMeta", break: true },
+                POINTED_BOUNDS: [
+                  {
+                    if: ["hasMeta", "isLeftClick"],
+                    to: "brushSelecting",
+                  },
                   {
                     if: "isLeftClick",
-                    do: "clearSelection",
+                    to: "pointingBounds",
                   },
-                  { to: "brushSelecting" },
-                  // {
-                  //   wait: 0.01,
-                  //   ifAny: ["hasSpace", "isMultitouch"],
-                  //   to: "canvasPanning",
-                  //   else: {
-                  //     to: "brushSelecting",
-                  //   },
-                  // },
                 ],
-                POINTED_BOUNDS: {
-                  if: "isLeftClick",
-                  to: "pointingBounds",
-                },
                 POINTED_BOUNDS_EDGE: {
                   if: "isLeftClick",
                   to: "edgeResizing",
@@ -209,6 +203,16 @@ const state = createState({
                 },
                 STARTED_TRANSLATING: {
                   to: "translating",
+                },
+                STARTED_CREATING_NODES: {
+                  to: "creatingNodes",
+                },
+                STARTED_LINKING_NODES: {
+                  if: "hasSelectedNodes",
+                  to: "linkingNodes",
+                  else: {
+                    to: "creatingNodes.glob",
+                  },
                 },
               },
             },
@@ -447,37 +451,36 @@ const state = createState({
             },
             brushSelecting: {
               onEnter: "startBrush",
-              onExit: "clearBrush",
               on: {
-                MOVED_POINTER: ["updateBrush", "updateBrushSelection"],
-                WHEELED: ["updateBrush", "updateBrushSelection"],
-                STOPPED_POINTING: { to: "notPointing" },
-                POINTED_CANVAS: { to: "notPointing" },
-                CANCELLED: { to: "notPointing" },
+                MOVED_POINTER: "updateBrush",
+                WHEELED: "updateBrush",
+                STOPPED_POINTING: { do: "completeBrush", to: "notPointing" },
+                POINTED_CANVAS: { do: "cancelBrush", to: "notPointing" },
+                CANCELLED: { do: "cancelBrush", to: "notPointing" },
               },
             },
             edgeResizing: {
-              onEnter: ["setEdgeTransform"],
+              onEnter: ["beginEdgeTransform"],
               on: {
-                MOVED_POINTER: ["updateEdgeResize"],
-                WHEELED: ["updateEdgeResize"],
+                MOVED_POINTER: "updateTransform",
+                WHEELED: "updateTransform",
                 STOPPED_POINTING: {
-                  do: ["completeEdgeResize", "saveData"],
+                  do: ["completeTransform", "saveData"],
                   to: "notPointing",
                 },
-                CANCELLED: { do: "cancelEdgeResize", to: "notPointing" },
+                CANCELLED: { do: "cancelTransform", to: "notPointing" },
               },
             },
             cornerResizing: {
-              onEnter: ["setCornerTransform"],
+              onEnter: ["beginCornerTransform"],
               on: {
-                MOVED_POINTER: ["updateCornerResize"],
-                WHEELED: ["updateCornerResize"],
+                MOVED_POINTER: ["updateTransform"],
+                WHEELED: ["updateTransform"],
                 STOPPED_POINTING: {
-                  do: ["completeCornerResize", "saveData"],
+                  do: ["completeTransform", "saveData"],
                   to: "notPointing",
                 },
-                CANCELLED: { do: "cancelCornerResize", to: "notPointing" },
+                CANCELLED: { do: "cancelTransform", to: "notPointing" },
               },
             },
             cornerRotating: {
@@ -653,7 +656,7 @@ const state = createState({
 
     // ELEMENT REFERENCES
     mountElement(
-      _,
+      data,
       payload: { id: string; elm: MutableRefObject<SVGElement> }
     ) {
       elms[payload.id] = payload.elm
@@ -737,24 +740,23 @@ const state = createState({
       camera.point = document.point
     },
 
-    // MOVING STUFF
-    beginMove(data) {
-      moveSession = new MoveSession(data)
-    },
-    updateMove(data) {
-      moveSession.update(data)
-    },
-    cancelMove(data) {
-      moveSession.cancel(data)
-    },
-    completeMove(data) {
-      moveSession.complete(data)
-    },
-    clearSnaps(data) {
-      data.snaps.active = []
-    },
-
     // SELECTION / HOVERS / HIGHLIGHTS
+
+    // Brush selection
+    startBrush(data) {
+      brushSession = new BrushSession(data)
+    },
+    updateBrush(data) {
+      brushSession.update(data)
+    },
+    cancelBrush(data) {
+      brushSession.cancel(data)
+      brushSession = undefined
+    },
+    completeBrush(data) {
+      brushSession.complete(data)
+      brushSession = undefined
+    },
     setPointingId(data, payload: { id: string }) {
       data.pointingId = payload.id
     },
@@ -885,14 +887,16 @@ const state = createState({
     beginRadiusMove(data) {
       resizeSession = new ResizeSession(data, data.selectedNodes[0])
     },
-    cancelRadiusMove(data) {
-      resizeSession.cancel(data)
-    },
     updateRadiusMove(data) {
       resizeSession.update(data)
     },
+    cancelRadiusMove(data) {
+      resizeSession.cancel(data)
+      resizeSession = undefined
+    },
     completeRadiusMove(data) {
       resizeSession.complete(data)
+      resizeSession = undefined
     },
     // TODO: Make a command
     toggleNodeLocked(data, payload: { id: string }) {
@@ -926,9 +930,11 @@ const state = createState({
     },
     cancelHandleMove(data) {
       handleSession.cancel(data)
+      handleSession = undefined
     },
     completeHandleMove(data) {
       handleSession.complete(data)
+      handleSession = undefined
     },
     setSelectedHandle(data, payload: { id: string; handle: IHandle }) {
       data.selectedHandle = payload
@@ -941,20 +947,37 @@ const state = createState({
     beginAnchorMove(data, payload: { id: string; anchor: IAnchor }) {
       anchorSession = new AnchorSession(data, payload.id, payload.anchor)
     },
-    cancelAnchorMove(data) {
-      anchorSession.cancel(data)
-    },
     updateAnchorMove(data) {
       anchorSession.update(data)
     },
+    cancelAnchorMove(data) {
+      anchorSession.cancel(data)
+      anchorSession = undefined
+    },
     completeAnchorMove(data) {
       anchorSession.complete(data)
+      anchorSession = undefined
     },
 
-    // BOUNDS / RESIZING
-    setBounds(data, payload: { bounds: IBounds }) {
-      data.bounds = payload.bounds
+    // Dragging
+    beginMove(data) {
+      moveSession = new MoveSession(data)
     },
+    updateMove(data) {
+      moveSession.update(data)
+    },
+    cancelMove(data) {
+      moveSession.cancel(data)
+      moveSession = undefined
+    },
+    completeMove(data) {
+      moveSession.complete(data)
+      moveSession = undefined
+    },
+    clearSnaps(data) {
+      data.snaps.active = []
+    },
+    // Translations (single properties)
     beginTranslation(data, payload: ITranslation) {
       translateSession = new TranslateSession(data, payload)
     },
@@ -963,14 +986,16 @@ const state = createState({
     },
     cancelTranslation(data) {
       translateSession.cancel(data)
+      translateSession = undefined
     },
     completeTranslation(data) {
       translateSession.complete(data)
+      translateSession = undefined
     },
+    // Moving bounds (single properties)
     changeBoundsX(data, payload: { value: number }) {
       commands.moveBounds(data, [payload.value, 0])
     },
-    // TODO: Make a command
     changeBoundsY(data, payload: { value: number }) {
       commands.moveBounds(data, [0, payload.value])
     },
@@ -980,30 +1005,25 @@ const state = createState({
     changeBoundsHeight(data, payload: { value: number }) {
       commands.resizeBounds(data, [0, payload.value])
     },
-    setEdgeTransform(data, payload: { edge: number }) {
+    // Edge / Corner Transforms
+    beginEdgeTransform(data, payload: { edge: number }) {
       transformSession = new TransformSession(data, "edge", payload.edge)
     },
-    cancelEdgeResize(data) {
-      transformSession.cancel(data)
-    },
-    updateEdgeResize(data) {
-      transformSession.update(data)
-    },
-    completeEdgeResize(data) {
-      transformSession.complete(data)
-    },
-    setCornerTransform(data, payload: { corner: number }) {
+    beginCornerTransform(data, payload: { corner: number }) {
       transformSession = new TransformSession(data, "corner", payload.corner)
     },
-    cancelCornerResize(data) {
-      transformSession.cancel(data)
-    },
-    updateCornerResize(data) {
+    updateTransform(data) {
       transformSession.update(data)
     },
-    completeCornerResize(data) {
-      transformSession.complete(data)
+    cancelTransform(data) {
+      transformSession.cancel(data)
+      transformSession = undefined
     },
+    completeTransform(data) {
+      transformSession.complete(data)
+      transformSession = undefined
+    },
+    // Rotations
     beginRotate(data) {
       rotateSession = new RotateSession(data)
     },
@@ -1012,96 +1032,11 @@ const state = createState({
     },
     cancelRotate(data) {
       rotateSession.cancel(data)
+      rotateSession = undefined
     },
     completeRotate(data) {
       rotateSession.complete(data)
-    },
-
-    // BRUSH
-    startBrush(data) {
-      const { nodes, globs, camera } = data
-
-      const targets = [
-        ...Object.values(nodes).map((node) => {
-          return {
-            id: node.id,
-            type: "node" as const,
-            path: svg.ellipse(node.point, node.radius),
-          }
-        }),
-        ...Object.values(globs).map((glob) => {
-          let path = ""
-
-          try {
-            path = getGlobPath(glob, nodes[glob.nodes[0]], nodes[glob.nodes[1]])
-          } catch (e) {}
-
-          return {
-            id: glob.id,
-            type: "glob" as const,
-            path,
-          }
-        }),
-      ]
-
-      data.brush = {
-        start: screenToWorld(inputs.pointer.point, camera),
-        end: screenToWorld(inputs.pointer.point, camera),
-        targets,
-      }
-    },
-    updateBrush(data) {
-      const { brush, camera } = data
-      brush.end = screenToWorld(inputs.pointer.point, camera)
-    },
-    updateBrushSelection(data) {
-      const { brush, nodes, globs } = data
-      const { start, end } = brush
-      const x0 = Math.min(start[0], end[0])
-      const y0 = Math.min(start[1], end[1])
-      const y1 = Math.max(start[1], end[1])
-      const x1 = Math.max(start[0], end[0])
-
-      const rect = [
-        svg.moveTo([x0, y0]),
-        svg.lineTo([x1, y0]),
-        svg.lineTo([x1, y1]),
-        svg.lineTo([x0, y1]),
-        svg.closePath(),
-      ].join(" ")
-
-      data.selectedGlobs = []
-      data.selectedNodes = []
-
-      for (let target of brush.targets) {
-        let bounds: IBounds
-
-        if (target.type === "node") {
-          const node = nodes[target.id]
-          bounds = getNodeBounds(node)
-        } else {
-          const glob = globs[target.id]
-          try {
-            bounds = getGlobInnerBounds(glob)
-          } catch (e) {
-            console.warn("Could not get bounds", e)
-          }
-        }
-
-        if (
-          (bounds && rectContainsRect(x0, y0, x1, y1, bounds)) ||
-          intersect(rect, target.path, true)
-        ) {
-          if (target.type === "glob") {
-            data.selectedGlobs.push(target.id)
-          } else if (target.type === "node") {
-            data.selectedNodes.push(target.id)
-          }
-        }
-      }
-    },
-    clearBrush(data) {
-      data.brush = undefined
+      rotateSession = undefined
     },
 
     // DATA
@@ -1169,7 +1104,12 @@ const state = createState({
   },
   values: {
     selectionBounds(data) {
-      return getSelectedBoundingBox(data)
+      if (data.selectedGlobs.length + data.selectedNodes.length) {
+        const bounds = getSelectedBoundingBox(data)
+        return roundBounds(bounds)
+      }
+
+      return null
     },
   },
 })
@@ -1183,6 +1123,7 @@ let resizeSession: ResizeSession
 let rotateSession: RotateSession
 let translateSession: TranslateSession
 let transformSession: TransformSession
+let brushSession: BrushSession
 
 /* --------------------- INPUTS --------------------- */
 

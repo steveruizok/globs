@@ -1,5 +1,6 @@
 import { INode, IGlob, IBounds, ICanvasItem } from "types"
 import { round } from "./utils"
+import { clamp } from "./vec"
 
 // Evaluate a 2D bezier curve
 export function bez2d(
@@ -87,8 +88,8 @@ export function getCubicBezierBounds(
   }
 
   return {
-    x: xl,
-    y: yl,
+    minX: xl,
+    minY: yl,
     maxX: xh,
     maxY: yh,
     width: Math.abs(xl - xh),
@@ -101,8 +102,8 @@ export function getCubicBezierBounds(
  */
 export function getCircleBounds(cx: number, cy: number, r: number): IBounds {
   return {
-    x: cx - r,
-    y: cy - r,
+    minX: cx - r,
+    minY: cy - r,
     maxX: cx + r,
     maxY: cy + r,
     width: r * 2,
@@ -115,12 +116,12 @@ export function getCircleBounds(cx: number, cy: number, r: number): IBounds {
  * @param node
  * @returns
  */
-export function getNodeBounds(node: INode): IBounds {
+export function getNodeBounds(node: INode, zoom = 1): IBounds {
   const {
     point: [x, y],
     radius,
   } = node
-  return getCircleBounds(x, y, radius)
+  return getCircleBounds(x, y, radius * zoom)
 }
 
 /**
@@ -143,14 +144,14 @@ export function getGlobInnerBounds(glob: IGlob) {
  * @returns
  */
 export function getExpandedBounds(a: IBounds, b: IBounds) {
-  const x = Math.min(a.x, b.x),
-    y = Math.min(a.y, b.y),
+  const minX = Math.min(a.minX, b.minX),
+    minY = Math.min(a.minY, b.minY),
     maxX = Math.max(a.maxX, b.maxX),
     maxY = Math.max(a.maxY, b.maxY),
-    width = Math.abs(maxX - x),
-    height = Math.abs(maxY - y)
+    width = Math.abs(maxX - minX),
+    height = Math.abs(maxY - minY)
 
-  return { x, y, maxX, maxY, width, height }
+  return { minX, minY, maxX, maxY, width, height }
 }
 
 /**
@@ -170,6 +171,17 @@ export function getCommonBounds(...b: IBounds[]) {
   return bounds
 }
 
+export function roundBounds(b: IBounds) {
+  return {
+    minX: round(b.minX),
+    maxX: round(b.maxX),
+    minY: round(b.minY),
+    maxY: round(b.maxY),
+    width: round(b.width),
+    height: round(b.height),
+  }
+}
+
 /**
  * Get the bounding box for a glob.
  * @param glob The glob
@@ -177,7 +189,7 @@ export function getCommonBounds(...b: IBounds[]) {
  * @param end The glob's end node (as a node)
  * @returns
  */
-export function getGlobBounds(glob: IGlob, start: INode, end: INode) {
+export function getGlobBounds(glob: IGlob, start: INode, end: INode, zoom = 1) {
   if (glob.points === null) {
     throw Error("Can't get bounds of a glob without points!")
   }
@@ -185,8 +197,86 @@ export function getGlobBounds(glob: IGlob, start: INode, end: INode) {
   const { E0, F0, F1, E1, E0p, F0p, F1p, E1p } = glob.points
   const b = getCubicBezierBounds(E0, F0, F1, E1)
   const bp = getCubicBezierBounds(E0p, F0p, F1p, E1p)
-  const sb = getNodeBounds(start)
-  const eb = getNodeBounds(end)
+  const sb = getNodeBounds(start, zoom)
+  const eb = getNodeBounds(end, zoom)
 
   return getCommonBounds(b, bp, sb, eb)
+}
+
+export function getBoundsBetweenPoints(a: number[], b: number[]): IBounds {
+  const x0 = Math.min(a[0], b[0])
+  const y0 = Math.min(a[1], b[1])
+  const x1 = Math.max(a[0], b[0])
+  const y1 = Math.max(a[1], b[1])
+
+  return {
+    minX: x0,
+    minY: y0,
+    maxX: x1,
+    maxY: y1,
+    width: Math.abs(x0 - x1),
+    height: Math.abs(y0 - y1),
+  }
+}
+
+/**
+ * Get whether two bounds collide.
+ * @param a Bounds
+ * @param b Bounds
+ * @returns
+ */
+export function boundsCollide(a: IBounds, b: IBounds) {
+  return !(
+    a.maxX < b.minX ||
+    a.minX > b.maxX ||
+    a.maxY < b.minY ||
+    a.minY > b.maxY
+  )
+}
+
+/**
+ * Get whether the bounds of A contain the bounds of B. A perfect match will return true.
+ * @param a Bounds
+ * @param b Bounds
+ * @returns
+ */
+export function boundsContain(a: IBounds, b: IBounds) {
+  return (
+    a.minX < b.minX && a.minY < b.minY && a.maxY > b.maxY && a.maxX > b.maxX
+  )
+}
+
+/**
+ * Get whether the bounds of A are contained by the bounds of B.
+ * @param a Bounds
+ * @param b Bounds
+ * @returns
+ */
+export function boundsContained(a: IBounds, b: IBounds) {
+  return boundsContain(b, a)
+}
+
+/**
+ * Get whether two bounds are identical.
+ * @param a Bounds
+ * @param b Bounds
+ * @returns
+ */
+export function boundsAreEqual(a: IBounds, b: IBounds) {
+  return !(
+    b.maxX !== a.maxX ||
+    b.minX !== a.minX ||
+    b.maxY !== a.maxY ||
+    b.minY !== a.minY
+  )
+}
+
+/**
+ * Get whether a point is inside of a bounds.
+ * @param A
+ * @param b
+ * @returns
+ */
+export function pointInBounds(A: number[], b: IBounds) {
+  return !(A[0] < b.minX || A[0] > b.maxX || A[1] < b.minY || A[1] > b.maxY)
 }

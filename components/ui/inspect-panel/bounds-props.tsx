@@ -47,7 +47,7 @@ export default function BoundsProps() {
 
   if (!bounds) return null
 
-  const { x, y, width, height } = bounds
+  const { minX, minY, width, height } = bounds
 
   // const locked = selectedNodes.reduce(
   //   (a, c) => (c.locked === a ? a : "mixed"),
@@ -57,7 +57,7 @@ export default function BoundsProps() {
   return (
     <>
       <NumberInput
-        value={round(x)}
+        value={round(minX)}
         label="x"
         onChange={handleXChange}
         onPanStart={() =>
@@ -65,7 +65,7 @@ export default function BoundsProps() {
         }
       />
       <NumberInput
-        value={round(y)}
+        value={round(minY)}
         label="y"
         onChange={handleYChange}
         onPanStart={() =>

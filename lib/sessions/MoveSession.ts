@@ -10,7 +10,7 @@ import {
   updateGlobPoints,
 } from "lib/utils"
 import { getGlobPoints } from "lib/utils"
-import inputs from "lib/sinputs"
+import inputs from "lib/inputs"
 import getNodeSnapper, { NodeSnapper } from "lib/snaps"
 import BaseSession from "./BaseSession"
 

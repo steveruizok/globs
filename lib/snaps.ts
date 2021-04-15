@@ -1,5 +1,5 @@
 import { IData, IGlob, INode } from "lib/types"
-import inputs from "lib/sinputs"
+import inputs from "lib/inputs"
 import * as vec from "lib/vec"
 import { pointInRect } from "lib/utils"
 

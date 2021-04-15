@@ -4,7 +4,7 @@ import state, { useSelector } from "lib/state"
 import usePinchZoom from "hooks/usePinchZoom"
 import * as vec from "lib/vec"
 import { motion, PanInfo, TapInfo } from "framer-motion"
-import inputs from "lib/sinputs"
+import inputs from "lib/inputs"
 
 import ContextMenu, {
   ContextMenuRoot,
@@ -20,6 +20,7 @@ import StatusBar from "./ui/statusbar"
 import LearnPanel from "./ui/learn-panel"
 import ZoomPanel from "./ui/zoom-panel"
 import Thumbstick from "./ui/thumbstick"
+import { throttle } from "lib/utils"
 
 const DOT_RADIUS = 2,
   ANCHOR_RADIUS = 4,
@@ -297,6 +298,18 @@ export default function Editor() {
     </OuterWrapper>
   )
 }
+
+const throttledMove = throttle(
+  (e: PointerEvent) =>
+    state.send("MOVED_POINTER", {
+      isPan: e.buttons === 4,
+      shiftKey: e.shiftKey,
+      optionKey: e.altKey,
+      metaKey: e.metaKey || e.ctrlKey,
+      ctrlKey: e.ctrlKey,
+    }),
+  16
+)
 
 const EditorContainer = styled("div", {
   position: "fixed",

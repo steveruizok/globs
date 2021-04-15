@@ -1,7 +1,9 @@
 // Some helpers for drawing SVGs.
 
-import * as Vec from "./vec"
-import { angleDelta, getSweep } from "utils"
+import * as vec from "./vec"
+import { getSweep } from "utils"
+import { getBoundsBetweenPoints } from "./bounds-utils"
+import { IBounds } from "./types"
 
 // General
 
@@ -21,6 +23,41 @@ export function lineTo(v: number[]) {
 
 export function line(a: number[], ...pts: number[][]) {
   return moveTo(a) + pts.map((p) => lineTo(p)).join()
+}
+
+export function hLineTo(v: number[]) {
+  return `H ${v[0]},${v[1]} `
+}
+
+export function vLineTo(v: number[]) {
+  return `V ${v[0]},${v[1]} `
+}
+
+/**
+ * Return the path for a rectangle between two points.
+ * @param a
+ * @param b
+ * @returns
+ */
+export function rectFromBounds(bounds: IBounds) {
+  const { minX, maxX, minY, maxY } = bounds
+  return [
+    moveTo([minX, maxX]),
+    lineTo([maxX, minY]),
+    lineTo([maxX, maxY]),
+    lineTo([minX, minY]),
+    closePath(),
+  ].join(" ")
+}
+
+/**
+ * Return the path for a rectangle with a given point and size.
+ * @param point
+ * @param size
+ * @returns
+ */
+export function rect(point: number[], size: number[]) {
+  return rectFromBounds(getBoundsBetweenPoints(point, vec.add(point, size)))
 }
 
 export function bezierTo(A: number[], B: number[], C: number[]) {

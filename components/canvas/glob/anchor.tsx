@@ -11,7 +11,6 @@ interface Props {
 export default function Anchor({
   position = [0, 0],
   color = "#000",
-  isSelected = false,
   isPrime = false,
   onSelect,
 }: Props) {

@@ -1,5 +1,7 @@
+import { getBoundsBetweenPoints } from "lib/bounds-utils"
 import { useSelector } from "lib/state"
 import { deepCompare } from "lib/utils"
+import * as svg from "lib/svg"
 
 export default function Brush() {
   const brush = useSelector((s) => s.data.brush, deepCompare)
@@ -8,12 +10,12 @@ export default function Brush() {
 
   return (
     <rect
-      x={Math.min(brush.start[0], brush.end[0])}
-      y={Math.min(brush.start[1], brush.end[1])}
-      width={Math.abs(brush.start[0] - brush.end[0])}
-      height={Math.abs(brush.start[1] - brush.end[1])}
+      x={brush.minX}
+      y={brush.minY}
+      width={brush.width}
+      height={brush.height}
       stroke="#1f58ff"
-      className="strokewidth-s"
+      className="strokewidth-brush"
       fill="rgba(30, 88, 255, .1"
       pointerEvents="none"
     />
