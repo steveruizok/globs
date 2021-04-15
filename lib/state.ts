@@ -161,14 +161,7 @@ const state = createState({
                 ],
                 POINTED_CANVAS: [
                   { unless: "isLeftClick", break: true },
-                  {
-                    if: ["hasSelection", "hasShift"],
-                    to: "pointingCanvas",
-                    else: {
-                      do: "clearSelection",
-                      to: "brushSelecting",
-                    },
-                  },
+                  { to: "pointingCanvas" },
                 ],
                 POINTED_ANCHOR: [
                   {
@@ -232,13 +225,13 @@ const state = createState({
               },
             },
             pointingCanvas: {
+              onEnter: { unless: "hasShift", do: "clearSelection" },
               on: {
                 MOVED_POINTER: {
                   if: "distanceImpliesDrag",
                   to: "brushSelecting",
                 },
                 STOPPED_POINTING: {
-                  do: "clearSelection",
                   to: "notPointing",
                 },
               },
