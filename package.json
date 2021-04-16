@@ -20,6 +20,7 @@
     "kld-intersections": "^0.7.0",
     "kld-polynomial": "^0.3.0",
     "next": "10.0.8",
+    "next-pwa": "^5.2.9",
     "path-intersection": "^2.2.1",
     "rbush": "^3.0.1",
     "react": "17.0.1",

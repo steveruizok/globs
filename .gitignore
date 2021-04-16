@@ -34,3 +34,7 @@ yarn-error.log*
 .vercel
 .env
 cypress/videos/*
+**/public/workbox-*.js
+**/public/sw.js
+public/sw.js.map
+public/workbox-6b19f60b.js.map
