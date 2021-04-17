@@ -1217,6 +1217,7 @@ export function getGlobOutline(
     svg.bezierTo(F0p, F1p, E1p),
     endCap === "round" ? svg.arcTo(C1, r1, E1p, E1) : svg.lineTo(E1),
     svg.bezierTo(F1, F0, E0),
+    svg.closePath(),
   ].join(" ")
 }
 // ;<svg
@@ -1242,6 +1243,38 @@ export function pointInCircle(A: number[], C: number[], r: number) {
   // var dx = C[0] - A[0]
   // var dy = C[1] - A[1]
   // return dx * dx + dy * dy <= r * r
+}
+
+export function sign(value: number): number {
+  return value < 0 ? -1 : 1
+}
+
+export function getBoundsBoundsIntersection(a: IBounds, b: IBounds) {
+  const dx = a.minX - b.minX
+  const px = b.minX + b.width / 2 + a.minX + a.width / 2 - Math.abs(dx)
+  if (px <= 0) return null
+
+  const dy = a.minY - b.minY
+  const py = b.minY + b.height / 2 + a.minY + a.height / 2 - Math.abs(dy)
+  if (py <= 0) return null
+
+  return true
+
+  const hit = {} as { delta: number[]; normal: number[]; point: number[] }
+
+  if (px < py) {
+    const sx = sign(dx)
+    hit.delta[0] = px * sx
+    hit.normal[0] = sx
+    hit.point[0] = a.minX + (a.width / 2) * sx
+    hit.point[1] = b.minY
+  } else {
+    const sy = sign(dy)
+    hit.delta[1] = py * sy
+    hit.normal[1] = sy
+    hit.point[0] = b.minX
+    hit.point[1] = a.minY + (a.height / 2) * sy
+  }
 }
 
 export function getCircleBoundsIntersection(

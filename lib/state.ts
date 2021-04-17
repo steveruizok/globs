@@ -446,6 +446,10 @@ const state = createState({
             brushSelecting: {
               onEnter: "startBrush",
               on: {
+                HOVERED_GLOB: "pushHoveredGlob",
+                UNHOVERED_GLOB: "pullHoveredGlob",
+                HOVERED_NODE: "pushHoveredNode",
+                UNHOVERED_NODE: "pullHoveredNode",
                 MOVED_POINTER: "updateBrush",
                 WHEELED: "updateBrush",
                 STOPPED_POINTING: { do: "completeBrush", to: "notPointing" },

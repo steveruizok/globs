@@ -1,6 +1,7 @@
 {
   "name": "Globs",
   "short_name": "Globs",
+  "lang": "en-GB",
   "scope": ".",
   "theme_color": "#FFFFFF",
   "background_color": "#FFFFFF",
@@ -9,7 +10,7 @@
   "orientation": "portrait",
   "icons": [
     {
-      "src": "./files/icon.png",
+      "src": "./icon.png",
       "type": "image/png",
       "sizes": "144x144"
     }
