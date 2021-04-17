@@ -92,7 +92,14 @@ const BaseNode = forwardRef<SVGCircleElement, Props>(function BaseNode(
             fill="none"
           />
         ) : (
-          <use href="#dot" x={cx} y={cy} className="fill-flat" stroke="none" />
+          <use
+            href="#dot"
+            x={cx}
+            y={cy}
+            className="fill-flat"
+            stroke="none"
+            pointerEvents="none"
+          />
         ))}
     </>
   )

@@ -210,12 +210,17 @@ export default class MoveSession extends BaseSession {
         }
       }
     } else {
-      // for (const globId in this.handleSnapshot) {
-      //   const glob = globs[globId]
-      //   const snap = this.handleSnapshot[globId]
-      //   glob.D = vec.add(this.delta, snap.D)
-      //   glob.Dp = vec.add(this.delta, snap.Dp)
-      // }
+      // TODO: We want to restore the not-shift-meta-moved nodes when
+      // the user isn't holding shift-meta, but this prevents them from
+      // moving along with a selection. Combine the above code with
+      // moveSelection.
+      //
+      //   for (const globId in this.handleSnapshot) {
+      //     const glob = globs[globId]
+      //     const snap = this.handleSnapshot[globId]
+      //     glob.D = vec.add(this.delta, snap.D)
+      //     glob.Dp = vec.add(this.delta, snap.Dp)
+      //   }
     }
 
     updateGlobPoints(data)
