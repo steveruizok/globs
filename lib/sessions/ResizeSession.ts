@@ -1,8 +1,4 @@
-import {
-  IData,
-  ISelectionSnapshot,
-  INodeAdjacentHandleSnapshot,
-} from "lib/types"
+import { IData, ISelectionSnapshot } from "lib/types"
 import BaseSession from "./BaseSession"
 import * as vec from "lib/vec"
 import inputs from "lib/inputs"
@@ -11,13 +7,12 @@ import {
   getSelectionSnapshot,
   round,
   screenToWorld,
-  updateGlobPoints,
-  getNodeAdjacentHandleSnapshot,
   getRayRayIntesection,
+  updateGlobPoints,
 } from "lib/utils"
 import { resizeNode } from "lib/commands"
 
-export type IMoveNodeAdjacentHandleSnapshot = Record<
+export type IResizeNodeAdjacentHandleSnapshot = Record<
   string,
   {
     D: number[]
@@ -43,7 +38,7 @@ export default class ResizeSession extends BaseSession {
   origin: number[]
   startDistance: number
   snapshot: ISelectionSnapshot
-  handleSnapshot: IMoveNodeAdjacentHandleSnapshot
+  handleSnapshot: IResizeNodeAdjacentHandleSnapshot
 
   constructor(data: IData, nodeId: string) {
     super(data)
@@ -154,7 +149,7 @@ export default class ResizeSession extends BaseSession {
     const { globs } = data
     const selectedNodeIds = new Set(data.selectedNodes)
 
-    const globHandleSnapshots: IMoveNodeAdjacentHandleSnapshot = {}
+    const globHandleSnapshots: IResizeNodeAdjacentHandleSnapshot = {}
 
     // Find the globs that will be effected when the node resizes.
     // We need to have some of their points, along with whether those points

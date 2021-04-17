@@ -1,12 +1,6 @@
 import { current } from "immer"
 import * as vec from "lib/vec"
-import {
-  IData,
-  IGlob,
-  INode,
-  ISelectionSnapshot,
-  INodeAdjacentHandleSnapshot,
-} from "lib/types"
+import { IData, IGlob, INode, ISelectionSnapshot } from "lib/types"
 import inputs from "lib/inputs"
 import {
   getLineLineIntersection,
@@ -22,6 +16,7 @@ import {
 import { getClosestPointOnCurve, getNormalOnCurve } from "lib/bez"
 import history, { Command, CommandType } from "lib/history"
 
+import { IResizeNodeAdjacentHandleSnapshot } from "./sessions/ResizeSession"
 import AnchorSession, { AnchorSessionSnapshot } from "./sessions/AnchorSession"
 import TransformSession, {
   TransformSessionSnapshot,
@@ -919,7 +914,7 @@ export function resizeBounds(data: IData, size: number[]) {
 export function resizeNode(
   data: IData,
   snapshot: ISelectionSnapshot,
-  handleSnapshot: INodeAdjacentHandleSnapshot
+  handleSnapshot: IResizeNodeAdjacentHandleSnapshot
 ) {
   const current = getSelectionSnapshot(data)
 
