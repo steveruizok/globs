@@ -163,7 +163,6 @@ export default class MoveSession extends BaseSession {
     MoveSession.moveSelection(data, this.delta, this.snapshot)
 
     const { globs } = data
-    const { delta } = this
 
     if (inputs.modifiers.shiftKey && inputs.modifiers.metaKey) {
       for (const globId in this.handleSnapshot) {
@@ -211,13 +210,15 @@ export default class MoveSession extends BaseSession {
         }
       }
     } else {
-      for (const globId in this.handleSnapshot) {
-        const glob = globs[globId]
-        const snap = this.handleSnapshot[globId]
-        glob.D = snap.D
-        glob.Dp = snap.Dp
-      }
+      // for (const globId in this.handleSnapshot) {
+      //   const glob = globs[globId]
+      //   const snap = this.handleSnapshot[globId]
+      //   glob.D = vec.add(this.delta, snap.D)
+      //   glob.Dp = vec.add(this.delta, snap.Dp)
+      // }
     }
+
+    updateGlobPoints(data)
   }
 
   static startCloning(

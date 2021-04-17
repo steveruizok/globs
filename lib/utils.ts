@@ -1777,37 +1777,24 @@ export function getNodeAdjacentHandleSnapshot(data: IData) {
   return globHandleSnapshots
 }
 
-export function getRayRayIntesection1(
-  p0: number[],
-  n0: number[],
-  p1: number[],
-  n1: number[]
-) {
-  const dx = p1[0] - p0[0]
-  const dy = p1[1] - p0[1]
-  const det = n1[0] * n0[1] - n1[1] * n0[0]
-  if (det === 0) return false
-
-  const u = (dy * n1[0] - dx * n1[1]) / det,
-    v = (dy * n0[0] - dx * n0[1]) / det
-
-  if (u < 0 || v < 0) return false
-
-  console.log(u)
-
-  return p0 // vec.add(p0, vec.mul(p0, u))
-}
-
+/**
+ * Get the intersection of two rays, with origin points p0 and p1, and direction vectors n0 and n1.
+ * @param p0 The origin point of the first ray
+ * @param n0 The direction vector of the first ray
+ * @param p1 The origin point of the second ray
+ * @param n1 The direction vector of the second ray
+ * @returns
+ */
 export function getRayRayIntesection(
   p0: number[],
   n0: number[],
   p1: number[],
   n1: number[]
 ) {
-  const p0End = vec.add(p0, n0),
-    p1End = vec.add(p1, n1),
-    m0 = (p0End[1] - p0[1]) / (p0End[0] - p0[0]),
-    m1 = (p1End[1] - p1[1]) / (p1End[0] - p1[0]),
+  const p0e = vec.add(p0, n0),
+    p1e = vec.add(p1, n1),
+    m0 = (p0e[1] - p0[1]) / (p0e[0] - p0[0]),
+    m1 = (p1e[1] - p1[1]) / (p1e[0] - p1[0]),
     b0 = p0[1] - m0 * p0[0],
     b1 = p1[1] - m1 * p1[0],
     x = (b1 - b0) / (m0 - m1),
