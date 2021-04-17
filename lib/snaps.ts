@@ -29,8 +29,7 @@ export default function getNodeSnapper(node: INode, nodes: INode[]) {
   return function getSnap(
     delta: number[],
     camera: IData["camera"],
-    document: IData["document"],
-    skip = false
+    document: IData["document"]
   ): { delta: number[]; point: number[]; snaps: SnapResult[] } {
     // Where would the point be without any snaps?
     const next = vec.add(iPoint, delta)
@@ -44,7 +43,7 @@ export default function getNodeSnapper(node: INode, nodes: INode[]) {
       sy = next[1]
 
     // Is the user skipping snaps? Is the user moving quickly? Return point.
-    if (skip || vec.len(inputs.pointer.delta) > MIN_SPEED)
+    if (vec.len(inputs.pointer.delta) > MIN_SPEED)
       return { delta: vec.vec(iPoint, next), point: next, snaps: [] }
 
     // Get a rect 1.5x the size of the document.

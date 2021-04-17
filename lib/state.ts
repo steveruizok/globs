@@ -230,25 +230,11 @@ const state = createState({
               on: {
                 CANCELLED: { do: "cancelMove", to: "notPointing" },
                 WHEELED: "updateMove",
-                PRESSED_OPTION: ["updateMove"],
-                RELEASED_OPTION: ["updateMove"],
+                PRESSED_OPTION: "updateMove",
+                RELEASED_OPTION: "updateMove",
                 MOVED_POINTER: "updateMove",
                 STOPPED_POINTING: {
                   do: ["completeMove", "saveData"],
-                  to: "notPointing",
-                },
-              },
-            },
-            resizingAllNodesInBounds: {
-              onEnter: "beginRadiusMove",
-              on: {
-                RELEASED_META: {
-                  do: "completeRadiusMove",
-                  to: "pointingBounds",
-                },
-                MOVED_POINTER: "updateRadiusMove",
-                STOPPED_POINTING: {
-                  do: ["completeRadiusMove", "saveData"],
                   to: "notPointing",
                 },
               },
@@ -350,10 +336,13 @@ const state = createState({
                       if: "distanceImpliesDrag",
                       to: "pointingBounds",
                     },
-                    PRESSED_META: {
-                      if: "hasOneSelectedNode",
-                      to: "changingRadius",
-                    },
+                    PRESSED_META: [
+                      () => console.log("hi"),
+                      {
+                        if: "hasOneSelectedNode",
+                        to: "changingRadius",
+                      },
+                    ],
                     STOPPED_POINTING: { to: "notPointing" },
                   },
                 },
@@ -388,9 +377,31 @@ const state = createState({
                 changingRadius: {
                   onEnter: "beginRadiusMove",
                   on: {
+                    PRESSED_SHIFT: "updateRadiusMove",
+                    RELEASED_SHIFT: "updateRadiusMove",
+                    PRESSED_OPTION: "updateRadiusMove",
+                    RELEASED_OPTION: "updateRadiusMove",
                     RELEASED_META: {
                       do: "completeRadiusMove",
                       to: "pointingSelectedNode",
+                    },
+                    MOVED_POINTER: "updateRadiusMove",
+                    STOPPED_POINTING: {
+                      do: ["completeRadiusMove", "saveData"],
+                      to: "notPointing",
+                    },
+                  },
+                },
+                resizingAllNodesInBounds: {
+                  onEnter: "beginRadiusMove",
+                  on: {
+                    PRESSED_SHIFT: "updateRadiusMove",
+                    RELEASED_SHIFT: "updateRadiusMove",
+                    PRESSED_OPTION: "updateRadiusMove",
+                    RELEASED_OPTION: "updateRadiusMove",
+                    RELEASED_META: {
+                      do: "completeRadiusMove",
+                      to: "pointingBounds",
                     },
                     MOVED_POINTER: "updateRadiusMove",
                     STOPPED_POINTING: {

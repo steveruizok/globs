@@ -33,7 +33,6 @@ export default class MoveSession extends BaseSession {
   constructor(data: IData) {
     super(data)
     const nodes = data.nodeIds.map((id) => data.nodes[id])
-    const globs = data.globIds.map((id) => data.globs[id])
 
     this.origin = screenToWorld(inputs.pointer.point, data.camera)
     this.snapshot = MoveSession.getSnapshot(data)
@@ -74,6 +73,7 @@ export default class MoveSession extends BaseSession {
       for (const globId in this.clones.globs) {
         data.globs[globId].id = globId
       }
+
       data.hoveredNodes = data.hoveredNodes.map(
         (id) => this.clones.nodeIdMap[id]
       )
@@ -96,7 +96,7 @@ export default class MoveSession extends BaseSession {
       this.clones = undefined
     }
 
-    moveSelection(data, this.delta, this.snapshot, this.clones)
+    moveSelection(data, this.delta, this.snapshot)
   }
 
   update = (data: IData) => {
@@ -118,13 +118,8 @@ export default class MoveSession extends BaseSession {
       this.isCloning = false
     }
 
-    if (this.nodeSnapper) {
-      const snapResults = this.nodeSnapper(
-        this.delta,
-        camera,
-        document,
-        inputs.modifiers.Alt
-      )
+    if (this.nodeSnapper && !inputs.modifiers.metaKey) {
+      const snapResults = this.nodeSnapper(this.delta, camera, document)
       this.delta = snapResults.delta
       data.snaps.active = snapResults.snaps as any
     } else {

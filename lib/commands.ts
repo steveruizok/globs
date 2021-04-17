@@ -22,6 +22,7 @@ import TransformSession, {
 } from "./sessions/TransformSession"
 import RotateSession from "./sessions/RotateSession"
 import MoveSession from "./sessions/MoveSession"
+import { ResizeSessionHandleSnapshot } from "./sessions/ResizeSession"
 
 import history, { Command, CommandType } from "./history"
 
@@ -881,7 +882,11 @@ export function resizeBounds(data: IData, size: number[]) {
   )
 }
 
-export function resizeNode(data: IData, snapshot: ISelectionSnapshot) {
+export function resizeNode(
+  data: IData,
+  snapshot: ISelectionSnapshot,
+  handleSnapshot: ResizeSessionHandleSnapshot
+) {
   const current = getSelectionSnapshot(data)
 
   history.execute(
@@ -895,12 +900,18 @@ export function resizeNode(data: IData, snapshot: ISelectionSnapshot) {
         for (const nodeId in snapshot.nodes) {
           nodes[nodeId].radius = current.nodes[nodeId].radius
         }
+
         updateGlobPoints(data)
       },
       undo(data) {
-        const { nodes } = data
+        const { nodes, globs } = data
         for (const nodeId in snapshot.nodes) {
           nodes[nodeId].radius = snapshot.nodes[nodeId].radius
+        }
+
+        for (const globId in handleSnapshot) {
+          globs[globId].D = handleSnapshot[globId].D
+          globs[globId].Dp = handleSnapshot[globId].Dp
         }
 
         updateGlobPoints(data)

@@ -194,6 +194,11 @@ class Inputs {
 
     this.keys[key] = true
 
+    if (shiftKey && !this.modifiers.shiftKey) state.send("PRESSED_SHIFT")
+    if (altKey && !this.modifiers.altKey) state.send("PRESSED_OPTION")
+    if (ctrlKey && !this.modifiers.ctrlKey) state.send("PRESSED_CONTROL")
+    if (metaKey && !this.modifiers.metaKey) state.send("PRESSED_META")
+
     Object.assign(this.modifiers, {
       shiftKey: shiftKey,
       optionKey: altKey,
@@ -202,7 +207,7 @@ class Inputs {
     })
 
     if (key in this.downCommands) {
-      for (let { modifiers, eventName } of this.downCommands[key]) {
+      for (const { modifiers, eventName } of this.downCommands[key]) {
         if (modifiers.every((command) => this.keys[command])) {
           return eventName
         }
@@ -223,6 +228,11 @@ class Inputs {
 
     this.keys[key] = false
 
+    if (shiftKey && !this.modifiers.shiftKey) state.send("RELEASED_SHIFT")
+    if (altKey && !this.modifiers.altKey) state.send("RELEASED_OPTION")
+    if (ctrlKey && !this.modifiers.ctrlKey) state.send("RELEASED_CONTROL")
+    if (metaKey && !this.modifiers.metaKey) state.send("RELEASED_META")
+
     Object.assign(this.modifiers, {
       shiftKey: shiftKey,
       optionKey: altKey,
@@ -231,7 +241,7 @@ class Inputs {
     })
 
     if (key in this.upCommands) {
-      for (let { modifiers, eventName } of this.upCommands[key]) {
+      for (const { modifiers, eventName } of this.upCommands[key]) {
         if (modifiers.every((command) => this.keys[command])) {
           return eventName
         }
