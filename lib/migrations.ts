@@ -1,7 +1,9 @@
-function removeGlobOptions(data: any) {
+import { IData } from "types"
+
+function removeGlobOptions(data: IData) {
   const { globIds, globs } = data
-  for (let globId of globIds) {
-    const glob = globs[globId]
+  for (const globId of globIds) {
+    const glob: any = globs[globId]
     if (glob.options !== undefined) {
       Object.assign(glob, glob.options)
       delete glob.options
@@ -9,7 +11,7 @@ function removeGlobOptions(data: any) {
   }
 }
 
-export default function migrate(data: any) {
+export default function migrate(data: IData) {
   removeGlobOptions(data)
   return data
 }

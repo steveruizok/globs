@@ -34,8 +34,6 @@ class MyDocument extends Document {
           `,
             }}
           />
-          <link rel="manifest" href="/manifest.json" />
-          <link rel="icon" href="/icon.png" />
         </Head>
         <body className={dark}>
           <Main />

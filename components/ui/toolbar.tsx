@@ -18,7 +18,7 @@ import useTheme from "hooks/useTheme"
 export default function Toolbar() {
   const hasSelectedNodes = useSelector((s) => s.data.selectedNodes.length > 0)
   const hasSelectedGlobs = useSelector((s) => s.data.selectedGlobs.length > 0)
-  const isLinking = useSelector((s) => s.isIn("linkingNodes"))
+  const isGlobbing = useSelector((s) => s.isIn("globbingNodes"))
   const isCreating = useSelector((s) => s.isIn("creatingNodes"))
 
   const { toggle } = useTheme()
@@ -55,8 +55,8 @@ export default function Toolbar() {
         <button
           title="Create Globs (L)"
           disabled={!hasSelectedNodes}
-          data-active={isLinking}
-          onClick={() => state.send("STARTED_LINKING_NODES")}
+          data-active={isGlobbing}
+          onClick={() => state.send("PRESSED_TOOLBAR_BUTTON_GLOBBING_NODES")}
         >
           <ArrowRight />
         </button>

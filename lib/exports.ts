@@ -28,7 +28,7 @@ class Exports {
         : []
       : globIds
 
-    for (let globId of globIdsToCopy) {
+    for (const globId of globIdsToCopy) {
       globbedNodes.add(globs[globId].nodes[0])
       globbedNodes.add(globs[globId].nodes[1])
       try {
@@ -46,7 +46,7 @@ class Exports {
       : nodeIds
     ).filter((id) => !globbedNodes.has(id))
 
-    for (let nodeId of nodeIdsToCopy) {
+    for (const nodeId of nodeIdsToCopy) {
       try {
         const copy = elements[nodeId].current.cloneNode(true)
         svg.appendChild(copy)
@@ -99,7 +99,7 @@ class Exports {
 
   static copyStringToClipboard(string: string) {
     let textarea: HTMLTextAreaElement
-    let result: any
+    let result: boolean | null
 
     try {
       textarea = document.createElement("textarea")
@@ -133,13 +133,9 @@ class Exports {
 
     // manual copy fallback using prompt
     if (!result) {
-      const isMac = navigator.platform.toUpperCase().indexOf("MAC") >= 0
-      const copyHotkey = isMac ? "⌘C" : "CTRL+C"
-      result = prompt(`Press ${copyHotkey}`, string) // eslint-disable-line no-alert
-      if (!result) {
-        return false
-      }
+      return false
     }
+
     return true
   }
 }

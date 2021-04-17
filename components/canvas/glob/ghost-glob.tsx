@@ -5,6 +5,7 @@ import * as vec from "lib/vec"
 import * as svg from "lib/svg"
 import { motion } from "framer-motion"
 import { getGlob, getGlobOutline, getOuterTangents } from "lib/utils"
+import inputs from "lib/inputs"
 
 export default function GhostBranchGlob() {
   const fill = useSelector((s) => s.data.fill)
@@ -15,16 +16,31 @@ export default function GhostBranchGlob() {
 
     const selected = selectedNodes.map((id) => nodes[id])
 
+    const pt = point
+
+    // if (inputs.modifiers.shiftKey) {
+    //   let d: number, dd: number
+
+    //   let snaps: number[][] = []
+
+    //   for (const node of selected) {
+    //     const py = vec.nearestPointOnLineThroughPoint(node.point, [0, 1], pt)
+    //     const px = vec.nearestPointOnLineSegment(node.point, [1, 0], pt)
+
+    //     pt = vec.dist(py, pt) < vec.dist(px, pt) ? py : px
+    //   }
+    // }
+
     const avgRadius = selected.reduce(
       (a, c) => (c.radius + a) / 2,
       selected[0].radius
     )
 
-    const ghost = { point, radius: avgRadius }
+    const ghost = { point: pt, radius: avgRadius }
 
     const commands: string[] = [svg.ellipse(ghost.point, ghost.radius)]
 
-    for (let id of selectedNodes) {
+    for (const id of selectedNodes) {
       const node = nodes[id]
 
       const { point: C0, radius: r0 } = node

@@ -1,7 +1,7 @@
 import { styled } from "stitches.config"
-import { motion, PanInfo, transform, useMotionValue } from "framer-motion"
+import { motion, useMotionValue } from "framer-motion"
 import { memo, useCallback, useEffect, useRef } from "react"
-import { modulate, throttle } from "lib/utils"
+import { throttle } from "lib/utils"
 import state from "lib/state"
 import inputs from "lib/inputs"
 import * as vec from "lib/vec"
@@ -64,11 +64,7 @@ function Thumbstick() {
   }, [])
 
   return (
-    <Container
-      onPointerMove={(e) => {
-        // e.preventDefault(), e.stopPropagation()
-      }}
-    >
+    <Container>
       <Stick ref={rStick} />
       <Control
         drag

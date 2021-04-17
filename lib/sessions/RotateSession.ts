@@ -34,14 +34,14 @@ export default class RotateSession extends BaseSession {
   }
 
   cancel = (data: IData) => {
-    for (let id in this.snapshot.nodes) {
+    for (const id in this.snapshot.nodes) {
       const sNode = this.snapshot.nodes[id]
       const node = data.nodes[id]
       node.point = sNode.point
       node.radius = sNode.radius
     }
 
-    for (let id in this.snapshot.globs) {
+    for (const id in this.snapshot.globs) {
       const sGlob = this.snapshot.globs[id]
       const glob = data.globs[id]
       Object.assign(glob, sGlob)
@@ -63,12 +63,12 @@ export default class RotateSession extends BaseSession {
     const point = screenToWorld(inputs.pointer.point, data.camera)
     const delta = angleDelta(angle, vec.angle(point, center))
 
-    for (let nodeId of data.selectedNodes) {
+    for (const nodeId of data.selectedNodes) {
       const snap = snapshots.nodes[nodeId]
       data.nodes[nodeId].point = rotatePoint(snap.point, center, delta)
     }
 
-    for (let globId of data.selectedGlobs) {
+    for (const globId of data.selectedGlobs) {
       const snap = snapshots.globs[globId]
       Object.assign(data.globs[globId], {
         D: rotatePoint(snap.D, center, delta),
@@ -77,5 +77,5 @@ export default class RotateSession extends BaseSession {
     }
   }
 
-  static getSnapshot(data: IData) {}
+  // static getSnapshot(data: IData) {}
 }

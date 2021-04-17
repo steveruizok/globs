@@ -3,7 +3,6 @@ import { current } from "immer"
 import * as vec from "./vec"
 import inputs from "lib/inputs"
 import {
-  getGlob,
   getLineLineIntersection,
   getResizedBounds,
   getSelectedBoundingBox,
@@ -11,23 +10,18 @@ import {
   getNewGlob,
   screenToWorld,
   updateGlobPoints,
-  saveSelectionState,
   getSelectionSnapshot,
   getGlobPoints,
 } from "./utils"
 
-import MoveSession, {
-  MoveSessionSnapshot,
-  MoveSessionClones,
-} from "./sessions/MoveSession"
 import AnchorSession, { AnchorSessionSnapshot } from "./sessions/AnchorSession"
 
 import { getClosestPointOnCurve, getNormalOnCurve } from "./bez"
-import ResizeSession, { ResizeSessionSnapshot } from "./sessions/ResizeSession"
 import TransformSession, {
   TransformSessionSnapshot,
 } from "./sessions/TransformSession"
 import RotateSession from "./sessions/RotateSession"
+import MoveSession from "./sessions/MoveSession"
 
 import history, { Command, CommandType } from "./history"
 
@@ -82,7 +76,7 @@ export function createGlobToNewNode(data: IData, point: number[]) {
         data.nodeIds.push(newNode.id)
         data.nodes[newNode.id] = newNode
 
-        for (let glob of newGlobs) {
+        for (const glob of newGlobs) {
           data.globIds.push(glob.id)
           data.globs[glob.id] = glob
         }
@@ -94,7 +88,7 @@ export function createGlobToNewNode(data: IData, point: number[]) {
         delete data.nodes[newNode.id]
         data.nodeIds = Object.keys(data.nodes)
 
-        for (let glob of newGlobs) {
+        for (const glob of newGlobs) {
           delete data.globs[glob.id]
         }
 
@@ -129,7 +123,7 @@ export function createGlobBetweenNodes(data: IData, targetId: string) {
     new Command({
       type: CommandType.CreateGlob,
       do(data) {
-        for (let glob of newGlobs) {
+        for (const glob of newGlobs) {
           data.globs[glob.id] = glob
           data.globIds.push(glob.id)
         }
@@ -138,7 +132,7 @@ export function createGlobBetweenNodes(data: IData, targetId: string) {
         data.selectedNodes[targetId]
       },
       undo(data) {
-        for (let glob of newGlobs) {
+        for (const glob of newGlobs) {
           delete data.globs[glob.id]
         }
         data.globIds = Object.keys(data.globs)
@@ -179,7 +173,7 @@ export function pasteSelection(
 
         const { globs, nodes } = data
 
-        for (let globId of data.selectedGlobs) {
+        for (const globId of data.selectedGlobs) {
           const glob = globs[globId]
           const { D, Dp } = globs[glob.id]
           glob.D = vec.round(vec.add(D, delta))
@@ -187,19 +181,18 @@ export function pasteSelection(
         }
 
         // Move nodes
-        for (let nodeId of data.selectedNodes) {
+        for (const nodeId of data.selectedNodes) {
           const node = nodes[nodeId]
-          let next = vec.round(vec.add(nodes[node.id].point, delta), 2)
-          node.point = next
+          node.point = vec.round(vec.add(nodes[node.id].point, delta), 2)
         }
 
         updateGlobPoints(data)
       },
       undo(data) {
-        for (let nodeId in pasted.nodes) {
+        for (const nodeId in pasted.nodes) {
           delete data.nodes[nodeId]
         }
-        for (let globId in pasted.globs) {
+        for (const globId in pasted.globs) {
           delete data.globs[globId]
         }
         data.nodeIds = Object.keys(data.nodes)
@@ -217,7 +210,7 @@ export function cloneSelection(
     hoveredNodes: string[]
     hoveredGlobs: string[]
   },
-  snapshot: MoveSessionSnapshot
+  snapshot: ISelectionSnapshot
 ) {
   const {
     nodes: sNodes,
@@ -238,10 +231,10 @@ export function cloneSelection(
         // When first executed, the items will already be in the correct position
         if (initial) return
 
-        for (let node of sCloneNodes) {
+        for (const node of sCloneNodes) {
           data.nodes[node.id] = node
         }
-        for (let glob of sCloneGlobs) {
+        for (const glob of sCloneGlobs) {
           data.globs[glob.id] = glob
         }
         data.nodeIds = Object.keys(data.nodes)
@@ -253,10 +246,10 @@ export function cloneSelection(
         data.hoveredGlobs = clones.hoveredGlobs
       },
       undo(data) {
-        for (let node of sCloneNodes) {
+        for (const node of sCloneNodes) {
           delete data.nodes[node.id]
         }
-        for (let glob of sCloneGlobs) {
+        for (const glob of sCloneGlobs) {
           delete data.globs[glob.id]
         }
         data.nodeIds = Object.keys(data.nodes)
@@ -273,8 +266,7 @@ export function cloneSelection(
 export function moveSelection(
   data: IData,
   delta: number[],
-  snapshot: MoveSessionSnapshot,
-  clones?: MoveSessionClones
+  snapshot: ISelectionSnapshot
 ) {
   const sSnapshot = MoveSession.getSnapshot(data)
 
@@ -372,7 +364,6 @@ export function splitGlob(data: IData, id: string) {
   const { globs: sGlobs, camera: sCamera, nodes: sNodes } = current(data)
 
   let newStartNode: INode,
-    newGlob: IGlob,
     D0: number[],
     D1: number[],
     D0p: number[],
@@ -512,7 +503,7 @@ export function splitGlob(data: IData, id: string) {
     newStartNode = getNewNode(C, r)
   }
 
-  newGlob = {
+  const newGlob = {
     ...getNewGlob(newStartNode, data.nodes[glob.nodes[1]]),
     D: D1,
     Dp: D1p,
@@ -624,13 +615,13 @@ export function deleteSelection(data: IData) {
   const deletedGlobIds = new Set(sSelectedGlobIds)
   const deletedNodeIds = new Set(sSelectedNodeIds)
 
-  for (let globId in deletedGlobIds) {
+  for (const globId in deletedGlobIds) {
     const glob = sGlobs[globId]
     deletedNodeIds.add(glob.nodes[0])
     deletedNodeIds.add(glob.nodes[1])
   }
 
-  for (let globId in sGlobs) {
+  for (const globId in sGlobs) {
     const glob = sGlobs[globId]
     if (glob.nodes.some((nodeId) => deletedNodeIds.has(nodeId))) {
       deletedGlobIds.add(globId)
@@ -674,12 +665,12 @@ export function toggleSelectionLocked(data: IData) {
       type: CommandType.ToggleLocked,
       do(data) {
         const locked = !selectedNodes.every((id) => data.nodes[id].locked)
-        for (let id of selectedNodes) {
+        for (const id of selectedNodes) {
           data.nodes[id].locked = locked
         }
       },
       undo(data) {
-        for (let id in currentLocked) {
+        for (const id in currentLocked) {
           data.nodes[id].locked = currentLocked[id]
         }
       },
@@ -696,7 +687,7 @@ export function updateGlobOptions(data: IData, options: Partial<IGlob>) {
     new Command({
       type: CommandType.ChangeBounds,
       do(data) {
-        for (let globId of sGlobIds) {
+        for (const globId of sGlobIds) {
           const glob = data.globs[globId]
           Object.assign(glob, options)
         }
@@ -704,7 +695,7 @@ export function updateGlobOptions(data: IData, options: Partial<IGlob>) {
         updateGlobPoints(data)
       },
       undo(data) {
-        for (let globId of sGlobIds) {
+        for (const globId of sGlobIds) {
           const glob = data.globs[globId]
           Object.assign(glob, snapshot.globs[globId])
         }
@@ -724,12 +715,12 @@ export function moveBounds(data: IData, delta: number[]) {
     new Command({
       type: CommandType.ChangeBounds,
       do(data) {
-        for (let nodeId of sNodeIds) {
+        for (const nodeId of sNodeIds) {
           const node = data.nodes[nodeId]
           node.point = vec.add(node.point, delta)
         }
 
-        for (let globId of sGlobIds) {
+        for (const globId of sGlobIds) {
           const glob = data.globs[globId]
           glob.D = vec.add(glob.D, delta)
           glob.Dp = vec.add(glob.Dp, delta)
@@ -737,12 +728,12 @@ export function moveBounds(data: IData, delta: number[]) {
         updateGlobPoints(data)
       },
       undo(data) {
-        for (let nodeId of sNodeIds) {
+        for (const nodeId of sNodeIds) {
           const node = data.nodes[nodeId]
           node.point = vec.sub(node.point, delta)
         }
 
-        for (let globId of sGlobIds) {
+        for (const globId of sGlobIds) {
           const glob = data.globs[globId]
           glob.D = vec.sub(glob.D, delta)
           glob.Dp = vec.sub(glob.Dp, delta)
@@ -770,14 +761,14 @@ export function rotateSelection(
         updateGlobPoints(data)
       },
       undo(data) {
-        for (let id in snapshot.nodes) {
+        for (const id in snapshot.nodes) {
           const sNode = snapshot.nodes[id]
           const node = data.nodes[id]
           node.point = sNode.point
           node.radius = sNode.radius
         }
 
-        for (let id in snapshot.globs) {
+        for (const id in snapshot.globs) {
           const sGlob = snapshot.globs[id]
           const glob = data.globs[id]
           Object.assign(glob, sGlob)
@@ -830,14 +821,14 @@ export function transformBounds(
         updateGlobPoints(data)
       },
       undo(data) {
-        for (let id in restore.nodes) {
+        for (const id in restore.nodes) {
           const sNode = restore.nodes[id]
           const node = data.nodes[id]
           node.point = sNode.point
           node.radius = sNode.radius
         }
 
-        for (let id in restore.globs) {
+        for (const id in restore.globs) {
           const sGlob = restore.globs[id]
           const glob = data.globs[id]
           Object.assign(glob, sGlob)
@@ -901,14 +892,14 @@ export function resizeNode(data: IData, snapshot: ISelectionSnapshot) {
         if (initial) return
 
         const { nodes } = data
-        for (let nodeId in snapshot.nodes) {
+        for (const nodeId in snapshot.nodes) {
           nodes[nodeId].radius = current.nodes[nodeId].radius
         }
         updateGlobPoints(data)
       },
       undo(data) {
         const { nodes } = data
-        for (let nodeId in snapshot.nodes) {
+        for (const nodeId in snapshot.nodes) {
           nodes[nodeId].radius = snapshot.nodes[nodeId].radius
         }
 
@@ -968,7 +959,7 @@ export function setPropertyOnSelectedNodes(
     new Command({
       type: CommandType.CreateNode,
       do(data) {
-        for (let key in sNodes) {
+        for (const key in sNodes) {
           const node = data.nodes[key]
           if (x !== null) node.point[0] = x
           if (y !== null) node.point[1] = y
@@ -979,7 +970,7 @@ export function setPropertyOnSelectedNodes(
         updateGlobPoints(data)
       },
       undo(data) {
-        for (let key in sNodes) {
+        for (const key in sNodes) {
           const node = data.nodes[key]
           const sNode = sNodes[key]
           if (x !== null) node.point[0] = sNode.point[0]
@@ -994,14 +985,14 @@ export function setPropertyOnSelectedNodes(
   )
 }
 
-export function template(data: IData) {
-  const snapshot = current(data)
-  history.execute(
-    data,
-    new Command({
-      type: CommandType.CreateNode,
-      do(data) {},
-      undo(data) {},
-    })
-  )
-}
+// export function template(data: IData) {
+//   const snapshot = current(data)
+//   history.execute(
+//     data,
+//     new Command({
+//       type: CommandType.CreateNode,
+//       do(data) {},
+//       undo(data) {},
+//     })
+//   )
+// }

@@ -159,7 +159,7 @@ export function tangent(A: number[], B: number[]) {
  * @param B
  */
 export function dist2(A: number[], B: number[]) {
-  var dif = sub(A, B)
+  const dif = sub(A, B)
   return dif[0] * dif[0] + dif[1] * dif[1]
 }
 
@@ -173,7 +173,7 @@ export function dist(A: number[], B: number[]) {
 }
 
 /**
- * A faster, though less accurate method for testing distances.
+ * A faster, though less accurate method for testing distances. Maybe faster?
  * @param A
  * @param B
  * @returns
@@ -271,7 +271,7 @@ export function lrp(A: number[], B: number[], t: number) {
  * @param s Strength
  */
 export function int(A: number[], B: number[], from: number, to: number, s = 1) {
-  var t = (clamp(from, to) - from) / (to - from)
+  const t = (clamp(from, to) - from) / (to - from)
   return add(mul(A, 1 - t), mul(B, s))
 }
 
@@ -283,8 +283,8 @@ export function int(A: number[], B: number[], from: number, to: number, s = 1) {
  */
 export function ang3(p1: number[], pc: number[], p2: number[]) {
   // this,
-  var v1 = vec(pc, p1)
-  var v2 = vec(pc, p2)
+  const v1 = vec(pc, p1)
+  const v2 = vec(pc, p2)
   return ang(v1, v2)
 }
 
@@ -335,12 +335,12 @@ export function round(a: number[], d = 2) {
  * @param P A point.
  * @returns
  */
-export function distanceToLine(A: number[], B: number[], P: number[]) {
-  const delta = sub(B, A)
-  const angle = Math.atan2(delta[1], delta[0])
-  const dir = rot(sub(P, A), -angle)
-  return Math.round(dir[1] * 100) / 100
-}
+// export function distanceToLine(A: number[], B: number[], P: number[]) {
+//   const delta = sub(B, A)
+//   const angle = Math.atan2(delta[1], delta[0])
+//   const dir = rot(sub(P, A), -angle)
+//   return dir[1]
+// }
 
 /**
  * Get the nearest point on a line segment AB.
@@ -350,7 +350,64 @@ export function distanceToLine(A: number[], B: number[], P: number[]) {
  * @param clamp Whether to clamp the resulting point to the segment.
  * @returns
  */
-export function nearestPointOnLine(
+// export function nearestPointOnLine(
+//   A: number[],
+//   B: number[],
+//   P: number[],
+//   clamp = true
+// ) {
+//   const delta = sub(B, A)
+//   const length = len(delta)
+//   const angle = Math.atan2(delta[1], delta[0])
+//   const dir = rot(sub(P, A), -angle)
+
+//   if (clamp) {
+//     if (dir[0] < 0) return A
+//     if (dir[0] > length) return B
+//   }
+
+//   return add(A, div(mul(delta, dir[0]), length))
+// }
+
+/**
+ * Get the nearest point on a line with a known unit vector that passes through point A
+ * @param A Any point on the line
+ * @param u The unit vector for the line.
+ * @param P A point not on the line to test.
+ * @returns
+ */
+export function nearestPointOnLineThroughPoint(
+  A: number[],
+  u: number[],
+  P: number[]
+) {
+  return add(A, mul(u, pry(sub(P, A), u)))
+}
+
+/**
+ * Distance between a point and a line with a known unit vector that passes through a point.
+ * @param A Any point on the line
+ * @param u The unit vector for the line.
+ * @param P A point not on the line to test.
+ * @returns
+ */
+export function distanceToLineThroughPoint(
+  A: number[],
+  u: number[],
+  P: number[]
+) {
+  return dist(P, nearestPointOnLineThroughPoint(A, u, P))
+}
+
+/**
+ * Get the nearest point on a line segment between A and B
+ * @param A The start of the line segment
+ * @param B The end of the line segment
+ * @param P The off-line point
+ * @param clamp Whether to clamp the point between A and B.
+ * @returns
+ */
+export function nearestPointOnLineSegment(
   A: number[],
   B: number[],
   P: number[],
@@ -358,15 +415,36 @@ export function nearestPointOnLine(
 ) {
   const delta = sub(B, A)
   const length = len(delta)
-  const angle = Math.atan2(delta[1], delta[0])
-  const dir = rot(sub(P, A), -angle)
+  const u = div(delta, length)
+
+  const pt = add(A, mul(u, pry(sub(P, A), u)))
 
   if (clamp) {
-    if (dir[0] < 0) return A
-    if (dir[0] > length) return B
+    const da = dist(A, pt)
+    const db = dist(B, pt)
+
+    if (db < da && da > length) return B
+    if (da < db && db > length) return A
   }
 
-  return add(A, div(mul(delta, dir[0]), length))
+  return pt
+}
+
+/**
+ * Distance between a point and the nearest point on a line segment between A and B
+ * @param A The start of the line segment
+ * @param B The end of the line segment
+ * @param P The off-line point
+ * @param clamp Whether to clamp the point between A and B.
+ * @returns
+ */
+export function distanceToLineSegment(
+  A: number[],
+  B: number[],
+  P: number[],
+  clamp = true
+) {
+  return dist(P, nearestPointOnLineSegment(A, B, P, clamp))
 }
 
 /**

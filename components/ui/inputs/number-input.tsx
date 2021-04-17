@@ -33,8 +33,8 @@ function NumberInput({
   const [isPanning, setIsPanning] = useState(false)
   const [isFocused, setIsFocused] = useState(false)
 
-  let rWillEdit = useRef(true)
-  let rPanStart = useRef(Math.round(Number(val) * 100) / 100)
+  const rWillEdit = useRef(true)
+  const rPanStart = useRef(Math.round(Number(val) * 100) / 100)
 
   useEffect(() => {
     rPanStart.current = Math.round(Number(val) * 100) / 100
@@ -110,7 +110,7 @@ function NumberInput({
     }
   }
 
-  function handleBlur(e: React.FocusEvent<HTMLInputElement>) {
+  function handleBlur() {
     if (rWillEdit.current) {
       setIsFocused(false)
       if (value !== "mixed") {
@@ -167,7 +167,3 @@ function NumberInput({
 }
 
 export default memo(NumberInput)
-
-function handlePanEnd() {
-  document.body.style.cursor = "default"
-}

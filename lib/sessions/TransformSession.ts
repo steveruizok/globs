@@ -109,14 +109,14 @@ export default class TransformSession extends BaseSession {
   }
 
   cancel = (data: IData) => {
-    for (let id in this.restore.nodes) {
+    for (const id in this.restore.nodes) {
       const sNode = this.restore.nodes[id]
       const node = data.nodes[id]
       node.point = sNode.point
       node.radius = sNode.radius
     }
 
-    for (let id in this.restore.globs) {
+    for (const id in this.restore.globs) {
       const sGlob = this.restore.globs[id]
       const glob = data.globs[id]
       Object.assign(glob, sGlob)
@@ -148,7 +148,7 @@ export default class TransformSession extends BaseSession {
     const nodes = data.selectedNodes.map((id) => data.nodes[id])
     const globs = data.selectedGlobs.map((id) => data.globs[id])
     const { nodes: sNodes, globs: sGlobs } = snapshot
-    let [x, y] = point
+    const [x, y] = point
 
     switch (value) {
       case 0: // Top Edge or Top-Left Corner
@@ -177,7 +177,7 @@ export default class TransformSession extends BaseSession {
     v.mx = v.x0 < v.x1 ? v.x0 : v.x1
     v.mw = Math.abs(v.x1 - v.x0)
 
-    for (let node of nodes) {
+    for (const node of nodes) {
       const { nx, nmx, ny, nmy, nw, nh } = sNodes[node.id]
       node.point = vec.round([
         v.mx + (v.x1 < v.x0 ? nmx : nx) * v.mw,
@@ -190,7 +190,7 @@ export default class TransformSession extends BaseSession {
       }
     }
 
-    for (let glob of globs) {
+    for (const glob of globs) {
       const { D, Dp, a, ap, b, bp } = sGlobs[glob.id]
 
       Object.assign(glob, {
@@ -245,7 +245,7 @@ export default class TransformSession extends BaseSession {
 
     const nodes = Object.fromEntries(
       data.selectedNodes.map((id) => {
-        let {
+        const {
           radius,
           point: [x, y],
         } = data.nodes[id]
@@ -270,7 +270,7 @@ export default class TransformSession extends BaseSession {
 
     const globs = Object.fromEntries(
       data.selectedGlobs.map((id) => {
-        let {
+        const {
           D: [dx, dy],
           Dp: [dpx, dpy],
           a,

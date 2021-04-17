@@ -256,13 +256,13 @@ function EdgeVertical({
   )
 }
 
-function setCursorNS() {
-  document.body.style.cursor = "ns-resize"
-}
+// function setCursorNS() {
+//   document.body.style.cursor = "ns-resize"
+// }
 
-function setCursorEW() {
-  document.body.style.cursor = "ew-resize"
-}
+// function setCursorEW() {
+//   document.body.style.cursor = "ew-resize"
+// }
 
 function restoreCursor() {
   document.body.style.cursor = "default"

@@ -5,15 +5,16 @@ import NumberInput from "../inputs/number-input"
 import EnumInput from "../inputs/enum-input"
 import BoolInput from "../inputs/bool-input"
 import { useCallback } from "react"
-import { deepCompare, round } from "lib/utils"
+import { deepCompare, round, deepCompareArrays } from "lib/utils"
 
 export default function BoundsProps() {
   const bounds = useSelector((s) => s.values.selectionBounds, deepCompare)
-  // const selectedNodes = useSelector(
-  //   ({ data: { selectedNodes, nodes } }) =>
-  //     selectedNodes.map((id) => nodes[id]),
-  //   deepCompareArrays
-  // )
+
+  const selectedNodes = useSelector(
+    ({ data: { selectedNodes, nodes } }) =>
+      selectedNodes.map((id) => nodes[id]),
+    deepCompareArrays
+  )
 
   const handleXChange = useCallback(
     (value: number) => state.send("CHANGED_BOUNDS_X", { value }),
@@ -35,13 +36,8 @@ export default function BoundsProps() {
     []
   )
 
-  const handleRotationChange = useCallback(
-    (value: number) => state.send("ROTATED_BOUNDS", { value }),
-    []
-  )
-
   const handleLockedChange = useCallback(
-    (value: boolean) => state.send("SET_NODES_LOCKED", { value }),
+    (value: boolean) => state.send("LOCKED_NODES", { value }),
     []
   )
 
@@ -49,10 +45,10 @@ export default function BoundsProps() {
 
   const { minX, minY, width, height } = bounds
 
-  // const locked = selectedNodes.reduce(
-  //   (a, c) => (c.locked === a ? a : "mixed"),
-  //   selectedNodes[0].locked
-  // )
+  const locked = selectedNodes.reduce(
+    (a, c) => (c.locked === a ? a : "mixed"),
+    selectedNodes[0].locked
+  )
 
   return (
     <>
@@ -82,7 +78,7 @@ export default function BoundsProps() {
         label="height"
         onChange={handleHeightChange}
       />
-      {/* <BoolInput label="locked" value={locked} onChange={handleLockedChange} /> */}
+      <BoolInput label="locked" value={locked} onChange={handleLockedChange} />
     </>
   )
 }

@@ -1,6 +1,5 @@
 import state, { useSelector } from "lib/state"
-import { deepCompare, getGlob, getGlobOutline } from "lib/utils"
-import { useRef } from "react"
+import { deepCompare, getGlobOutline } from "lib/utils"
 import CenterLine from "../glob/center-line"
 
 interface Props {

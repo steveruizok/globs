@@ -106,11 +106,11 @@ export default class TranslateSession extends BaseSession {
     const { snapshot } = this
     const { nodes, globs, selectedNodes, selectedGlobs } = data
 
-    for (let nodeId of selectedNodes) {
+    for (const nodeId of selectedNodes) {
       nodes[nodeId].point = snapshot.nodes[nodeId].point
     }
 
-    for (let globId of selectedGlobs) {
+    for (const globId of selectedGlobs) {
       globs[globId].D = snapshot.globs[globId].D
       globs[globId].Dp = snapshot.globs[globId].Dp
     }
@@ -146,13 +146,13 @@ export default class TranslateSession extends BaseSession {
       delta[0] = 0
     }
 
-    for (let nodeId of selectedNodes) {
+    for (const nodeId of selectedNodes) {
       nodes[nodeId].point = vec.round(
         vec.add(snapshot.nodes[nodeId].point, delta)
       )
     }
 
-    for (let globId of selectedGlobs) {
+    for (const globId of selectedGlobs) {
       globs[globId].D = vec.round(vec.add(snapshot.globs[globId].D, delta))
       globs[globId].Dp = vec.round(vec.add(snapshot.globs[globId].Dp, delta))
     }
@@ -176,7 +176,7 @@ export default class TranslateSession extends BaseSession {
       delta[0] = 0
     }
 
-    for (let globId of selectedGlobs) {
+    for (const globId of selectedGlobs) {
       const sGlob = snapshot.globs[globId]
       globs[globId][handle] = vec.round(vec.add(sGlob[handle], delta))
     }
@@ -192,7 +192,7 @@ export default class TranslateSession extends BaseSession {
   ) {
     const { globs, selectedGlobs } = data
 
-    for (let globId of selectedGlobs) {
+    for (const globId of selectedGlobs) {
       const sGlob = snapshot.globs[globId]
       let next = sGlob[anchor] + delta[0] / 100
       if (!inputs.keys.Meta && Math.abs(0.5 - next) < 0.025) next = 0.5
@@ -209,7 +209,7 @@ export default class TranslateSession extends BaseSession {
   ) {
     const { nodes, selectedNodes } = data
 
-    for (let nodeId of selectedNodes) {
+    for (const nodeId of selectedNodes) {
       const sNode = snapshot.nodes[nodeId]
       nodes[nodeId].radius = round(clamp(sNode.radius + delta[0], 0))
     }

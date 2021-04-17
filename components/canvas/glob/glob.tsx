@@ -7,8 +7,6 @@ import BrokenGlob from "./broken-glob"
 import BaseGlob from "./base-glob"
 import BaseNode from "../node/base-node"
 import GlobNodeHints from "./glob-node-hints"
-import * as svg from "lib/svg"
-import classNames from "classnames"
 import useRegisteredElement from "hooks/useRegisteredElement"
 
 interface Props {
@@ -58,8 +56,8 @@ export default function Glob({ id, fill, isSelected }: Props) {
 
   if (!glob) return null
 
-  let safe = !!glob.points
-  let globPts = glob.points || rPrevPts.current
+  const safe = !!glob.points
+  const globPts = glob.points || rPrevPts.current
 
   if (!globPts) return null
 

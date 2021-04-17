@@ -46,16 +46,16 @@ export default class AnchorSession extends BaseSession {
     let n: number
 
     if (this.primary === "a") {
-      next = vec.nearestPointOnLine(E0, D, next)
+      next = vec.nearestPointOnLineSegment(E0, D, next)
       n = vec.dist(E0, next) / vec.dist(E0, D)
     } else if (this.primary === "b") {
-      next = vec.nearestPointOnLine(E1, D, next)
+      next = vec.nearestPointOnLineSegment(E1, D, next)
       n = vec.dist(E1, next) / vec.dist(E1, D)
     } else if (this.primary === "ap") {
-      next = vec.nearestPointOnLine(E0p, Dp, next)
+      next = vec.nearestPointOnLineSegment(E0p, Dp, next)
       n = vec.dist(E0p, next) / vec.dist(E0p, Dp)
     } else if (this.primary === "bp") {
-      next = vec.nearestPointOnLine(E1p, Dp, next)
+      next = vec.nearestPointOnLineSegment(E1p, Dp, next)
       n = vec.dist(E1p, next) / vec.dist(E1p, Dp)
     }
 

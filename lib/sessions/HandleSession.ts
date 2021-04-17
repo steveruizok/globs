@@ -70,7 +70,7 @@ export default class HandleSession extends BaseSession {
     const [start, end] = glob.nodes
     snaps.active = []
 
-    let delta = vec.vec(
+    const delta = vec.vec(
       this.origin,
       screenToWorld(inputs.pointer.point, camera)
     )
@@ -88,8 +88,6 @@ export default class HandleSession extends BaseSession {
 
     // Snapping
     if (!inputs.keys.Alt) {
-      let d: number
-
       const [A0, A1] =
         this.primary === "D"
           ? [glob.points.E0, glob.points.E1]
@@ -99,7 +97,7 @@ export default class HandleSession extends BaseSession {
       const n = vec.uni(vec.vec(A0, A1))
 
       // Is the near the midpoint of its points?
-      d = vec.dist(next, mp) * camera.zoom
+      const d = vec.dist(next, mp) * camera.zoom
       if (d < 5) {
         next = mp
         snaps.active.push({
@@ -111,8 +109,10 @@ export default class HandleSession extends BaseSession {
       }
 
       // Is the handle near to the line between its points?
-      if (Math.abs(vec.distanceToLine(A0, A1, next) * camera.zoom) < 3) {
-        next = vec.nearestPointOnLine(A0, A1, next, false)
+      const ptOnLine = vec.nearestPointOnLineThroughPoint(mp, n, next)
+
+      if (vec.dist(ptOnLine, next) * camera.zoom < 3) {
+        next = ptOnLine
 
         snaps.active.push({
           type: ISnapTypes.HandleStraight,
@@ -122,12 +122,13 @@ export default class HandleSession extends BaseSession {
         })
       }
 
-      // Is the handle near the perpendicular of its points?
-      const p0 = vec.sub(mp, vec.mul(vec.per(n), 100000))
-      const p1 = vec.add(mp, vec.mul(vec.per(n), 100000))
-
-      if (Math.abs(vec.distanceToLine(p0, p1, next) * camera.zoom) < 3) {
-        next = vec.nearestPointOnLine(p0, p1, next, false)
+      const ptOnPerLine = vec.nearestPointOnLineThroughPoint(
+        mp,
+        vec.per(n),
+        next
+      )
+      if (vec.dist(ptOnPerLine, next) * camera.zoom < 3) {
+        next = ptOnPerLine
 
         snaps.active.push({
           type: ISnapTypes.Handle,
@@ -159,8 +160,8 @@ export default class HandleSession extends BaseSession {
       let snapd = 3,
         snapped = false
 
-      for (let snap of this.snaps) {
-        let d = vec.dist(next, snap) * camera.zoom
+      for (const snap of this.snaps) {
+        const d = vec.dist(next, snap) * camera.zoom
         if (d < snapd) {
           snapd = d
           next = snap
@@ -169,8 +170,9 @@ export default class HandleSession extends BaseSession {
       }
 
       if (!snapped) {
-        for (let id of data.globIds) {
+        for (const id of data.globIds) {
           if (globs[id].points === null) continue
+          if (glob.id === id) continue
 
           const { E0: a, D: b, E1: c, E0p: ap, Dp: bp, E1p: cp } = globs[
             id
@@ -178,9 +180,11 @@ export default class HandleSession extends BaseSession {
 
           if (
             (isInView(a, document) || isInView(b, document)) &&
-            Math.abs(vec.distanceToLine(a, b, next) * camera.zoom) < 3
+            Math.abs(
+              vec.distanceToLineSegment(a, b, next, false) * camera.zoom
+            ) < 3
           ) {
-            next = vec.nearestPointOnLine(a, b, next, false)
+            next = vec.nearestPointOnLineSegment(a, b, next, false)
             snaps.active.push({
               type: ISnapTypes.Handle,
               from: next,
@@ -188,9 +192,11 @@ export default class HandleSession extends BaseSession {
             })
           } else if (
             (isInView(b, document) || isInView(c, document)) &&
-            Math.abs(vec.distanceToLine(b, c, next) * camera.zoom) < 3
+            Math.abs(
+              vec.distanceToLineSegment(b, c, next, false) * camera.zoom
+            ) < 3
           ) {
-            next = vec.nearestPointOnLine(b, c, next, false)
+            next = vec.nearestPointOnLineSegment(b, c, next, false)
             snaps.active.push({
               type: ISnapTypes.Handle,
               from: next,
@@ -198,9 +204,11 @@ export default class HandleSession extends BaseSession {
             })
           } else if (
             (isInView(ap, document) || isInView(bp, document)) &&
-            Math.abs(vec.distanceToLine(ap, bp, next) * camera.zoom) < 3
+            Math.abs(
+              vec.distanceToLineSegment(ap, bp, next, false) * camera.zoom
+            ) < 3
           ) {
-            next = vec.nearestPointOnLine(ap, bp, next, false)
+            next = vec.nearestPointOnLineSegment(ap, bp, next, false)
             snaps.active.push({
               type: ISnapTypes.Handle,
               from: next,
@@ -208,9 +216,11 @@ export default class HandleSession extends BaseSession {
             })
           } else if (
             (isInView(bp, document) || isInView(cp, document)) &&
-            Math.abs(vec.distanceToLine(bp, cp, next) * camera.zoom) < 3
+            Math.abs(
+              vec.distanceToLineSegment(bp, cp, next, false) * camera.zoom
+            ) < 3
           ) {
-            next = vec.nearestPointOnLine(bp, cp, next, false)
+            next = vec.nearestPointOnLineSegment(bp, cp, next, false)
             snaps.active.push({
               type: ISnapTypes.Handle,
               from: next,
@@ -267,12 +277,12 @@ export default class HandleSession extends BaseSession {
     const { nodes, globs } = data
     const snaps: number[][] = []
 
-    for (let key in nodes) {
+    for (const key in nodes) {
       const node = nodes[key]
       snaps.push([...node.point])
     }
 
-    for (let key in globs) {
+    for (const key in globs) {
       const { D, Dp, points } = globs[key]
 
       snaps.push([...D], [...Dp])

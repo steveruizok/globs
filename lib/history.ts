@@ -42,8 +42,8 @@ class BaseCommand<T extends any> {
     this.doFn = options.do
     this.undoFn = options.undo
     this.manualSelection = options.manualSelection || false
-    this.restoreBeforeSelectionState = (data: T) => () => {}
-    this.restoreAfterSelectionState = (data: T) => () => {}
+    this.restoreBeforeSelectionState = () => () => {}
+    this.restoreAfterSelectionState = () => () => {}
   }
 
   undo = (data: T) => {

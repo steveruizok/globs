@@ -1,7 +1,5 @@
-import { getBoundsBetweenPoints } from "lib/bounds-utils"
 import { useSelector } from "lib/state"
 import { deepCompare } from "lib/utils"
-import * as svg from "lib/svg"
 
 export default function Brush() {
   const brush = useSelector((s) => s.data.brush, deepCompare)

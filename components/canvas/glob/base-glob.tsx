@@ -13,35 +13,36 @@ interface Props {
   endCap: "round" | "flat"
 }
 
-const BaseGlob = forwardRef<SVGPathElement, Props>(
-  ({ id, points, isFilled, isSelected, startCap, endCap }, ref) => {
-    const outline = getGlobOutline(points, startCap, endCap)
+const BaseGlob = forwardRef<SVGPathElement, Props>(function BaseGlob(
+  { id, points, isFilled, isSelected, startCap, endCap }: Props,
+  ref
+) {
+  const outline = getGlobOutline(points, startCap, endCap)
 
-    return (
-      <path
-        ref={ref}
-        d={outline}
-        onPointerDown={(e) =>
-          state.send("POINTED_GLOB", {
-            id,
-            shiftKey: e.shiftKey,
-            optionKey: e.altKey,
-            metaKey: e.metaKey || e.ctrlKey,
-            ctrlKey: e.ctrlKey,
-          })
-        }
-        className={classNames([
-          "strokewidth-m",
-          {
-            "stroke-selected": !isFilled && isSelected,
-            "stroke-outline": !isFilled && !isSelected,
-            "fill-flat": isFilled,
-            "fill-soft": !isFilled,
-          },
-        ])}
-      />
-    )
-  }
-)
+  return (
+    <path
+      ref={ref}
+      d={outline}
+      onPointerDown={(e) =>
+        state.send("POINTED_GLOB", {
+          id,
+          shiftKey: e.shiftKey,
+          optionKey: e.altKey,
+          metaKey: e.metaKey || e.ctrlKey,
+          ctrlKey: e.ctrlKey,
+        })
+      }
+      className={classNames([
+        "strokewidth-m",
+        {
+          "stroke-selected": !isFilled && isSelected,
+          "stroke-outline": !isFilled && !isSelected,
+          "fill-flat": isFilled,
+          "fill-soft": !isFilled,
+        },
+      ])}
+    />
+  )
+})
 
 export default BaseGlob

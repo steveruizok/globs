@@ -16,7 +16,7 @@ class Clipboard {
 
     const sNodeIds = new Set(data.selectedNodes)
 
-    for (let globId of data.selectedGlobs) {
+    for (const globId of data.selectedGlobs) {
       sNodeIds.add(sGlobs[globId].nodes[0])
       sNodeIds.add(sGlobs[globId].nodes[1])
     }
@@ -61,7 +61,7 @@ class Clipboard {
     )
 
     const globs = Object.fromEntries(
-      Object.entries(toPaste.globs).map(([key, glob]) => {
+      Object.values(toPaste.globs).map((glob) => {
         const id = "glob_p_" + Date.now() * Math.random()
         glob.id = id
         glob.nodes = glob.nodes.map((nodeId) => nodeIdMap[nodeId] || nodeId)

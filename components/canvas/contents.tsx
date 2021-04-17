@@ -19,7 +19,7 @@ export default function HoveringNodes() {
   const fill = useSelector((s) => s.data.fill)
   const selectedNodeIds = useSelector((s) => s.data.selectedNodes)
   const selectedGlobIds = useSelector((s) => s.data.selectedGlobs)
-  const isLinking = useSelector((s) => s.isIn("linkingNodes"))
+  const isGlobbing = useSelector((s) => s.isIn("globbingNodes"))
   const isCreating = useSelector((s) => s.isIn("creatingNodes"))
 
   return (
@@ -39,7 +39,7 @@ export default function HoveringNodes() {
       ).map((id) => (
         <Node key={id} id={id} fill={fill} isSelected={true} />
       ))}
-      {isLinking && <GhostGlob />}
+      {isGlobbing && <GhostGlob />}
       {isCreating && <GhostNode />}
     </>
   )

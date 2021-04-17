@@ -1,8 +1,6 @@
-import intersect from "path-intersection"
 import { motionValue } from "framer-motion"
 import { createState, createSelectorHook } from "@state-designer/react"
 import * as vec from "lib/vec"
-import * as svg from "lib/svg"
 
 import { initialData } from "./data"
 import history from "lib/history"
@@ -16,26 +14,9 @@ import TranslateSession from "lib/sessions/TranslateSession"
 import TransformSession from "lib/sessions/TransformSession"
 import RotateSession from "lib/sessions/RotateSession"
 import MoveSession from "./sessions/MoveSession"
-import {
-  IGlob,
-  IBounds,
-  KeyCommand,
-  IHandle,
-  IAnchor,
-  ITranslation,
-} from "lib/types"
-import {
-  getGlobPath,
-  getSelectedBoundingBox,
-  screenToWorld,
-  throttle,
-} from "utils"
-import {
-  boundsCollide,
-  getGlobInnerBounds,
-  getNodeBounds,
-  roundBounds,
-} from "./bounds-utils"
+import { IGlob, IHandle, IAnchor, ITranslation } from "lib/types"
+import { getSelectedBoundingBox, screenToWorld, throttle } from "utils"
+import { roundBounds } from "./bounds-utils"
 import migrate from "./migrations"
 import clipboard from "./clipboard"
 import { MutableRefObject } from "react"
@@ -203,9 +184,16 @@ const state = createState({
                 STARTED_CREATING_NODES: {
                   to: "creatingNodes",
                 },
-                STARTED_LINKING_NODES: {
+                PRESSED_TOOLBAR_BUTTON_GLOBBING_NODES: {
                   if: "hasSelectedNodes",
-                  to: "linkingNodes",
+                  to: "globbingNodes",
+                  else: {
+                    to: "creatingNodes.glob",
+                  },
+                },
+                STARTED_GLOBBING_NODES: {
+                  if: "hasSelectedNodes",
+                  to: "globbingNodes",
                   else: {
                     to: "creatingNodes.glob",
                   },
@@ -500,9 +488,9 @@ const state = createState({
             STARTED_CREATING_NODES: {
               to: "selecting",
             },
-            STARTED_LINKING_NODES: {
+            STARTED_GLOBBING_NODES: {
               if: "hasSelectedNodes",
-              to: "linkingNodes",
+              to: "globbingNodes",
             },
             CANCELLED: { to: "selecting" },
           },
@@ -525,17 +513,19 @@ const state = createState({
                   "createNode",
                   "saveData",
                   {
-                    to: "linkingNodes",
+                    to: "globbingNodes",
                   },
                 ],
               },
             },
           },
         },
-        linkingNodes: {
+        globbingNodes: {
           on: {
             CANCELLED: { to: "selecting" },
-            STARTED_LINKING_NODES: { to: "selecting" },
+            PRESSED_TOOLBAR_BUTTON_GLOBBING_NODES: {
+              to: "selecting",
+            },
             STARTED_CREATING_NODES: {
               to: "creatingNodes",
             },
@@ -604,16 +594,16 @@ const state = createState({
     globIsSelected(data, payload: { id: string }) {
       return data.selectedGlobs.includes(payload.id)
     },
-    isTrackpadZoom(data, payload: { ctrlKey: boolean }) {
+    isTrackpadZoom(_, payload: { ctrlKey: boolean }) {
       return inputs.keys.Alt || payload.ctrlKey
     },
-    isScaleZoom(data, payload: { scale: number }) {
+    isScaleZoom(_, payload: { scale: number }) {
       return payload.scale !== undefined
     },
-    hasMiddleButton(data, payload: { isPan: boolean }) {
+    hasMiddleButton(_, payload: { isPan: boolean }) {
       return payload.isPan
     },
-    isLeftClick(data) {
+    isLeftClick() {
       return inputs.pointer.buttons === 1
     },
     hasMeta() {
@@ -625,7 +615,7 @@ const state = createState({
     hasSpace() {
       return inputs.keys[" "]
     },
-    isMultitouch(data) {
+    isMultitouch() {
       return inputs.pointer.points.size > 1
     },
   },
@@ -638,7 +628,7 @@ const state = createState({
     copyToClipboard(data) {
       clipboard.copy(data)
     },
-    startPasteFromClipboard(data) {
+    startPasteFromClipboard() {
       clipboard.startPaste()
     },
     finishPasteFromClipboard(data, copied) {
@@ -802,7 +792,7 @@ const state = createState({
       data.selectedHandle = undefined
       data.selectedNodes = []
     },
-    pullPointingFromSelectedGlobs(data, payload: { id: string }) {
+    pullPointingFromSelectedGlobs(data) {
       data.selectedGlobs = data.selectedGlobs.filter(
         (id) => id !== data.pointingId
       )
@@ -824,7 +814,7 @@ const state = createState({
       const index = data.hoveredNodes.indexOf(payload.id)
       data.hoveredNodes.splice(index, 1)
     },
-    setHoveredNode(data, payload: { id: string }) {
+    setHoveredNode(data) {
       data.hoveredNodes = []
     },
     pushHighlightGlob(data, payload: { id: string }) {
@@ -1152,13 +1142,13 @@ export const mvPointer = {
 
 let prevScale = 1
 
-const handleGestureStart = (e: any) => {
+const handleGestureStart = (e: Event) => {
   prevScale = 1
   e.preventDefault()
 }
 
 const handleGestureEvent = throttle(
-  (e: any) => {
+  (e: Event & { scale: number }) => {
     const scale = e.scale
     let delta = scale - prevScale
     if (scale < 1) delta *= 2

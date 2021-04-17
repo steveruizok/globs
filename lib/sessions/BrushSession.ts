@@ -66,7 +66,7 @@ export default class BrushSession extends BaseSession {
       inputs.modifiers.shiftKey ? snapshot.selectedGlobIds : []
     )
 
-    for (let nodeId in nodes) {
+    for (const nodeId in nodes) {
       const snap = this.snapshot.nodes[nodeId]
       if (
         !selectedNodeIds.has(nodeId) &&
@@ -76,7 +76,7 @@ export default class BrushSession extends BaseSession {
       }
     }
 
-    for (let globId in globs) {
+    for (const globId in globs) {
       const snap = this.snapshot.globs[globId]
       if (
         !selectedGlobIds.has(globId) &&

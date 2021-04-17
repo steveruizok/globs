@@ -2,7 +2,6 @@
 import * as svg from "./svg"
 import {
   IBounds,
-  ICanvasItem,
   ICanvasItems,
   ISelectionSnapshot,
   IData,
@@ -42,15 +41,19 @@ export function getCircleTangentToPoint(
 }
 
 export function circleCircleIntersections(a: number[], b: number[]) {
-  var R = a[2],
-    r = b[2],
-    dx = b[0] - a[0],
-    dy = b[1] - a[1],
-    d = Math.sqrt(dx * dx + dy * dy),
+  const R = a[2],
+    r = b[2]
+
+  let dx = b[0] - a[0],
+    dy = b[1] - a[1]
+
+  const d = Math.sqrt(dx * dx + dy * dy),
     x = (d * d - r * r + R * R) / (2 * d),
     y = Math.sqrt(R * R - x * x)
+
   dx /= d
   dy /= d
+
   return [
     [a[0] + dx * x - dy * y, a[1] + dy * x + dx * y],
     [a[0] + dx * x + dy * y, a[1] + dy * x - dx * y],
@@ -72,8 +75,8 @@ export function projectPoint(p0: number[], a: number, d: number) {
 }
 
 function shortAngleDist(a0: number, a1: number) {
-  var max = Math.PI * 2
-  var da = (a1 - a0) % max
+  const max = Math.PI * 2
+  const da = (a1 - a0) % max
   return ((2 * da) % max) - da
 }
 
@@ -90,7 +93,7 @@ export function getBezierCurveSegments(points: number[][], tension = 0.4) {
   }
 
   for (let i = 1; i < len - 1; i++) {
-    let p0 = points[i - 1],
+    const p0 = points[i - 1],
       p1 = points[i],
       p2 = points[i + 1]
 
@@ -167,7 +170,7 @@ export function cubicBezier(
   // http://www.tinaja.com/text/bezmath.html
 
   // Set start and end point
-  let x0 = 0,
+  const x0 = 0,
     y0 = 0,
     x3 = 1,
     y3 = 1,
@@ -181,12 +184,12 @@ export function cubicBezier(
     G = 3 * y1 - 3 * y0,
     H = y0,
     // Variables for the loop below
-    t = tx,
-    iterations = 5,
-    i: number,
+    iterations = 5
+
+  let i: number,
     slope: number,
     x: number,
-    y: number
+    t = tx
 
   // Loop through a few times to get a more accurate time value, according to the Newton-Raphson method
   // http://en.wikipedia.org/wiki/Newton's_method
@@ -203,14 +206,12 @@ export function cubicBezier(
   }
 
   // Find the y value through the curve's y equation, with the now more accurate time value
-  y = Math.abs(E * t * t * t + F * t * t + G * t * H)
-
-  return y
+  return Math.abs(E * t * t * t + F * t * t + G * t * H)
 }
 
 export function copyToClipboard(string: string) {
   let textarea: HTMLTextAreaElement
-  let result: any
+  let result: boolean
 
   try {
     textarea = document.createElement("textarea")
@@ -241,16 +242,7 @@ export function copyToClipboard(string: string) {
     document.body.removeChild(textarea)
   }
 
-  // manual copy fallback using prompt
-  if (!result) {
-    const isMac = navigator.platform.toUpperCase().indexOf("MAC") >= 0
-    const copyHotkey = isMac ? "⌘C" : "CTRL+C"
-    result = prompt(`Press ${copyHotkey}`, string) // eslint-disable-line no-alert
-    if (!result) {
-      return false
-    }
-  }
-  return true
+  return !!result
 }
 
 /**
@@ -259,7 +251,7 @@ export function copyToClipboard(string: string) {
  * @param k Tension
  * @returns An array of points as [cp1x, cp1y, cp2x, cp2y, px, py].
  */
-export function getSpline(pts: number[][], k = 0.5, closed = false) {
+export function getSpline(pts: number[][], k = 0.5) {
   let p0: number[],
     [p1, p2, p3] = pts
 
@@ -289,9 +281,11 @@ export function getCurvePoints(
   isClosed = false,
   numOfSegments = 3
 ) {
-  let _pts = [...pts],
+  const _pts = [...pts],
     len = pts.length,
-    t1x: number, // tension vectors
+    res: number[][] = [] // results
+
+  let t1x: number, // tension vectors
     t2x: number,
     t1y: number,
     t2y: number,
@@ -301,8 +295,7 @@ export function getCurvePoints(
     c4: number,
     st: number,
     st2: number,
-    st3: number,
-    res: number[][] = [] // results
+    st3: number
 
   // The algorithm require a previous and next point to the actual point array.
   // Check if we will draw closed or open curve.
@@ -708,9 +701,10 @@ export function computePointOnCurve(t: number, points: number[][]) {
   } // quadratic/cubic curve?
 
   if (order < 4) {
-    let mt2 = mt * mt,
-      t2 = t * t,
-      a: number,
+    const mt2 = mt * mt,
+      t2 = t * t
+
+    let a: number,
       b: number,
       c: number,
       d = 0
@@ -735,7 +729,7 @@ export function computePointOnCurve(t: number, points: number[][]) {
 }
 
 function distance2(p: DOMPoint, point: number[]) {
-  var dx = p.x - point[0],
+  const dx = p.x - point[0],
     dy = p.y - point[1]
   return dx * dx + dy * dy
 }
@@ -750,15 +744,18 @@ export function getClosestPointOnPath(
   pathNode: SVGPathElement,
   point: number[]
 ) {
-  var pathLen = pathNode.getTotalLength(),
-    p = 8,
+  const pathLen = pathNode.getTotalLength()
+
+  let p = 8,
     best: DOMPoint,
     bestLen: number,
-    bestDist = Infinity
+    bestDist = Infinity,
+    bl: number,
+    al: number
 
   // linear scan for coarse approximation
   for (
-    var scan: DOMPoint, scanLen = 0, scanDist: number;
+    let scan: DOMPoint, scanLen = 0, scanDist: number;
     scanLen <= pathLen;
     scanLen += p
   ) {
@@ -775,12 +772,7 @@ export function getClosestPointOnPath(
   // binary search for precise estimate
   p /= 2
   while (p > 0.5) {
-    var before: DOMPoint,
-      after: DOMPoint,
-      bl: number,
-      al: number,
-      bd: number,
-      ad: number
+    let before: DOMPoint, after: DOMPoint, bd: number, ad: number
     if (
       (bl = bestLen - p) >= 0 &&
       (bd = distance2((before = pathNode.getPointAtLength(bl)), point)) <
@@ -822,9 +814,9 @@ export function det(
 
 // Get a circle from three points.
 export function circleFromThreePoints(A: number[], B: number[], C: number[]) {
-  var a = det(A[0], A[1], 1, B[0], B[1], 1, C[0], C[1], 1)
+  const a = det(A[0], A[1], 1, B[0], B[1], 1, C[0], C[1], 1)
 
-  var bx = -det(
+  const bx = -det(
     A[0] * A[0] + A[1] * A[1],
     A[1],
     1,
@@ -835,7 +827,7 @@ export function circleFromThreePoints(A: number[], B: number[], C: number[]) {
     C[1],
     1
   )
-  var by = det(
+  const by = det(
     A[0] * A[0] + A[1] * A[1],
     A[0],
     1,
@@ -846,7 +838,7 @@ export function circleFromThreePoints(A: number[], B: number[], C: number[]) {
     C[0],
     1
   )
-  var c = -det(
+  const c = -det(
     A[0] * A[0] + A[1] * A[1],
     A[0],
     A[1],
@@ -864,14 +856,17 @@ export function circleFromThreePoints(A: number[], B: number[], C: number[]) {
   ]
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function throttle<P extends any[], T extends (...args: P) => any>(
   fn: T,
   wait: number,
   preventDefault?: boolean
 ) {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let inThrottle: boolean, lastFn: any, lastTime: number
   return function(...args: P) {
     if (preventDefault) args[0].preventDefault()
+    // eslint-disable-next-line @typescript-eslint/no-this-alias
     const context = this
     if (!inThrottle) {
       fn.apply(context, args)
@@ -895,8 +890,8 @@ export function getSnapshots(
 ): Record<string, INodeSnapshot> {
   const acc = {} as Record<string, INodeSnapshot>
 
-  for (let node of nodes) {
-    let {
+  for (const node of nodes) {
+    const {
       radius,
       point: [x, y],
     } = node
@@ -921,7 +916,7 @@ export function getSnapshots(
 export function getSnapglobs(globs: IGlob[], bounds: IBounds) {
   return Object.fromEntries(
     globs.map((glob) => {
-      let {
+      const {
         D: [dx, dy],
         Dp: [dpx, dpy],
       } = glob
@@ -987,7 +982,7 @@ export function getEdgeTransform(
       my = y0 < y1 ? y0 : y1
       mh = Math.abs(y1 - y0)
 
-      for (let node of nodes) {
+      for (const node of nodes) {
         const { ny, nmy, nw, nh } = snapshots[node.id]
         node.point[1] = round(my + (y1 < y0 ? nmy : ny) * mh)
         if (!preserveRadii) {
@@ -997,7 +992,7 @@ export function getEdgeTransform(
         }
       }
 
-      for (let glob of globs) {
+      for (const glob of globs) {
         const { D, Dp, a, b, ap, bp } = snapglobs[glob.id]
 
         if (y1 < y0) {
@@ -1024,7 +1019,7 @@ export function getEdgeTransform(
       edge === 1 ? (x1 = x) : (x0 = x)
       mx = x0 < x1 ? x0 : x1
       mw = Math.abs(x1 - x0)
-      for (let node of nodes) {
+      for (const node of nodes) {
         const { nx, nmx, nw, nh } = snapshots[node.id]
         node.point[0] = round(mx + (x1 < x0 ? nmx : nx) * mw)
 
@@ -1035,7 +1030,7 @@ export function getEdgeTransform(
         }
       }
 
-      for (let glob of globs) {
+      for (const glob of globs) {
         const { D, Dp, a, b, ap, bp } = snapglobs[glob.id]
 
         if (x1 < x0) {
@@ -1105,7 +1100,7 @@ export function getCornerTransform(
     mx = x0 < x1 ? x0 : x1
     mw = Math.abs(x1 - x0)
 
-    for (let node of nodes) {
+    for (const node of nodes) {
       const { nx, nmx, ny, nmy, nw, nh } = snapshots[node.id]
       node.point = vec.round([
         mx + (x1 < x0 ? nmx : nx) * mw,
@@ -1118,7 +1113,7 @@ export function getCornerTransform(
       }
     }
 
-    for (let glob of globs) {
+    for (const glob of globs) {
       const { D, Dp, a, ap, b, bp } = snapglobs[glob.id]
 
       Object.assign(glob, {
@@ -1189,12 +1184,12 @@ export function getCornerRotater(
     globs: IGlob[]
   ) {
     const delta = angleDelta(angle, vec.angle(point, center))
-    for (let node of nodes) {
+    for (const node of nodes) {
       const snap = snapshots[node.id]
       node.point = rotatePoint([snap.x, snap.y], center, delta)
     }
 
-    for (let glob of globs) {
+    for (const glob of globs) {
       const snap = snapglobs[glob.id]
       glob.D = rotatePoint([snap.D.x, snap.D.y], center, delta)
       glob.Dp = rotatePoint([snap.Dp.x, snap.Dp.y], center, delta)
@@ -1220,29 +1215,9 @@ export function getGlobOutline(
     svg.closePath(),
   ].join(" ")
 }
-// ;<svg
-//   xmlns="http://www.w3.org/2000/svg"
-//   viewBox="753.85 -434.984375 151.15781249999998 271.15437499999996"
-//   width="119.15781249999998"
-//   height="239.154375"
-// >
-//   <path
-//     d=`
-// 		M 774.2690760092153,-219.02244755796332
-// 		A 25 25 0 1 0 819.7699008749618 -202.83036493777465
-// 		C 822.87,-241.47 855.76,-330.7 885.5509818003335,-381.3000596263912
-// 		M 885.5509818003335,-381.3000596263912
-// 		A 25 25 0 1 0 839.646875939762 -399.6008480844242
-// 		C 824.79,-335.18 792.1,-244.89 774.2690760092153,-219.02244755796332 "
-//     class="strokewidth-m stroke-selected fill-soft"
-//   />
-// </svg>
 
 export function pointInCircle(A: number[], C: number[], r: number) {
   return vec.dist(A, C) <= r
-  // var dx = C[0] - A[0]
-  // var dy = C[1] - A[1]
-  // return dx * dx + dy * dy <= r * r
 }
 
 export function sign(value: number): number {
@@ -1321,31 +1296,31 @@ export function getBezierLineSegmentIntersections(
   )
 }
 
-// Generate a lookup table by sampling the curve.
-function getBezierCurveLUT(points: number[][], samples = 100) {
-  return Array.from(Array(samples)).map((_, i) =>
-    computePointOnCurve(i / (samples - 1 - i), points)
-  )
-}
+// // Generate a lookup table by sampling the curve.
+// function getBezierCurveLUT(points: number[][], samples = 100) {
+//   return Array.from(Array(samples)).map((_, i) =>
+//     computePointOnCurve(i / (samples - 1 - i), points)
+//   )
+// }
 
-// Find the closest point among points in a lookup table
-function closestPointInLUT(A: number[], LUT: number[][]) {
-  let mdist = Math.pow(2, 63),
-    mpos: number,
-    d: number
-  LUT.forEach(function(p, idx) {
-    d = vec.dist(A, p)
+// // Find the closest point among points in a lookup table
+// function closestPointInLUT(A: number[], LUT: number[][]) {
+//   let mdist = Math.pow(2, 63),
+//     mpos: number,
+//     d: number
+//   LUT.forEach(function(p, idx) {
+//     d = vec.dist(A, p)
 
-    if (d < mdist) {
-      mdist = d
-      mpos = idx
-    }
-  })
-  return {
-    mdist: mdist,
-    mpos: mpos,
-  }
-}
+//     if (d < mdist) {
+//       mdist = d
+//       mpos = idx
+//     }
+//   })
+//   return {
+//     mdist: mdist,
+//     mpos: mpos,
+//   }
+// }
 
 // export function getClosestPointOnCurve(A: number[], points: number[][]) {
 //   // Create lookup table
@@ -1382,27 +1357,27 @@ function closestPointInLUT(A: number[], LUT: number[][]) {
 //   return p
 // }
 
-function lineIntersection(P: number[], r: number, Q: number[], s: number) {
-  // line1 = P + lambda1 * r
-  // line2 = Q + lambda2 * s
-  // r and s must be normalized (length = 1)
-  // returns intersection point O of line1 with line2 = [ Ox, Oy ]
-  // returns null if lines do not intersect or are identical
-  var PQx = Q[0] - P[0]
-  var PQy = Q[1] - P[1]
-  var rx = r[0]
-  var ry = r[1]
-  var rxt = -ry
-  var ryt = rx
-  var qx = PQx * rx + PQy * ry
-  var qy = PQx * rxt + PQy * ryt
-  var sx = s[0] * rx + s[1] * ry
-  var sy = s[0] * rxt + s[1] * ryt
-  // if lines are identical or do not cross...
-  if (sy == 0) return null
-  var a = qx - (qy * sx) / sy
-  return [P[0] + a * rx, P[1] + a * ry]
-}
+// function lineIntersection(P: number[], r: number, Q: number[], s: number) {
+//   // line1 = P + lambda1 * r
+//   // line2 = Q + lambda2 * s
+//   // r and s must be normalized (length = 1)
+//   // returns intersection point O of line1 with line2 = [ Ox, Oy ]
+//   // returns null if lines do not intersect or are identical
+//   const PQx = Q[0] - P[0]
+//   const PQy = Q[1] - P[1]
+//   const rx = r[0]
+//   const ry = r[1]
+//   const rxt = -ry
+//   const ryt = rx
+//   const qx = PQx * rx + PQy * ry
+//   const qy = PQx * rxt + PQy * ryt
+//   const sx = s[0] * rx + s[1] * ry
+//   const sy = s[0] * rxt + s[1] * ryt
+//   // if lines are identical or do not cross...
+//   if (sy == 0) return null
+//   const a = qx - (qy * sx) / sy
+//   return [P[0] + a * rx, P[1] + a * ry]
+// }
 
 export function getLineLineIntersection(
   A: number[],
@@ -1490,7 +1465,7 @@ export function pointInRect(
 
 // Point should be in world space
 export function getNodeTransform(node: INode, point: number[]) {
-  let iPoint = [...node.point]
+  const iPoint = [...node.point]
   const iRadius = node.radius
   const iDist = vec.dist(node.point, point)
 
@@ -1603,7 +1578,8 @@ export function getResizedBounds(
   const snapshots = getSnapshots(nodes, bounds)
   const snapglobs = getSnapglobs(globs, bounds)
 
-  let { minX: x0, minY: y0, maxX: x1, maxY: y1 } = bounds
+  const { minX: x0, minY: y0 } = bounds
+  let { maxX: x1, maxY: y1 } = bounds
   let { maxX: mx, maxY: my, width: mw, height: mh } = bounds
 
   const [x, y] = [
@@ -1619,8 +1595,8 @@ export function getResizedBounds(
   mx = x0
   mw = Math.abs(x1 - x0)
 
-  for (let node of nodes) {
-    const { nx, nmx, ny, nmy, nw, nh } = snapshots[node.id]
+  for (const node of nodes) {
+    const { nx, ny, nw, nh } = snapshots[node.id]
 
     node.point = vec.round(vec.add([mx + nx * mw, my + ny * mh], pointDelta))
     if (resizeRadius) {
@@ -1628,7 +1604,7 @@ export function getResizedBounds(
     }
   }
 
-  for (let glob of globs) {
+  for (const glob of globs) {
     const { D, Dp, a, ap, b, bp } = snapglobs[glob.id]
 
     Object.assign(glob, {
@@ -1692,7 +1668,7 @@ export function saveSelectionState(data: IData) {
 export function getSelectionSnapshot(data: IData): ISelectionSnapshot {
   const nodesToSnapshot = new Set(data.selectedNodes)
 
-  for (let globId of data.selectedGlobs) {
+  for (const globId of data.selectedGlobs) {
     nodesToSnapshot.add(data.globs[globId].nodes[0])
     nodesToSnapshot.add(data.globs[globId].nodes[1])
   }
@@ -1706,7 +1682,7 @@ export function getSelectionSnapshot(data: IData): ISelectionSnapshot {
 
   const globs = Object.fromEntries(
     data.selectedGlobs.map((id) => {
-      let { D, Dp, a, b, ap, bp } = data.globs[id]
+      const { D, Dp, a, b, ap, bp } = data.globs[id]
 
       return [
         id,
@@ -1742,12 +1718,12 @@ export function updateGlobPoints(data: IData) {
 
   const sGlobs = globIds.map((id) => globs[id])
 
-  for (let glob of sGlobs) {
+  for (const glob of sGlobs) {
     nodesToUpdate.add(glob.nodes[0])
     nodesToUpdate.add(glob.nodes[1])
   }
 
-  for (let glob of sGlobs) {
+  for (const glob of sGlobs) {
     if (nodesToUpdate.has(glob.nodes[0]) || nodesToUpdate.has(glob.nodes[1])) {
       globsToUpdate.add(glob)
     }

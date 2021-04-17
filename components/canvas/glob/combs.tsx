@@ -3,15 +3,8 @@ import * as svg from "lib/svg"
 import * as vec from "lib/vec"
 import { modulate } from "utils"
 import { useEffect, useState, useRef } from "react"
-import state from "lib/state"
 
-export default function Combs({
-  id,
-  points,
-}: {
-  id: string
-  points: IGlobPoints
-}) {
+export default function Combs({ points }: { points: IGlobPoints }) {
   // Show normal points along line
   const [skeletonPts, setSkeletonPts] = useState<number[][][]>([])
   const rLeftPath = useRef<SVGPathElement>(null)
@@ -29,7 +22,7 @@ export default function Combs({
     const lenL = left.getTotalLength()
     const lenR = right.getTotalLength()
 
-    let pts: number[][][] = []
+    const pts: number[][][] = []
     const steps = 20, // Math.max(lenL, lenR) / 32,
       step = 1 / steps
 

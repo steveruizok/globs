@@ -40,7 +40,7 @@ class Inputs {
     ],
     x: [{ eventName: "CUT", modifiers: ["Meta"] }],
     v: [{ eventName: "PASTED", modifiers: ["Meta"] }],
-    g: [{ eventName: "STARTED_LINKING_NODES", modifiers: [] }],
+    g: [{ eventName: "STARTED_GLOBBING_NODES", modifiers: [] }],
     l: [{ eventName: "LOCKED_NODES", modifiers: ["Meta"] }],
     n: [{ eventName: "STARTED_CREATING_NODES", modifiers: [] }],
     Shift: [{ eventName: "PRESSED_SHIFT", modifiers: [] }],

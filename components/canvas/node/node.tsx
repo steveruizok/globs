@@ -1,5 +1,6 @@
 import useRegisteredElement from "hooks/useRegisteredElement"
 import { useSelector } from "lib/state"
+import React from "react"
 import BaseNode from "./base-node"
 
 interface Props {

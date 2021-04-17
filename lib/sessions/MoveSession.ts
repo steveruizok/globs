@@ -14,7 +14,6 @@ import inputs from "lib/inputs"
 import getNodeSnapper, { NodeSnapper } from "lib/snaps"
 import BaseSession from "./BaseSession"
 
-export interface MoveSessionSnapshot extends ISelectionSnapshot {}
 export interface MoveSessionClones {
   nodes: Record<string, INode>
   nodeIdMap: Record<string, string>
@@ -24,7 +23,7 @@ export interface MoveSessionClones {
 
 export default class MoveSession extends BaseSession {
   private nodeSnapper?: NodeSnapper
-  private snapshot: MoveSessionSnapshot
+  private snapshot: ISelectionSnapshot
   private origin = [0, 0]
   private delta = [0, 0]
   private clones: MoveSessionClones
@@ -42,7 +41,7 @@ export default class MoveSession extends BaseSession {
     const snapNode = MoveSession.getClosestNodeToPointer(data)
 
     if (snapNode) {
-      this.nodeSnapper = getNodeSnapper(snapNode, nodes, globs)
+      this.nodeSnapper = getNodeSnapper(snapNode, nodes)
     }
 
     if (inputs.modifiers.optionKey) {
@@ -68,11 +67,11 @@ export default class MoveSession extends BaseSession {
   complete = (data: IData) => {
     if (this.isCloning) {
       // Assign true ids to nodes and globs
-      for (let nodeId in this.clones.nodes) {
+      for (const nodeId in this.clones.nodes) {
         data.nodes[nodeId].id = nodeId
       }
 
-      for (let globId in this.clones.globs) {
+      for (const globId in this.clones.globs) {
         data.globs[globId].id = globId
       }
       data.hoveredNodes = data.hoveredNodes.map(
@@ -147,14 +146,14 @@ export default class MoveSession extends BaseSession {
   static startCloning(
     data: IData,
     clones: MoveSessionClones,
-    snapshot: MoveSessionSnapshot
+    snapshot: ISelectionSnapshot
   ) {
     // Add clones to data
-    for (let nodeId in clones.nodes) {
+    for (const nodeId in clones.nodes) {
       data.nodes[nodeId] = clones.nodes[nodeId]
     }
 
-    for (let globId in clones.globs) {
+    for (const globId in clones.globs) {
       data.globs[globId] = clones.globs[globId]
     }
 
@@ -162,11 +161,11 @@ export default class MoveSession extends BaseSession {
     data.globIds = Object.keys(data.globs)
 
     // Move snapshot nodes back to original locations
-    for (let nodeId in snapshot.nodes) {
+    for (const nodeId in snapshot.nodes) {
       Object.assign(data.nodes[nodeId], snapshot.nodes[nodeId])
     }
 
-    for (let globId in snapshot.globs) {
+    for (const globId in snapshot.globs) {
       const glob = data.globs[globId]
       Object.assign(glob, snapshot.globs[globId])
     }
@@ -186,13 +185,13 @@ export default class MoveSession extends BaseSession {
   static stopCloning(
     data: IData,
     clones: MoveSessionClones,
-    snapshot: MoveSessionSnapshot
+    snapshot: ISelectionSnapshot
   ) {
     // Delete clones
-    for (let nodeId in clones.nodes) {
+    for (const nodeId in clones.nodes) {
       delete data.nodes[nodeId]
     }
-    for (let globId in clones.globs) {
+    for (const globId in clones.globs) {
       delete data.globs[globId]
     }
 
@@ -225,16 +224,16 @@ export default class MoveSession extends BaseSession {
   static moveSelection(
     data: IData,
     delta: number[],
-    snapshot: MoveSessionSnapshot
+    snapshot: ISelectionSnapshot
   ) {
     const { globs, nodes } = data
 
     // Moving maybe nodes and globs
     const nodesToMove = new Set(data.selectedNodes)
 
-    for (let globId of data.selectedGlobs) {
+    for (const globId of data.selectedGlobs) {
       const glob = globs[globId]
-      for (let nodeId of glob.nodes) {
+      for (const nodeId of glob.nodes) {
         nodesToMove.add(nodeId)
       }
 
@@ -245,17 +244,15 @@ export default class MoveSession extends BaseSession {
     }
 
     // Move nodes
-    for (let nodeId of nodesToMove) {
+    for (const nodeId of nodesToMove) {
       const node = nodes[nodeId]
       if (node.locked) continue
 
-      let next = vec.round(vec.add(snapshot.nodes[node.id].point, delta), 2)
-
-      node.point = next
+      node.point = vec.round(vec.add(snapshot.nodes[node.id].point, delta), 2)
     }
 
     // Move globs
-    for (let globId in globs) {
+    for (const globId in globs) {
       const glob = globs[globId]
       if (
         data.selectedGlobs.includes(globId) ||
@@ -272,7 +269,7 @@ export default class MoveSession extends BaseSession {
   static getMoveSessionClones(data: IData): MoveSessionClones {
     const nodesToSnapshot = new Set(data.selectedNodes)
 
-    for (let globId of data.selectedGlobs) {
+    for (const globId of data.selectedGlobs) {
       nodesToSnapshot.add(data.globs[globId].nodes[0])
       nodesToSnapshot.add(data.globs[globId].nodes[1])
     }

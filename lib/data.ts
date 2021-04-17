@@ -1,5 +1,5 @@
 import { ICanvasItems, IData } from "lib/types"
-import { getGlob, getGlobPoints } from "./utils"
+import { getGlobPoints } from "./utils"
 
 export const initialData: IData = {
   viewport: {
@@ -126,7 +126,7 @@ export const initialData: IData = {
   selectedHandle: undefined,
 }
 
-for (let key in initialData.globs) {
+for (const key in initialData.globs) {
   const glob = initialData.globs[key]
   const [start, end] = glob.nodes.map((id) => initialData.nodes[id])
   glob.points = getGlobPoints(glob, start, end)

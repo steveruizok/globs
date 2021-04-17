@@ -51,15 +51,15 @@ export function getCubicBezierBounds(
   if (p1[0] > xh) xh = p1[0]
 
   if (disc >= 0) {
-    var t1 = (-b + Math.sqrt(disc)) / (2 * a)
+    const t1 = (-b + Math.sqrt(disc)) / (2 * a)
     if (t1 > 0 && t1 < 1) {
-      var x1 = bez1d(p0[0], c0[0], c1[0], p1[0], t1)
+      const x1 = bez1d(p0[0], c0[0], c1[0], p1[0], t1)
       if (x1 < xl) xl = x1
       if (x1 > xh) xh = x1
     }
-    var t2 = (-b - Math.sqrt(disc)) / (2 * a)
+    const t2 = (-b - Math.sqrt(disc)) / (2 * a)
     if (t2 > 0 && t2 < 1) {
-      var x2 = bez1d(p0[0], c0[0], c1[0], p1[0], t2)
+      const x2 = bez1d(p0[0], c0[0], c1[0], p1[0], t2)
       if (x2 < xl) xl = x2
       if (x2 > xh) xh = x2
     }
@@ -75,15 +75,15 @@ export function getCubicBezierBounds(
   if (p1[1] < yl) yl = p1[1]
   if (p1[1] > yh) yh = p1[1]
   if (disc >= 0) {
-    var t1 = (-b + Math.sqrt(disc)) / (2 * a)
+    const t1 = (-b + Math.sqrt(disc)) / (2 * a)
     if (t1 > 0 && t1 < 1) {
-      var y1 = bez1d(p0[1], c0[1], c1[1], p1[1], t1)
+      const y1 = bez1d(p0[1], c0[1], c1[1], p1[1], t1)
       if (y1 < yl) yl = y1
       if (y1 > yh) yh = y1
     }
-    var t2 = (-b - Math.sqrt(disc)) / (2 * a)
+    const t2 = (-b - Math.sqrt(disc)) / (2 * a)
     if (t2 > 0 && t2 < 1) {
-      var y2 = bez1d(p0[1], c0[1], c1[1], p1[1], t2)
+      const y2 = bez1d(p0[1], c0[1], c1[1], p1[1], t2)
       if (y2 < yl) yl = y2
       if (y2 > yh) yh = y2
     }
@@ -107,7 +107,7 @@ function getBezierCurveLUT(
   p1: number[],
   samples = 100
 ) {
-  let lut: number[][] = [p0]
+  const lut: number[][] = [p0]
   for (let i = 0; i < samples + 1; i++) {
     lut.push(bez2d(p0, c0, c1, p1, i / samples))
   }

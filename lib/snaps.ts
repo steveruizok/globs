@@ -12,11 +12,7 @@ type SnapResult = {
   to: number[]
 }
 
-export default function getNodeSnapper(
-  node: INode,
-  nodes: INode[],
-  globs: IGlob[]
-) {
+export default function getNodeSnapper(node: INode, nodes: INode[]) {
   // Since we'll be using a closure, create a not-proxy copy of the data.
   const iPoint = [...node.point]
   const r = node.radius
@@ -38,9 +34,10 @@ export default function getNodeSnapper(
   ): { delta: number[]; point: number[]; snaps: SnapResult[] } {
     // Where would the point be without any snaps?
     const next = vec.add(iPoint, delta)
+    const results: SnapResult[] = []
 
     let d: number,
-      results: SnapResult[] = [], // either [center] or [x-axis, y-axis]
+      // either [center] or [x-axis, y-axis]
       dx = SNAP_DISTANCE, // distance to test point (screen space)
       dy = SNAP_DISTANCE,
       sx = next[0],
@@ -57,13 +54,13 @@ export default function getNodeSnapper(
       maxY = minY + document.size[1] * 1.5
 
     // Get nodes that are close enough;
-    const nodesToCheck = iNodes.filter(({ id, point }) =>
+    const nodesToCheck = iNodes.filter(({ point }) =>
       pointInRect(point, minX, minY, maxX, maxY)
     )
 
     // CENTER -> CENTER
 
-    for (let n of nodesToCheck) {
+    for (const n of nodesToCheck) {
       d = vec.dist(n.point, next) * camera.zoom
       if (d < dx) {
         dx = d
@@ -82,7 +79,7 @@ export default function getNodeSnapper(
       // If we haven't snapped to a center...
       // CENTER X -> CENTER X / CENTER Y -> CENTER Y
 
-      for (let n of nodesToCheck) {
+      for (const n of nodesToCheck) {
         // Center x -> Center x
         d = Math.abs(next[0] - n.point[0]) * camera.zoom
         if (d < dx) {
@@ -112,7 +109,7 @@ export default function getNodeSnapper(
       // CENTER X -> EDGES X, CENTER Y -> EDGES Y
 
       if (!(results[0] && results[1])) {
-        for (let n of nodesToCheck) {
+        for (const n of nodesToCheck) {
           // If we don't have a center x -> center x snap, check center x -> edges x
           if (!results[0]) {
             // Center x -> min x
@@ -172,7 +169,7 @@ export default function getNodeSnapper(
       // check from left and right edges.
 
       if (!(results[0] && results[1])) {
-        for (let n of nodesToCheck) {
+        for (const n of nodesToCheck) {
           // EDGES X -> EDGES X
 
           if (!results[0]) {

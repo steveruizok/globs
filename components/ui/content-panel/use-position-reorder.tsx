@@ -1,4 +1,3 @@
-import { useState, useRef } from "react"
 import { clamp, distance } from "popmotion"
 
 const buffer = 30
