@@ -7,6 +7,7 @@ export default function Bounds() {
   const selectedGlobs = useSelector((s) => s.data.selectedGlobs)
   const bounds = useSelector((s) => s.values.selectionBounds, deepCompare)
   const zoom = useSelector((s) => s.data.camera.zoom)
+  const isBrushing = useSelector((s) => s.isIn("brushSelecting"))
 
   if (bounds === null) return null
   if (selectedGlobs.length === 0 && selectedNodes.length === 1) return null
@@ -18,7 +19,7 @@ export default function Bounds() {
   const cp = p * 2
 
   return (
-    <g>
+    <g pointerEvents={isBrushing ? "none" : "all"}>
       <Corner
         x={minX}
         y={minY}
