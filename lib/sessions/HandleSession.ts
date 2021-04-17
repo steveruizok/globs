@@ -1,4 +1,4 @@
-import { IData, IHandle, ISnapTypes } from "lib/types"
+import { IData, IHandle, ISnapTypes, IGlob } from "lib/types"
 import { moveHandle } from "lib/commands"
 import * as vec from "lib/vec"
 import { getSafeHandlePoint, isInView, screenToWorld } from "lib/utils"
@@ -63,17 +63,22 @@ export default class HandleSession extends BaseSession {
   }
 
   update = (data: IData) => {
-    const { camera, nodes, globs, snaps, document } = data
+    const { camera, nodes, globs } = data
 
     const handle = this.initial[this.primary]
     const glob = globs[this.globId]
     const [start, end] = glob.nodes
-    snaps.active = []
 
     const delta = vec.vec(
       this.origin,
       screenToWorld(inputs.pointer.point, camera)
     )
+
+    // TODO: Make sure that extra snaps don't get added. Once a snap has been found,
+    // then any other snap must be compatible with the first one. For example, if a
+    // handle can snap to a point in line with the handle on adjacent glob A, and
+    // also can snap to a point in line with the handle on adjacent glob B, then the
+    // final snap should be the intersection of those two lines.
 
     // Lock to initial axis
     if (inputs.keys.Shift) {
@@ -88,147 +93,7 @@ export default class HandleSession extends BaseSession {
 
     // Snapping
     if (!inputs.keys.Alt) {
-      const [A0, A1] =
-        this.primary === "D"
-          ? [glob.points.E0, glob.points.E1]
-          : [glob.points.E0p, glob.points.E1p]
-
-      const mp = vec.med(A0, A1)
-      const n = vec.uni(vec.vec(A0, A1))
-
-      // Is the near the midpoint of its points?
-      const d = vec.dist(next, mp) * camera.zoom
-      if (d < 5) {
-        next = mp
-        snaps.active.push({
-          type: ISnapTypes.HandleStraight,
-          from: vec.sub(next, vec.mul(n, 32 / camera.zoom)),
-          to: vec.add(next, vec.mul(n, 32 / camera.zoom)),
-          n,
-        })
-      }
-
-      // Is the handle near to the line between its points?
-      const ptOnLine = vec.nearestPointOnLineThroughPoint(mp, n, next)
-
-      if (vec.dist(ptOnLine, next) * camera.zoom < 3) {
-        next = ptOnLine
-
-        snaps.active.push({
-          type: ISnapTypes.HandleStraight,
-          from: vec.sub(next, vec.mul(n, 64 / camera.zoom)),
-          to: vec.add(next, vec.mul(n, 64 / camera.zoom)),
-          n,
-        })
-      }
-
-      const ptOnPerLine = vec.nearestPointOnLineThroughPoint(
-        mp,
-        vec.per(n),
-        next
-      )
-      if (vec.dist(ptOnPerLine, next) * camera.zoom < 3) {
-        next = ptOnPerLine
-
-        snaps.active.push({
-          type: ISnapTypes.Handle,
-          from: next,
-          to: mp,
-        })
-      }
-
-      // Is the handle at a right triangle?
-      const dd = vec.dist(A0, A1) / 2
-      const md = vec.dist(next, mp)
-
-      if (Math.abs(dd - md) * camera.zoom < 3) {
-        next = vec.add(mp, vec.mul(vec.vec(mp, next), dd / md))
-
-        snaps.active.push({
-          type: ISnapTypes.Handle,
-          from: next,
-          to: A0,
-        })
-        snaps.active.push({
-          type: ISnapTypes.Handle,
-          from: next,
-          to: A1,
-        })
-      }
-
-      // Snap to other handles
-      let snapd = 3,
-        snapped = false
-
-      for (const snap of this.snaps) {
-        const d = vec.dist(next, snap) * camera.zoom
-        if (d < snapd) {
-          snapd = d
-          next = snap
-          snapped = true
-        }
-      }
-
-      if (!snapped) {
-        for (const id of data.globIds) {
-          if (globs[id].points === null) continue
-          if (glob.id === id) continue
-
-          const { E0: a, D: b, E1: c, E0p: ap, Dp: bp, E1p: cp } = globs[
-            id
-          ].points
-
-          if (
-            (isInView(a, document) || isInView(b, document)) &&
-            Math.abs(
-              vec.distanceToLineSegment(a, b, next, false) * camera.zoom
-            ) < 3
-          ) {
-            next = vec.nearestPointOnLineSegment(a, b, next, false)
-            snaps.active.push({
-              type: ISnapTypes.Handle,
-              from: next,
-              to: vec.dist(next, a) > vec.dist(next, b) ? a : b,
-            })
-          } else if (
-            (isInView(b, document) || isInView(c, document)) &&
-            Math.abs(
-              vec.distanceToLineSegment(b, c, next, false) * camera.zoom
-            ) < 3
-          ) {
-            next = vec.nearestPointOnLineSegment(b, c, next, false)
-            snaps.active.push({
-              type: ISnapTypes.Handle,
-              from: next,
-              to: vec.dist(next, b) > vec.dist(next, c) ? b : c,
-            })
-          } else if (
-            (isInView(ap, document) || isInView(bp, document)) &&
-            Math.abs(
-              vec.distanceToLineSegment(ap, bp, next, false) * camera.zoom
-            ) < 3
-          ) {
-            next = vec.nearestPointOnLineSegment(ap, bp, next, false)
-            snaps.active.push({
-              type: ISnapTypes.Handle,
-              from: next,
-              to: vec.dist(next, ap) > vec.dist(next, bp) ? ap : bp,
-            })
-          } else if (
-            (isInView(bp, document) || isInView(cp, document)) &&
-            Math.abs(
-              vec.distanceToLineSegment(bp, cp, next, false) * camera.zoom
-            ) < 3
-          ) {
-            next = vec.nearestPointOnLineSegment(bp, cp, next, false)
-            snaps.active.push({
-              type: ISnapTypes.Handle,
-              from: next,
-              to: vec.dist(next, bp) > vec.dist(next, cp) ? bp : cp,
-            })
-          }
-        }
-      }
+      next = this.findSnap(glob, next, data)
     }
 
     // Apply the change to the handle
@@ -306,5 +171,164 @@ export default class HandleSession extends BaseSession {
     }
 
     return snaps
+  }
+
+  findSnap = (glob: IGlob, next: number[], data: IData) => {
+    const { snaps, document, camera } = data
+
+    snaps.active = []
+
+    // Snap
+    let snapd = 3,
+      d = 0
+
+    const [A0, A1] =
+      this.primary === "D"
+        ? [glob.points.E0, glob.points.E1]
+        : [glob.points.E0p, glob.points.E1p]
+
+    const mp = vec.med(A0, A1)
+    const n = vec.uni(vec.vec(A0, A1))
+
+    // Is the near the midpoint of its points?
+    d = vec.dist(next, mp) * camera.zoom
+
+    if (d < 5) {
+      snapd = d
+      next = mp
+
+      snaps.active.push({
+        type: ISnapTypes.HandleStraight,
+        from: vec.sub(next, vec.mul(n, 32 / camera.zoom)),
+        to: vec.add(next, vec.mul(n, 32 / camera.zoom)),
+        n,
+      })
+    }
+
+    // Is the handle near to the line between its points?
+    const ptOnLine = vec.nearestPointOnLineThroughPoint(mp, n, next)
+
+    d = vec.dist(ptOnLine, next) * camera.zoom
+    if (d < snapd) {
+      snapd = d
+      next = ptOnLine
+
+      snaps.active.push({
+        type: ISnapTypes.HandleStraight,
+        from: vec.sub(next, vec.mul(n, 64 / camera.zoom)),
+        to: vec.add(next, vec.mul(n, 64 / camera.zoom)),
+        n,
+      })
+    }
+
+    // Is the handle near to the perpendicular of the line between its points?
+    const ptOnPerLine = vec.nearestPointOnLineThroughPoint(mp, vec.per(n), next)
+
+    d = vec.dist(ptOnPerLine, next) * camera.zoom
+    if (d < snapd) {
+      snapd = d
+      next = ptOnPerLine
+
+      snaps.active.push({
+        type: ISnapTypes.Handle,
+        from: next,
+        to: mp,
+      })
+    }
+
+    // Is the handle at a right triangle?
+    const dd = vec.dist(A0, A1) / 2
+    const md = vec.dist(next, mp)
+
+    d = Math.abs(dd - md) * camera.zoom
+    if (d < snapd) {
+      snapd = d
+      next = vec.add(mp, vec.mul(vec.vec(mp, next), dd / md))
+
+      snaps.active.push({
+        type: ISnapTypes.Handle,
+        from: next,
+        to: A0,
+      })
+
+      snaps.active.push({
+        type: ISnapTypes.Handle,
+        from: next,
+        to: A1,
+      })
+    }
+
+    for (const snapPoint of this.snaps) {
+      d = vec.dist(next, snapPoint) * camera.zoom
+      if (d < snapd) {
+        snapd = d
+        next = snapPoint
+      }
+    }
+
+    for (const id of data.globIds) {
+      if (data.globs[id].points === null) continue
+      if (glob.id === id) continue
+
+      const { E0: a, D: b, E1: c, E0p: ap, Dp: bp, E1p: cp } = data.globs[
+        id
+      ].points
+
+      if (
+        (isInView(a, document) || isInView(b, document)) &&
+        Math.abs(vec.distanceToLineSegment(a, b, next, false) * camera.zoom) <
+          snapd
+      ) {
+        next = vec.nearestPointOnLineSegment(a, b, next, false)
+        snaps.active.push({
+          type: ISnapTypes.Handle,
+          from: next,
+          to: vec.dist(next, a) > vec.dist(next, b) ? a : b,
+        })
+      }
+
+      if (
+        (isInView(b, document) || isInView(c, document)) &&
+        Math.abs(vec.distanceToLineSegment(b, c, next, false) * camera.zoom) <
+          snapd
+      ) {
+        next = vec.nearestPointOnLineSegment(b, c, next, false)
+        snaps.active.push({
+          type: ISnapTypes.Handle,
+          from: next,
+          to: vec.dist(next, b) > vec.dist(next, c) ? b : c,
+        })
+      }
+
+      if (
+        (isInView(ap, document) || isInView(bp, document)) &&
+        Math.abs(vec.distanceToLineSegment(ap, bp, next, false) * camera.zoom) <
+          snapd
+      ) {
+        next = vec.nearestPointOnLineSegment(ap, bp, next, false)
+        snaps.active.push({
+          type: ISnapTypes.Handle,
+          from: next,
+          to: vec.dist(next, ap) > vec.dist(next, bp) ? ap : bp,
+        })
+      }
+
+      if (
+        (isInView(bp, document) || isInView(cp, document)) &&
+        Math.abs(vec.distanceToLineSegment(bp, cp, next, false) * camera.zoom) <
+          snapd
+      ) {
+        next = vec.nearestPointOnLineSegment(bp, cp, next, false)
+        snaps.active.push({
+          type: ISnapTypes.Handle,
+          from: next,
+          to: vec.dist(next, bp) > vec.dist(next, cp) ? bp : cp,
+        })
+      }
+    }
+
+    snaps.active = snaps.active.map((snap) => ({ ...snap, from: next }))
+
+    return next
   }
 }
