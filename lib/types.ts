@@ -209,3 +209,22 @@ export type ITranslation =
   | { type: "handle"; axis: "x" | "y"; handle: IHandle }
   | { type: "point"; axis: "x" | "y" }
   | { type: "radius" }
+
+export interface ResizeSessionSnapshot {
+  radius: number
+}
+
+export type INodeAdjacentHandleSnapshot = Record<
+  string,
+  {
+    D: number[]
+    Dp: number[]
+    E0: number[]
+    E0p: number[]
+    E1: number[]
+    E1p: number[]
+    cw: boolean
+    cwp: boolean
+    type: "end" | "start" | "both"
+  }
+>

@@ -1,4 +1,8 @@
-import { IData, ISelectionSnapshot } from "lib/types"
+import {
+  IData,
+  ISelectionSnapshot,
+  INodeAdjacentHandleSnapshot,
+} from "lib/types"
 import BaseSession from "./BaseSession"
 import * as vec from "lib/vec"
 import inputs from "lib/inputs"
@@ -8,14 +12,12 @@ import {
   round,
   screenToWorld,
   updateGlobPoints,
+  getNodeAdjacentHandleSnapshot,
+  getRayRayIntesection,
 } from "lib/utils"
 import { resizeNode } from "lib/commands"
 
-export interface ResizeSessionSnapshot {
-  radius: number
-}
-
-export type ResizeSessionHandleSnapshot = Record<
+export type IMoveNodeAdjacentHandleSnapshot = Record<
   string,
   {
     D: number[]
@@ -24,10 +26,15 @@ export type ResizeSessionHandleSnapshot = Record<
     E0p: number[]
     E1: number[]
     E1p: number[]
-    E0n?: number[]
-    E0pn?: number[]
-    E1n?: number[]
-    E1pn?: number[]
+    type: "end" | "start" | "both"
+    n0: number[]
+    n0p: number[]
+    n1: number[]
+    n1p: number[]
+    nE0: number[]
+    nE0p: number[]
+    nE1: number[]
+    nE1p: number[]
   }
 >
 
@@ -36,7 +43,7 @@ export default class ResizeSession extends BaseSession {
   origin: number[]
   startDistance: number
   snapshot: ISelectionSnapshot
-  handleSnapshot: ResizeSessionHandleSnapshot
+  handleSnapshot: IMoveNodeAdjacentHandleSnapshot
 
   constructor(data: IData, nodeId: string) {
     super(data)
@@ -50,7 +57,7 @@ export default class ResizeSession extends BaseSession {
     )
 
     this.snapshot = getSelectionSnapshot(data)
-    this.handleSnapshot = ResizeSession.getHandleSnapshot(data)
+    this.handleSnapshot = ResizeSession.getNodeAdjacentHandleSnapshot(data)
     this.origin = screenToWorld(inputs.pointer.point, data.camera)
   }
 
@@ -79,43 +86,44 @@ export default class ResizeSession extends BaseSession {
       for (const globId in this.handleSnapshot) {
         const glob = globs[globId]
         const snap = this.handleSnapshot[globId]
+        const {
+          type,
+          E0,
+          E0p,
+          E1,
+          E1p,
+          n0,
+          n0p,
+          n1,
+          n1p,
+          nE0,
+          nE0p,
+          nE1,
+          nE1p,
+        } = snap
 
-        if (snap.E0n && snap.E0pn && snap.E1n && snap.E1pn) {
-          const ccw0 = vec.clockwise(snap.E0, snap.D, snap.E1)
-          glob.D = vec.nudge(
-            vec.nudge(snap.D, snap.E0, ccw0 ? -delta : delta),
-            snap.E1,
-            ccw0 ? -delta : delta
-          )
+        const d0 = vec.add(E0, vec.mul(nE0, delta))
+        const d0p = vec.add(E0p, vec.mul(nE0p, delta))
+        const d1 = vec.add(E1, vec.mul(nE1, delta))
+        const d1p = vec.add(E1p, vec.mul(nE1p, delta))
 
-          const ccw1 = vec.clockwise(snap.E0p, snap.Dp, snap.E1p)
-          glob.Dp = vec.nudge(
-            (glob.Dp = vec.nudge(snap.Dp, snap.E0p, ccw1 ? delta : -delta)),
-            snap.E1p,
-            ccw1 ? delta : -delta
-          )
-        } else if (snap.E0n && snap.E0pn) {
-          glob.D = vec.nudge(
-            snap.D,
-            snap.E1,
-            vec.clockwise(snap.E0, snap.D, snap.E1) ? -delta : delta
-          )
-          glob.Dp = vec.nudge(
-            snap.Dp,
-            snap.E1p,
-            vec.clockwise(snap.E0p, snap.Dp, snap.E1p) ? delta : -delta
-          )
-        } else if (snap.E1n && snap.E1pn) {
-          glob.D = vec.nudge(
-            snap.D,
-            snap.E0,
-            vec.clockwise(snap.E0, snap.D, snap.E1) ? -delta : delta
-          )
-          glob.Dp = vec.nudge(
-            snap.Dp,
-            snap.E0p,
-            vec.clockwise(snap.E0p, snap.Dp, snap.E1p) ? delta : -delta
-          )
+        switch (type) {
+          case "start": {
+            glob.D = getRayRayIntesection(d0, n0, E1, n1)
+            glob.Dp = getRayRayIntesection(d0p, n0p, E1p, n1p)
+            break
+          }
+          case "end": {
+            glob.D = getRayRayIntesection(d1, n1, E0, n0)
+            glob.Dp = getRayRayIntesection(d1p, n1p, E0p, n0p)
+            break
+          }
+          case "both": {
+            glob.D = getRayRayIntesection(d1, n1, d0, n0)
+            glob.Dp = getRayRayIntesection(d1p, n1p, d0p, n0p)
+
+            break
+          }
         }
       }
     } else {
@@ -142,41 +150,49 @@ export default class ResizeSession extends BaseSession {
     resizeNode(data, this.snapshot, this.handleSnapshot)
   }
 
-  static getHandleSnapshot(data: IData) {
+  static getNodeAdjacentHandleSnapshot(data: IData) {
+    const { globs } = data
     const selectedNodeIds = new Set(data.selectedNodes)
 
-    const globHandleSnapshots: ResizeSessionHandleSnapshot = {}
+    const globHandleSnapshots: IMoveNodeAdjacentHandleSnapshot = {}
 
     // Find the globs that will be effected when the node resizes.
+    // We need to have some of their points, along with whether those points
+    // are in clockwise order. If a glob has both its nodes among the selected
+    // nodes, then
 
-    for (const globId in data.globs) {
-      const glob = data.globs[globId]
-      if (
-        selectedNodeIds.has(glob.nodes[0]) ||
-        selectedNodeIds.has(glob.nodes[1])
-      ) {
-        const start = data.nodes[glob.nodes[0]]
-        const end = data.nodes[glob.nodes[1]]
+    for (const globId in globs) {
+      const glob = globs[globId]
+      const hasStart = selectedNodeIds.has(glob.nodes[0])
+      const hasEnd = selectedNodeIds.has(glob.nodes[1])
 
-        const snap: ResizeSessionHandleSnapshot[keyof ResizeSessionHandleSnapshot] = (globHandleSnapshots[
-          glob.id
-        ] = {
-          D: [...glob.D],
-          Dp: [...glob.Dp],
-          E0: [...glob.points.E0],
-          E1: [...glob.points.E1],
-          E0p: [...glob.points.E0p],
-          E1p: [...glob.points.E1p],
-        })
+      const {
+        D,
+        Dp,
+        points: { E0, E1, E0p, E1p },
+      } = glob
 
-        if (selectedNodeIds.has(glob.nodes[0])) {
-          snap.E0n = vec.uni(vec.vec(start.point, glob.points.E1))
-          snap.E0pn = vec.uni(vec.vec(start.point, glob.points.E1p))
-        }
+      if (hasStart || hasEnd) {
+        const [start, end] = glob.nodes.map(
+          (nodeId) => data.nodes[nodeId].point
+        )
 
-        if (selectedNodeIds.has(glob.nodes[1])) {
-          snap.E1n = vec.uni(vec.vec(end.point, glob.points.E0))
-          snap.E1pn = vec.uni(vec.vec(end.point, glob.points.E0p))
+        globHandleSnapshots[glob.id] = {
+          D: [...D],
+          Dp: [...Dp],
+          E0: [...E0],
+          E1: [...E1],
+          E0p: [...E0p],
+          E1p: [...E1p],
+          type: hasStart && hasEnd ? "both" : hasStart ? "start" : "end",
+          n0: vec.uni(vec.vec(E0, D)),
+          n0p: vec.uni(vec.vec(E0p, Dp)),
+          n1: vec.uni(vec.vec(E1, D)),
+          n1p: vec.uni(vec.vec(E1p, Dp)),
+          nE0: vec.uni(vec.vec(start, E0)),
+          nE0p: vec.uni(vec.vec(start, E0p)),
+          nE1: vec.uni(vec.vec(end, E1)),
+          nE1p: vec.uni(vec.vec(end, E1p)),
         }
       }
     }

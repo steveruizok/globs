@@ -1,6 +1,12 @@
-import { IData, IGlob, INode, ISelectionSnapshot } from "./types"
 import { current } from "immer"
-import * as vec from "./vec"
+import * as vec from "lib/vec"
+import {
+  IData,
+  IGlob,
+  INode,
+  ISelectionSnapshot,
+  INodeAdjacentHandleSnapshot,
+} from "lib/types"
 import inputs from "lib/inputs"
 import {
   getLineLineIntersection,
@@ -12,19 +18,18 @@ import {
   updateGlobPoints,
   getSelectionSnapshot,
   getGlobPoints,
-} from "./utils"
+} from "lib/utils"
+import { getClosestPointOnCurve, getNormalOnCurve } from "lib/bez"
+import history, { Command, CommandType } from "lib/history"
 
 import AnchorSession, { AnchorSessionSnapshot } from "./sessions/AnchorSession"
-
-import { getClosestPointOnCurve, getNormalOnCurve } from "./bez"
 import TransformSession, {
   TransformSessionSnapshot,
 } from "./sessions/TransformSession"
 import RotateSession from "./sessions/RotateSession"
-import MoveSession from "./sessions/MoveSession"
-import { ResizeSessionHandleSnapshot } from "./sessions/ResizeSession"
-
-import history, { Command, CommandType } from "./history"
+import MoveSession, {
+  IMoveNodeAdjacentHandleSnapshot,
+} from "./sessions/MoveSession"
 
 /* -------------------- Commands -------------------- */
 
@@ -267,9 +272,20 @@ export function cloneSelection(
 export function moveSelection(
   data: IData,
   delta: number[],
-  snapshot: ISelectionSnapshot
+  snapshot: ISelectionSnapshot,
+  handleSnapshot: IMoveNodeAdjacentHandleSnapshot
 ) {
   const sSnapshot = MoveSession.getSnapshot(data)
+
+  const sGlobHandles = Object.fromEntries(
+    Object.keys(handleSnapshot).map((globId) => [
+      globId,
+      {
+        D: [...data.globs[globId].D],
+        Dp: [...data.globs[globId].Dp],
+      },
+    ])
+  )
 
   history.execute(
     data,
@@ -279,9 +295,27 @@ export function moveSelection(
         // When first executed, the items will already be in the correct position
         if (initial) return
         MoveSession.moveSelection(data, delta, snapshot)
+
+        const { globs } = data
+
+        for (const globId in sGlobHandles) {
+          globs[globId].D = sGlobHandles[globId].D
+          globs[globId].Dp = sGlobHandles[globId].Dp
+        }
+
+        updateGlobPoints(data)
       },
       undo(data) {
+        const { globs } = data
+
         MoveSession.moveSelection(data, vec.neg(delta), sSnapshot)
+
+        for (const globId in handleSnapshot) {
+          globs[globId].D = handleSnapshot[globId].D
+          globs[globId].Dp = handleSnapshot[globId].Dp
+        }
+
+        updateGlobPoints(data)
       },
     })
   )
@@ -885,9 +919,19 @@ export function resizeBounds(data: IData, size: number[]) {
 export function resizeNode(
   data: IData,
   snapshot: ISelectionSnapshot,
-  handleSnapshot: ResizeSessionHandleSnapshot
+  handleSnapshot: INodeAdjacentHandleSnapshot
 ) {
   const current = getSelectionSnapshot(data)
+
+  const sGlobHandles = Object.fromEntries(
+    Object.keys(handleSnapshot).map((globId) => [
+      globId,
+      {
+        D: [...data.globs[globId].D],
+        Dp: [...data.globs[globId].Dp],
+      },
+    ])
+  )
 
   history.execute(
     data,
@@ -896,10 +940,18 @@ export function resizeNode(
       do(data, initial) {
         if (initial) return
 
-        const { nodes } = data
+        const { nodes, globs } = data
+
         for (const nodeId in snapshot.nodes) {
           nodes[nodeId].radius = current.nodes[nodeId].radius
         }
+
+        for (const globId in sGlobHandles) {
+          globs[globId].D = sGlobHandles[globId].D
+          globs[globId].Dp = sGlobHandles[globId].Dp
+        }
+
+        updateGlobPoints(data)
 
         updateGlobPoints(data)
       },

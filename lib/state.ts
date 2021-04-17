@@ -337,7 +337,6 @@ const state = createState({
                       to: "pointingBounds",
                     },
                     PRESSED_META: [
-                      () => console.log("hi"),
                       {
                         if: "hasOneSelectedNode",
                         to: "changingRadius",
@@ -1188,6 +1187,7 @@ function handleKeyDown(e: KeyboardEvent) {
     e.ctrlKey,
     e.metaKey
   )
+
   if (eventName) {
     state.send(eventName)
     e.preventDefault()

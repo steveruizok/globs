@@ -1,18 +1,41 @@
-import { IData, IGlob, INode, ISelectionSnapshot } from "lib/types"
+import {
+  IData,
+  IGlob,
+  INode,
+  ISelectionSnapshot,
+  INodeAdjacentHandleSnapshot,
+} from "lib/types"
 import { cloneSelection, moveSelection } from "lib/commands"
 import * as vec from "lib/vec"
 import {
-  getGlob,
   getGlobClone,
   getNodeClone,
   getSelectionSnapshot,
   screenToWorld,
   updateGlobPoints,
+  getGlobPoints,
+  getRayRayIntesection,
 } from "lib/utils"
-import { getGlobPoints } from "lib/utils"
 import inputs from "lib/inputs"
 import getNodeSnapper, { NodeSnapper } from "lib/snaps"
 import BaseSession from "./BaseSession"
+
+export type IMoveNodeAdjacentHandleSnapshot = Record<
+  string,
+  {
+    D: number[]
+    Dp: number[]
+    E0: number[]
+    E0p: number[]
+    E1: number[]
+    E1p: number[]
+    type: "end" | "start" | "both"
+    n0: number[]
+    n0p: number[]
+    n1: number[]
+    n1p: number[]
+  }
+>
 
 export interface MoveSessionClones {
   nodes: Record<string, INode>
@@ -27,6 +50,7 @@ export default class MoveSession extends BaseSession {
   private origin = [0, 0]
   private delta = [0, 0]
   private clones: MoveSessionClones
+  private handleSnapshot: IMoveNodeAdjacentHandleSnapshot
 
   private isCloning = false
 
@@ -48,6 +72,8 @@ export default class MoveSession extends BaseSession {
       MoveSession.startCloning(data, this.clones, this.snapshot)
       this.isCloning = true
     }
+
+    this.handleSnapshot = MoveSession.getNodeAdjacentHandleSnapshot(data)
   }
 
   cancel = (data: IData) => {
@@ -92,11 +118,10 @@ export default class MoveSession extends BaseSession {
         this.snapshot
       )
       return
-    } else {
-      this.clones = undefined
     }
 
-    moveSelection(data, this.delta, this.snapshot)
+    this.clones = undefined
+    moveSelection(data, this.delta, this.snapshot, this.handleSnapshot)
   }
 
   update = (data: IData) => {
@@ -126,7 +151,7 @@ export default class MoveSession extends BaseSession {
       data.snaps.active = []
     }
 
-    if (inputs.keys.Shift) {
+    if (inputs.modifiers.shiftKey && !inputs.modifiers.metaKey) {
       if (inputs.pointer.axis === "x") {
         this.delta[1] = 0
       } else {
@@ -136,6 +161,63 @@ export default class MoveSession extends BaseSession {
 
     // Move stuff...
     MoveSession.moveSelection(data, this.delta, this.snapshot)
+
+    const { globs } = data
+    const { delta } = this
+
+    if (inputs.modifiers.shiftKey && inputs.modifiers.metaKey) {
+      for (const globId in this.handleSnapshot) {
+        const glob = globs[globId]
+        const snap = this.handleSnapshot[globId]
+        const { type, E0, E0p, E1, E1p, n0, n0p, n1, n1p } = snap
+
+        switch (type) {
+          case "start": {
+            glob.D = getRayRayIntesection(vec.add(E0, this.delta), n0, E1, n1)
+            glob.Dp = getRayRayIntesection(
+              vec.add(E0p, this.delta),
+              n0p,
+              E1p,
+              n1p
+            )
+            break
+          }
+          case "end": {
+            glob.D = getRayRayIntesection(vec.add(E1, this.delta), n1, E0, n0)
+            glob.Dp = getRayRayIntesection(
+              vec.add(E1p, this.delta),
+              n1p,
+              E0p,
+              n0p
+            )
+            break
+          }
+          case "both": {
+            glob.D = getRayRayIntesection(
+              vec.add(E1, this.delta),
+              n1,
+              vec.add(E0, this.delta),
+              n0
+            )
+            glob.Dp = getRayRayIntesection(
+              vec.add(E1p, this.delta),
+              n1p,
+              vec.add(E0p, this.delta),
+              n0p
+            )
+
+            break
+          }
+        }
+      }
+    } else {
+      for (const globId in this.handleSnapshot) {
+        const glob = globs[globId]
+        const snap = this.handleSnapshot[globId]
+        glob.D = snap.D
+        glob.Dp = snap.Dp
+      }
+    }
   }
 
   static startCloning(
@@ -306,5 +388,80 @@ export default class MoveSession extends BaseSession {
       nodeIdMap,
       globIdMap,
     }
+  }
+
+  static getHandleSnapshot(data: IData) {
+    const selectedNodeIds = new Set(data.selectedNodes)
+
+    const globHandleSnapshots: INodeAdjacentHandleSnapshot = {}
+
+    // Find the globs that will be effected when the node resizes.
+    // We need to have some of their points, along with whether those points
+    // are in clockwise order. If a glob has both its nodes among the selected
+    // nodes, then
+
+    for (const globId in data.globs) {
+      const glob = data.globs[globId]
+      const hasStart = selectedNodeIds.has(glob.nodes[0])
+      const hasEnd = selectedNodeIds.has(glob.nodes[1])
+
+      if (hasStart || hasEnd) {
+        globHandleSnapshots[glob.id] = {
+          D: [...glob.D],
+          Dp: [...glob.Dp],
+          E0: [...glob.points.E0],
+          E1: [...glob.points.E1],
+          E0p: [...glob.points.E0p],
+          E1p: [...glob.points.E1p],
+          cw: vec.clockwise(glob.points.E0, glob.D, glob.points.E1),
+          cwp: vec.clockwise(glob.points.E0p, glob.Dp, glob.points.E1p),
+          type: hasStart && hasEnd ? "both" : hasStart ? "start" : "end",
+        }
+      }
+    }
+
+    return globHandleSnapshots
+  }
+
+  static getNodeAdjacentHandleSnapshot(data: IData) {
+    const { globs } = data
+    const selectedNodeIds = new Set(data.selectedNodes)
+
+    const globHandleSnapshots: IMoveNodeAdjacentHandleSnapshot = {}
+
+    // Find the globs that will be effected when the node resizes.
+    // We need to have some of their points, along with whether those points
+    // are in clockwise order. If a glob has both its nodes among the selected
+    // nodes, then
+
+    for (const globId in globs) {
+      const glob = globs[globId]
+      const hasStart = selectedNodeIds.has(glob.nodes[0])
+      const hasEnd = selectedNodeIds.has(glob.nodes[1])
+
+      const {
+        D,
+        Dp,
+        points: { E0, E1, E0p, E1p },
+      } = glob
+
+      if (hasStart || hasEnd) {
+        globHandleSnapshots[glob.id] = {
+          D: [...D],
+          Dp: [...Dp],
+          E0: [...E0],
+          E1: [...E1],
+          E0p: [...E0p],
+          E1p: [...E1p],
+          type: hasStart && hasEnd ? "both" : hasStart ? "start" : "end",
+          n0: vec.uni(vec.vec(E0, D)),
+          n0p: vec.uni(vec.vec(E0p, Dp)),
+          n1: vec.uni(vec.vec(E1, D)),
+          n1p: vec.uni(vec.vec(E1p, Dp)),
+        }
+      }
+    }
+
+    return globHandleSnapshots
   }
 }

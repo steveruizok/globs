@@ -9,6 +9,7 @@ import {
   IGlobPoints,
   INode,
   INodeSnapshot,
+  INodeAdjacentHandleSnapshot,
 } from "./types"
 import { getNormalOnCurve, getClosestPointOnCurve } from "./bez"
 import * as vec from "./vec"
@@ -1741,4 +1742,76 @@ export function updateGlobPoints(data: IData) {
 
 export function worldToScreen(point: number[], offset: number[], zoom: number) {
   return vec.mul(vec.sub(point, offset), zoom)
+}
+
+export function getNodeAdjacentHandleSnapshot(data: IData) {
+  const selectedNodeIds = new Set(data.selectedNodes)
+
+  const globHandleSnapshots: INodeAdjacentHandleSnapshot = {}
+
+  // Find the globs that will be effected when the node resizes.
+  // We need to have some of their points, along with whether those points
+  // are in clockwise order. If a glob has both its nodes among the selected
+  // nodes, then
+
+  for (const globId in data.globs) {
+    const glob = data.globs[globId]
+    const hasStart = selectedNodeIds.has(glob.nodes[0])
+    const hasEnd = selectedNodeIds.has(glob.nodes[1])
+
+    if (hasStart || hasEnd) {
+      globHandleSnapshots[glob.id] = {
+        D: [...glob.D],
+        Dp: [...glob.Dp],
+        E0: [...glob.points.E0],
+        E1: [...glob.points.E1],
+        E0p: [...glob.points.E0p],
+        E1p: [...glob.points.E1p],
+        cw: vec.clockwise(glob.points.E0, glob.D, glob.points.E1),
+        cwp: vec.clockwise(glob.points.E0p, glob.Dp, glob.points.E1p),
+        type: hasStart && hasEnd ? "both" : hasStart ? "start" : "end",
+      }
+    }
+  }
+
+  return globHandleSnapshots
+}
+
+export function getRayRayIntesection1(
+  p0: number[],
+  n0: number[],
+  p1: number[],
+  n1: number[]
+) {
+  const dx = p1[0] - p0[0]
+  const dy = p1[1] - p0[1]
+  const det = n1[0] * n0[1] - n1[1] * n0[0]
+  if (det === 0) return false
+
+  const u = (dy * n1[0] - dx * n1[1]) / det,
+    v = (dy * n0[0] - dx * n0[1]) / det
+
+  if (u < 0 || v < 0) return false
+
+  console.log(u)
+
+  return p0 // vec.add(p0, vec.mul(p0, u))
+}
+
+export function getRayRayIntesection(
+  p0: number[],
+  n0: number[],
+  p1: number[],
+  n1: number[]
+) {
+  const p0End = vec.add(p0, n0),
+    p1End = vec.add(p1, n1),
+    m0 = (p0End[1] - p0[1]) / (p0End[0] - p0[0]),
+    m1 = (p1End[1] - p1[1]) / (p1End[0] - p1[0]),
+    b0 = p0[1] - m0 * p0[0],
+    b1 = p1[1] - m1 * p1[0],
+    x = (b1 - b0) / (m0 - m1),
+    y = m0 * x + b0
+
+  return [x, y]
 }
