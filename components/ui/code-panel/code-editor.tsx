@@ -69,10 +69,8 @@ export default function Editor({ code, onChange }: Props) {
 }
 
 const EditorContainer = styled("div", {
-  height: "100%",
   overflow: "hidden",
   "& .cm-wrap": {
-    height: "100%",
     outline: "none",
   },
   "& .cm-scroller": { overflowX: "scroll", overflowY: "scroll", font: "$code" },

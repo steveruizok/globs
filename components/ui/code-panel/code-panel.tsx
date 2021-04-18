@@ -202,7 +202,7 @@ const Content = styled("div", {
   minWidth: "100%",
   width: 560,
   maxWidth: 560,
-  overflowY: "scroll",
+  overflowY: "hidden",
   height: "100%",
   userSelect: "none",
   pointerEvents: "all",
