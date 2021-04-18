@@ -2,8 +2,7 @@ import React, { useCallback, useEffect, useRef } from "react"
 import { styled } from "stitches.config"
 import state, { useSelector } from "lib/state"
 import usePinchZoom from "hooks/usePinchZoom"
-import * as vec from "lib/vec"
-import { motion, PanInfo, TapInfo } from "framer-motion"
+import { motion } from "framer-motion"
 import inputs from "lib/inputs"
 
 import ContextMenu, {
@@ -18,9 +17,9 @@ import ContentPanel from "./ui/content-panel/content-panel"
 import Toolbar from "./ui/toolbar"
 import StatusBar from "./ui/statusbar"
 import LearnPanel from "./ui/learn-panel"
+import CodePanel from "./ui/code-panel/code-panel"
 import ZoomPanel from "./ui/zoom-panel"
 import Thumbstick from "./ui/thumbstick"
-import { throttle } from "lib/utils"
 
 const DOT_RADIUS = 2,
   ANCHOR_RADIUS = 4,
@@ -121,7 +120,7 @@ export default function Editor() {
     []
   )
 
-  const handlePointerDown = useCallback((e: PointerEvent, info: TapInfo) => {
+  const handlePointerDown = useCallback((e: PointerEvent) => {
     // pointer.points.add(e.pointerId)
     inputs.handlePointerDown(
       e.clientX,
@@ -143,7 +142,7 @@ export default function Editor() {
     })
   }, [])
 
-  const handlePointerUp = useCallback((e: PointerEvent, info: TapInfo) => {
+  const handlePointerUp = useCallback((e: PointerEvent) => {
     inputs.handlePointerUp(
       e.clientX,
       e.clientY,
@@ -288,6 +287,7 @@ export default function Editor() {
             <StatusBar />
             <Main ref={rMain}>
               <LearnPanel bounds={rMain} />
+              <CodePanel />
               <ZoomPanel />
               <Thumbstick />
             </Main>
@@ -298,18 +298,6 @@ export default function Editor() {
     </OuterWrapper>
   )
 }
-
-const throttledMove = throttle(
-  (e: PointerEvent) =>
-    state.send("MOVED_POINTER", {
-      isPan: e.buttons === 4,
-      shiftKey: e.shiftKey,
-      optionKey: e.altKey,
-      metaKey: e.metaKey || e.ctrlKey,
-      ctrlKey: e.ctrlKey,
-    }),
-  16
-)
 
 const EditorContainer = styled("div", {
   position: "fixed",

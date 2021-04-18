@@ -14,7 +14,7 @@ import TranslateSession from "lib/sessions/TranslateSession"
 import TransformSession from "lib/sessions/TransformSession"
 import RotateSession from "lib/sessions/RotateSession"
 import MoveSession from "./sessions/MoveSession"
-import { IGlob, IHandle, IAnchor, ITranslation } from "lib/types"
+import { IGlob, IHandle, IAnchor, ITranslation, INode } from "lib/types"
 import { getSelectedBoundingBox, screenToWorld, throttle } from "utils"
 import { roundBounds } from "./bounds-utils"
 import migrate from "./migrations"
@@ -102,6 +102,7 @@ const state = createState({
                 HARD_RESET: ["hardReset", "saveData"],
                 SELECTED_ALL: "selectAll",
                 LOCKED_NODES: "lockSelectedNodes",
+                GENERATED_ITEMS: "refreshGeneratedItems",
                 POINTED_NODE: [
                   { unless: "isLeftClick", break: true },
                   "setPointingId",
@@ -634,6 +635,14 @@ const state = createState({
       exports.copyToSvg(data, elms)
     },
 
+    // CODE GENERATED ITEMS
+    refreshGeneratedItems(
+      data,
+      payload: { nodes: Record<string, INode>; globs: Record<string, IGlob> }
+    ) {
+      commands.refreshGeneratedItems(data, payload)
+    },
+
     // CLIPBOARD
     copyToClipboard(data) {
       clipboard.copy(data)
@@ -644,6 +653,7 @@ const state = createState({
     finishPasteFromClipboard(data, copied) {
       clipboard.finishPaste(data, copied)
     },
+
     // HISTORY
     undo(data) {
       history.undo(data)
@@ -1062,6 +1072,8 @@ const state = createState({
       data.hoveredNodes = []
       data.hoveredGlobs = []
       data.snaps.active = []
+      // data.generated.nodeIds = []
+      // data.generated.globIds = []
       data.fill = false
 
       if (typeof window !== "undefined") {

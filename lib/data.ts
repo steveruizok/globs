@@ -124,6 +124,10 @@ export const initialData: IData = {
   selectedNodes: [],
   selectedGlobs: [],
   selectedHandle: undefined,
+  generated: {
+    nodeIds: [],
+    globIds: [],
+  },
 }
 
 for (const key in initialData.globs) {

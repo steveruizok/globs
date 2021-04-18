@@ -145,6 +145,10 @@ export interface IData {
   highlightGlobs: string[]
   selectedNodes: string[]
   selectedHandle?: { id: string; handle: IHandle }
+  generated: {
+    nodeIds: string[]
+    globIds: string[]
+  }
 }
 
 export type IAnchor = "a" | "ap" | "b" | "bp"

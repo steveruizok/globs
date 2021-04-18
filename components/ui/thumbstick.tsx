@@ -93,7 +93,7 @@ const Container = styled(motion.div, {
   userSelect: "none",
   pointerEvents: "all",
 
-  "@media (min-width: 768px)": {
+  "@media (min-width: 560px)": {
     visibility: "hidden",
   },
 })

@@ -1,16 +1,9 @@
 import { styled } from "stitches.config"
 import * as _ContextMenu from "@radix-ui/react-context-menu"
-import state, { useSelector } from "lib/state"
-import { deepCompare } from "lib/utils"
+import state from "lib/state"
 
 export default function ContextMenu() {
-  // const hoveredNode = useSelector(
-  //   (s) => s.data.hoveredNodes[0] && s.data.nodes[s.data.hoveredNodes[0]],
-  //   deepCompare
-  // )
-
   return (
-    // @ts-ignore
     <StyledContent disableOutsidePointerEvents={false}>
       <StyledItem onSelect={() => state.send("COPIED")}>Copy</StyledItem>
       <StyledItem onSelect={() => state.send("PASTED")}>Paste</StyledItem>

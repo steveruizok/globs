@@ -2,7 +2,6 @@ import { createState } from "@state-designer/core"
 import { useStateDesigner } from "@state-designer/react"
 import { motion, animate, useMotionValue, PanInfo } from "framer-motion"
 import { RefObject, useEffect, useRef } from "react"
-import * as vec from "lib/vec"
 import {
   BookOpen,
   ChevronLeft,
@@ -77,7 +76,7 @@ const state = createState({
         image: "learn/intro_caps.mp4",
         description: (
           <p>
-            To change a node's <b>cap</b>: double click it.
+            To change a node&apos;s <b>cap</b>: double click it.
           </p>
         ),
       },
@@ -86,7 +85,7 @@ const state = createState({
         image: "learn/intro_anchors.mp4",
         description: (
           <p>
-            For <b>fine adjustment</b>: drag a glob's anchor points.
+            For <b>fine adjustment</b>: drag a glob&apos;s anchor points.
           </p>
         ),
       },
@@ -108,8 +107,8 @@ const state = createState({
             To <b>select</b> things: click on the canvas and draw a box. To{" "}
             <b>move</b>
             the items, click and drag the box. To <b>resize</b> the items: click
-            and drag the box's edges or corners. To <b>rotate</b>: click and
-            drag at a point just past the corners.
+            and drag the box&apos;s edges or corners. To <b>rotate</b>: click
+            and drag at a point just past the corners.
           </p>
         ),
       },

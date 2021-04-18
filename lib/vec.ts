@@ -159,8 +159,7 @@ export function tangent(A: number[], B: number[]) {
  * @param B
  */
 export function dist2(A: number[], B: number[]) {
-  const dif = sub(A, B)
-  return dif[0] * dif[0] + dif[1] * dif[1]
+  return len2(sub(A, B))
 }
 
 /**

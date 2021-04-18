@@ -12,6 +12,7 @@ import {
   updateGlobPoints,
   getSelectionSnapshot,
   getGlobPoints,
+  getGlob,
 } from "lib/utils"
 import { getClosestPointOnCurve, getNormalOnCurve } from "lib/bez"
 import history, { Command, CommandType } from "lib/history"
@@ -268,19 +269,21 @@ export function moveSelection(
   data: IData,
   delta: number[],
   snapshot: ISelectionSnapshot,
-  handleSnapshot: IMoveNodeAdjacentHandleSnapshot
+  handleSnapshot?: IMoveNodeAdjacentHandleSnapshot
 ) {
   const sSnapshot = MoveSession.getSnapshot(data)
 
-  const sGlobHandles = Object.fromEntries(
-    Object.keys(handleSnapshot).map((globId) => [
-      globId,
-      {
-        D: [...data.globs[globId].D],
-        Dp: [...data.globs[globId].Dp],
-      },
-    ])
-  )
+  const sGlobHandles = handleSnapshot
+    ? Object.fromEntries(
+        Object.keys(handleSnapshot).map((globId) => [
+          globId,
+          {
+            D: [...data.globs[globId].D],
+            Dp: [...data.globs[globId].Dp],
+          },
+        ])
+      )
+    : {}
 
   history.execute(
     data,
@@ -1038,6 +1041,89 @@ export function setPropertyOnSelectedNodes(
           if (locked !== null) node.locked = sNode.locked
         }
         updateGlobPoints(data)
+      },
+    })
+  )
+}
+
+export function refreshGeneratedItems(
+  data: IData,
+  items: { nodes: Record<string, INode>; globs: Record<string, IGlob> }
+) {
+  const { generated: sGenerated, nodes: sNodes, globs: sGlobs } = current(data)
+
+  history.execute(
+    data,
+    new Command({
+      type: CommandType.CreateNode,
+      manualSelection: true,
+      do(data) {
+        for (const nodeId of sGenerated.nodeIds) {
+          delete data.nodes[nodeId]
+        }
+
+        for (const globId of sGenerated.globIds) {
+          delete data.globs[globId]
+        }
+
+        for (const nodeId in items.nodes) {
+          data.nodes[nodeId] = items.nodes[nodeId]
+        }
+
+        for (const globId in items.globs) {
+          const glob = items.globs[globId]
+          glob.points = getGlobPoints(
+            glob,
+            data.nodes[glob.nodes[0]],
+            data.nodes[glob.nodes[1]]
+          )
+          data.globs[globId] = glob
+        }
+
+        data.generated.nodeIds = Object.keys(items.nodes)
+        data.generated.globIds = Object.keys(items.globs)
+
+        data.nodeIds = Object.keys(data.nodes)
+        data.globIds = Object.keys(data.globs)
+
+        data.selectedGlobs = []
+        data.selectedNodes = []
+        data.hoveredGlobs = []
+        data.hoveredNodes = []
+      },
+      undo(data) {
+        for (const nodeId in items.nodes) {
+          delete data.nodes[nodeId]
+        }
+
+        for (const globId in items.globs) {
+          delete data.globs[globId]
+        }
+
+        for (const nodeId of sGenerated.nodeIds) {
+          data.nodes[nodeId] = sNodes[nodeId]
+        }
+
+        for (const globId of sGenerated.globIds) {
+          const glob = sGlobs[globId]
+          glob.points = getGlobPoints(
+            glob,
+            data.nodes[glob.nodes[0]],
+            data.nodes[glob.nodes[1]]
+          )
+          data.globs[globId] = glob
+        }
+
+        data.generated.nodeIds = [...sGenerated.nodeIds]
+        data.generated.globIds = [...sGenerated.globIds]
+
+        data.nodeIds = Object.keys(data.nodes)
+        data.globIds = Object.keys(data.globs)
+
+        data.selectedGlobs = []
+        data.selectedNodes = []
+        data.hoveredGlobs = []
+        data.hoveredNodes = []
       },
     })
   )

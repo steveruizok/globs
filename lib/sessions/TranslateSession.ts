@@ -120,7 +120,7 @@ export default class TranslateSession extends BaseSession {
   }
 
   complete = (data: IData) => {
-    // Create a command
+    // TODO: Add handle snapshot?
     moveSelection(data, this.delta, this.snapshot)
 
     document.removeEventListener("pointermove", updatePosition, false)
