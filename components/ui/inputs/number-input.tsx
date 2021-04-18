@@ -145,7 +145,7 @@ function NumberInput({
         onPointerLeave={() => setIsHovered(false)}
         onPointerDown={handlePointerDown}
         onPointerUp={handlePointerUp}
-        onPointerMove={handePointerMove}
+        // onPointerMove={handePointerMove}
         onTap={handleTap}
       >
         <input
