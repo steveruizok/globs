@@ -2,9 +2,6 @@ import useCodemirror, { getTheme } from "./useCodemirror"
 import { EditorState } from "@codemirror/state"
 import { useEffect, useRef } from "react"
 import { styled } from "stitches.config"
-import prettier from "prettier/standalone"
-
-const PARSER = "javascript"
 
 interface Props {
   code: string

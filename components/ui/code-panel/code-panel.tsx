@@ -1,7 +1,7 @@
 import { createState } from "@state-designer/core"
 import { useStateDesigner } from "@state-designer/react"
 import { motion } from "framer-motion"
-import { useEffect, useMemo, useRef } from "react"
+import { useEffect, useRef } from "react"
 import evalCode from "lib/code"
 import CodeDocs from "./code-docs"
 import Editor from "./code-editor"
@@ -10,7 +10,55 @@ import state from "lib/state"
 import { X, Code, Info, PlayCircle } from "react-feather"
 import { styled } from "stitches.config"
 
-let code = ""
+let code = `// Basic nodes and globs
+
+const nodeA = new Node({
+  x: -100,
+  y: 0
+})
+
+const nodeB = new Node({
+  x: 100,
+  y: 0
+})
+
+const glob = new Glob({
+  start: nodeA,
+  end: nodeB,
+  D: { x: 0, y: 60},
+  Dp: { x: 0, y: 90}
+})
+
+// Something more interesting...
+
+
+const PI2 = Math.PI * 2, 
+  center = { x: 0, y: 0 }, 
+  radius = 400
+
+let prev
+
+for (let i = 0; i < 21; i++) {
+  const t = i * (PI2 / 20)
+
+  const node = new Node({
+    x: center.x + radius * Math.sin(t),
+    y: center.y + radius * Math.cos(t)
+  })	
+
+  if (prev !== undefined) {
+    new Glob({
+      start: prev, 
+      end: node,
+      D: center,
+      Dp: center
+    })
+  } 
+
+  prev = node
+}
+`
+
 const saved = localStorage.getItem("__globs_code")
 if (saved !== null) code = saved
 
@@ -25,7 +73,7 @@ const panelState = createState({
     UNMOUNTED: "saveCode",
     CHANGED_CODE: { secretlyDo: "setCode" },
   },
-  initial: "expanded",
+  initial: "collapsed",
   states: {
     collapsed: {
       on: {
@@ -198,11 +246,11 @@ const IconButton = styled("button", {
 const Content = styled("div", {
   display: "grid",
   gridTemplateColumns: "1fr",
-  gridTemplateRows: "auto  1fr",
+  gridTemplateRows: "auto 1fr",
   minWidth: "100%",
   width: 560,
   maxWidth: 560,
-  overflowY: "hidden",
+  overflow: "hidden",
   height: "100%",
   userSelect: "none",
   pointerEvents: "all",
@@ -239,6 +287,6 @@ const ButtonsGroup = styled("div", {
 
 const EditorContainer = styled("div", {
   position: "relative",
-  height: "100%",
   pointerEvents: "all",
+  overflowY: "scroll",
 })
