@@ -72,7 +72,7 @@ const panelState = createState({
     UNMOUNTED: "saveCode",
     CHANGED_CODE: { secretlyDo: "setCode" },
   },
-  initial: "expanded",
+  initial: "collapsed",
   states: {
     collapsed: {
       on: {
