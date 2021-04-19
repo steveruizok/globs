@@ -164,6 +164,10 @@ class Vector {
     return new Vector(this)
   }
 
+  clone() {
+    return this.copy()
+  }
+
   toArray() {
     return [this.x, this.y]
   }
@@ -247,15 +251,16 @@ class Vector {
   }
 
   vec(b: Vector) {
-    this.x = b.x - this.x
-    this.y = b.y - this.y
+    const { x, y } = this
+    this.x = b.x - x
+    this.y = b.y - y
     return this
   }
 
   static vec(a: Vector, b: Vector) {
     const n = new Vector(a)
-    n.x = b.x - n.x
-    n.y = b.y - n.y
+    n.x = b.x - a.x
+    n.y = b.y - a.y
     return n
   }
 
@@ -329,24 +334,26 @@ class Vector {
   }
 
   rot(r: number) {
-    this.x = this.x * Math.cos(r) - this.y * Math.sin(r)
-    this.y = this.x * Math.sin(r) + this.y * Math.cos(r)
+    const { x, y } = this
+    this.x = x * Math.cos(r) - y * Math.sin(r)
+    this.y = x * Math.sin(r) + y * Math.cos(r)
     return this
   }
 
   static rot(a: Vector, r: number) {
     const n = new Vector(a)
-    n.x = n.x * Math.cos(r) - n.y * Math.sin(r)
-    n.y = n.x * Math.sin(r) + n.y * Math.cos(r)
+    n.x = a.x * Math.cos(r) - a.y * Math.sin(r)
+    n.y = a.x * Math.sin(r) + a.y * Math.cos(r)
     return n
   }
 
   rotAround(b: Vector, r: number) {
+    const { x, y } = this
     const s = Math.sin(r)
     const c = Math.cos(r)
 
-    const px = this.x - b.x
-    const py = this.y - b.y
+    const px = x - b.x
+    const py = y - b.y
 
     this.x = px * c - py * s + b.x
     this.y = px * s + py * c + b.y
@@ -451,15 +458,16 @@ class Vector {
   }
 
   per() {
+    let t = this.x
     this.x = this.y
-    this.y = -this.x
+    this.y = -t
     return this
   }
 
   static per(a: Vector) {
     const n = new Vector(a)
     n.x = n.y
-    n.y = n.y = -n.x
+    n.y = -a.x
     return n
   }
 
