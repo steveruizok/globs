@@ -9,12 +9,6 @@
     "cypress:open": "cypress open"
   },
   "dependencies": {
-    "@codemirror/basic-setup": "^0.18.0",
-    "@codemirror/lang-javascript": "^0.18.0",
-    "@codemirror/language-data": "^0.18.0",
-    "@codemirror/theme-one-dark": "^0.18.0",
-    "@mdx-js/loader": "^1.6.22",
-    "@next/mdx": "^10.1.3",
     "@radix-ui/react-context-menu": "^0.0.10",
     "@state-designer/react": "^1.7.1",
     "@stitches/react": "^0.1.4",

@@ -4,7 +4,7 @@ import { motion } from "framer-motion"
 import { useEffect, useRef } from "react"
 import evalCode from "lib/code"
 import CodeDocs from "./code-docs"
-import Editor from "./code-editor"
+import CodeEditor from "./code-editor"
 import state from "lib/state"
 
 import { X, Code, Info, PlayCircle } from "react-feather"
@@ -73,7 +73,7 @@ const panelState = createState({
     UNMOUNTED: "saveCode",
     CHANGED_CODE: { secretlyDo: "setCode" },
   },
-  initial: "collapsed",
+  initial: "expanded",
   states: {
     collapsed: {
       on: {
@@ -88,6 +88,7 @@ const panelState = createState({
       states: {
         code: {
           on: {
+            SAVED_CODE: ["setCode", "saveDirtyToClean", "evalCode"],
             RAN_CODE: ["saveDirtyToClean", "evalCode"],
             TOGGLED_DOCS: { to: "docs" },
           },
@@ -173,11 +174,11 @@ export default function LearnPanel() {
             </ButtonsGroup>
           </Header>
           <EditorContainer>
-            <Editor
-              code={local.data.code.clean}
-              onChange={(code: string) => {
-                panelState.send("CHANGED_CODE", { code })
-              }}
+            <CodeEditor
+              maximized
+              value={local.data.code.clean}
+              onChange={(code) => panelState.send("CHANGED_CODE", { code })}
+              onSave={(code) => panelState.send("SAVED_CODE", { code })}
             />
             <CodeDocs isHidden={!local.isIn("docs")} />
           </EditorContainer>
