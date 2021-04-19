@@ -129,6 +129,7 @@ export default function CopenhagenEditor({
             plugins: [parser],
             proseWrap: "always",
             printWidth: 60,
+            semi: false,
           })
 
           editor.setValue(formatted)

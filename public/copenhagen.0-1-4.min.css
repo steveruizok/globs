@@ -694,7 +694,7 @@ control[control="CPHContextMenu"] {
   min-width: 150px;
   z-index: 1000;
   padding: 4px 0px;
-  background-color: var(--sx-colors-);
+  background-color: var(--sx-colors-contextmenubg);
   border-radius: 4px;
   box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.3);
   border: 1px solid var(--sx-colors-contextmenuborder);

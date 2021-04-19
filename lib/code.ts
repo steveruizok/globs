@@ -10,6 +10,19 @@ interface Point {
 }
 
 class Utils {
+  static getRayRayIntesection(p0: Vector, n0: Vector, p1: Vector, n1: Vector) {
+    const p0e = Vector.add(p0, n0),
+      p1e = Vector.add(p1, n1),
+      m0 = (p0e[1] - p0[1]) / (p0e[0] - p0[0]),
+      m1 = (p1e[1] - p1[1]) / (p1e[0] - p1[0]),
+      b0 = p0[1] - m0 * p0[0],
+      b1 = p1[1] - m1 * p1[0],
+      x = (b1 - b0) / (m0 - m1),
+      y = m0 * x + b0
+
+    return new Vector({ x, y })
+  }
+
   static getCircleTangentToPoint(
     A: Point | Vector,
     r0: number,
@@ -520,6 +533,65 @@ class Vector {
   static from(v: Vector) {
     return new Vector(v)
   }
+
+  nearestPointOnLineThroughPoint(b: Vector, u: Vector) {
+    return this.clone().add(u.clone().mulScalar(Vector.sub(this, b).pry(u)))
+  }
+
+  static nearestPointOnLineThroughPoint(a: Vector, b: Vector, u: Vector) {
+    return a.clone().add(u.clone().mulScalar(Vector.sub(a, b).pry(u)))
+  }
+
+  distanceToLineThroughPoint(b: Vector, u: Vector) {
+    return this.dist(Vector.nearestPointOnLineThroughPoint(b, u, this))
+  }
+
+  static distanceToLineThroughPoint(a: Vector, b: Vector, u: Vector) {
+    return a.dist(Vector.nearestPointOnLineThroughPoint(b, u, a))
+  }
+
+  nearestPointOnLineSegment(p0: Vector, p1: Vector, clamp = true) {
+    return Vector.nearestPointOnLineSegment(this, p0, p1, clamp)
+  }
+
+  static nearestPointOnLineSegment(
+    a: Vector,
+    p0: Vector,
+    p1: Vector,
+    clamp = true
+  ) {
+    const delta = Vector.sub(p1, p0)
+    const length = delta.len()
+    const u = Vector.divScalar(delta, length)
+
+    const pt = Vector.add(
+      p0,
+      Vector.mulScalar(u, Vector.pry(Vector.sub(a, p0), u))
+    )
+
+    if (clamp) {
+      const da = p0.dist(pt)
+      const db = p1.dist(pt)
+
+      if (db < da && da > length) return p1
+      if (da < db && db > length) return p0
+    }
+
+    return pt
+  }
+
+  distanceToLineSegment(p0: Vector, p1: Vector, clamp = true) {
+    return Vector.distanceToLineSegment(this, p0, p1, clamp)
+  }
+
+  static distanceToLineSegment(
+    a: Vector,
+    p0: Vector,
+    p1: Vector,
+    clamp = true
+  ) {
+    return Vector.dist(a, Vector.nearestPointOnLineSegment(a, p0, p1, clamp))
+  }
 }
 
 type NodeOptions = {
@@ -637,6 +709,29 @@ class Glob {
     globs.delete(this)
   }
 
+  pinch = () => {
+    const center = Vector.med(this.start.point, this.end.point)
+
+    this.D = center.clone()
+    this.Dp = center.clone()
+
+    return this
+  }
+
+  straighten = () => {
+    const n = Vector.vec(this.start.point, this.end.point)
+      .uni()
+      .per()
+      .mulScalar((this.start.radius + this.end.radius) / 2)
+
+    const center = Vector.med(this.start.point, this.end.point)
+
+    this.D = center.clone().add(n)
+    this.Dp = center.clone().sub(n)
+
+    return this
+  }
+
   getBounds = () => {
     const { E0, F0, F1, E1, E0p, F0p, F1p, E1p } = this.getPoints()
     const b = Utils.getCubicBezierBounds(E0, F0, F1, E1)
@@ -722,6 +817,26 @@ class Glob {
       D,
       Dp,
     }
+  }
+
+  get vector() {
+    return Vector.vec(this.start.point, this.end.point)
+  }
+
+  move(v: Vector) {
+    this.D.add(v)
+    this.Dp.add(v)
+    this.start.point.add(v)
+    this.end.point.add(v)
+  }
+
+  set center(v: Vector) {
+    const vec = Vector.vec(this.center, v)
+    this.move(vec)
+  }
+
+  get center() {
+    return Vector.med(this.start.point, this.end.point)
   }
 }
 
