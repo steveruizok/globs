@@ -94,6 +94,7 @@ export default function GlobsProps() {
         label="a"
         min={0}
         max={1}
+        step={0.01}
         onChange={handleAChange}
         onPanStart={() =>
           state.send("STARTED_TRANSLATING", {
@@ -107,6 +108,7 @@ export default function GlobsProps() {
         label="b"
         min={0}
         max={1}
+        step={0.01}
         onChange={handleBChange}
         onPanStart={() =>
           state.send("STARTED_TRANSLATING", {
@@ -120,6 +122,7 @@ export default function GlobsProps() {
         label="ap"
         min={0}
         max={1}
+        step={0.01}
         onChange={handleApChange}
         onPanStart={() =>
           state.send("STARTED_TRANSLATING", {
@@ -133,6 +136,7 @@ export default function GlobsProps() {
         label="bp"
         min={0}
         max={1}
+        step={0.01}
         onChange={handleBpChange}
         onPanStart={() =>
           state.send("STARTED_TRANSLATING", {
