@@ -20,8 +20,9 @@ function BoolInput({ value, label, onChange }: Props) {
 
   return (
     <PropContainer>
-      <label>{label}</label>
+      <label htmlFor={label}>{label}</label>
       <input
+        id={label}
         ref={rInput}
         type="checkbox"
         checked={value === "mixed" ? true : value}

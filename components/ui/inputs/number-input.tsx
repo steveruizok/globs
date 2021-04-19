@@ -59,7 +59,7 @@ function NumberInput({
     window.removeEventListener("pointerup", handleEnd)
   }
 
-  function handePointerMove(e) {
+  function handlePointerMove(e) {
     if (
       isPressed &&
       !isPanning &&
@@ -138,18 +138,22 @@ function NumberInput({
 
   return (
     <PropContainer>
-      <label style={{ pointerEvents: "none" }}>{label}</label>
+      <label style={{
+        pointerEvents: isHovered ? "none" : "all"
+        }}
+        htmlFor={label}>{label}</label>
       <motion.div
         className="dragWrapper"
         onPointerEnter={() => setIsHovered(true)}
         onPointerLeave={() => setIsHovered(false)}
         onPointerDown={handlePointerDown}
         onPointerUp={handlePointerUp}
-        // onPointerMove={handePointerMove}
+        // onPointerMove={handlePointerMove}
         onTap={handleTap}
       >
         <input
           ref={rInput}
+          id={label}
           type="number"
           value={val}
           min={min}
