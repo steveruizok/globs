@@ -1785,7 +1785,7 @@ export function getNodeAdjacentHandleSnapshot(data: IData) {
  * @param n1 The direction vector of the second ray
  * @returns
  */
-export function getRayRayIntesection(
+export function getRayRayIntersection(
   p0: number[],
   n0: number[],
   p1: number[],

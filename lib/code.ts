@@ -10,13 +10,13 @@ interface Point {
 }
 
 class Utils {
-  static getRayRayIntesection(p0: Vector, n0: Vector, p1: Vector, n1: Vector) {
+  static getRayRayIntersection(p0: Vector, n0: Vector, p1: Vector, n1: Vector) {
     const p0e = Vector.add(p0, n0),
       p1e = Vector.add(p1, n1),
-      m0 = (p0e[1] - p0[1]) / (p0e[0] - p0[0]),
-      m1 = (p1e[1] - p1[1]) / (p1e[0] - p1[0]),
-      b0 = p0[1] - m0 * p0[0],
-      b1 = p1[1] - m1 * p1[0],
+      m0 = (p0e.y - p0.y) / (p0e.x - p0.x),
+      m1 = (p1e.y - p1.y) / (p1e.x - p1.x),
+      b0 = p0.y - m0 * p0.x,
+      b1 = p1.y - m1 * p1.x,
       x = (b1 - b0) / (m0 - m1),
       y = m0 * x + b0
 
@@ -625,6 +625,14 @@ class Node {
     nodes.add(this)
   }
 
+  clone() {
+    return new Node({
+      point: Vector.from(this.point),
+      radius: this.radius,
+      cap: this.cap,
+    })
+  }
+
   destroy() {
     nodes.delete(this)
   }
@@ -644,8 +652,16 @@ class Node {
     return this.point.x
   }
 
+  set x(v: number) {
+    this.point.x = v
+  }
+
   get y() {
     return this.point.y
+  }
+
+  set y(v: number) {
+    this.point.y = v
   }
 }
 
@@ -819,15 +835,19 @@ class Glob {
     }
   }
 
-  get vector() {
-    return Vector.vec(this.start.point, this.end.point)
-  }
-
   move(v: Vector) {
     this.D.add(v)
     this.Dp.add(v)
     this.start.point.add(v)
     this.end.point.add(v)
+  }
+
+  get vector() {
+    return Vector.vec(this.start.point, this.end.point)
+  }
+
+  getVector() {
+    return this.vector
   }
 
   set center(v: Vector) {
@@ -837,6 +857,9 @@ class Glob {
 
   get center() {
     return Vector.med(this.start.point, this.end.point)
+  }
+  getCenter() {
+    return this.center
   }
 }
 

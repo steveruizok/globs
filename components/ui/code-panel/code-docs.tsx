@@ -54,6 +54,18 @@ const node = new Node({
       </p>
       <h4>
         <code>
+          <i>node.</i>x
+        </code>
+      </h4>
+      <p>The x coordinate of the vector's point.</p>
+      <h4>
+        <code>
+          <i>node.</i>y
+        </code>
+      </h4>
+      <p>The y coordinate of the vector's point.</p>
+      <h4>
+        <code>
           <i>node.</i>radius
         </code>
       </h4>
@@ -68,6 +80,12 @@ const node = new Node({
         <code>&quot;round&quot;</code> or <code>&quot;flat&quot;</code>.
       </p>
       <h3>Methods</h3>
+      <h4>
+        <code>
+          <i>node.</i>clone()
+        </code>
+      </h4>
+      <p>Return a new node with the same properties.</p>
       <h4>
         <code>
           <i>node.</i>getBounds()
@@ -173,7 +191,46 @@ const node = new Node({
         will be touching the <code>end</code> node; at 1, the anchor will be
         touching the <code>Dp</code> handle.
       </p>
+      <h4>
+        <code>
+          <i>glob.</i>center
+        </code>
+      </h4>
+      <p>The point between the glob's nodes.</p>
+      <h4>
+        <code>
+          <i>glob.</i>vector
+        </code>
+      </h4>
+      <p>The vector between the glob's nodes.</p>
       <h3>Methods</h3>
+      <h4>
+        <code>
+          <i>glob.</i>straighten()
+        </code>
+      </h4>
+      <p>
+        Places the glob's handles such that both of the glob's curves form
+        straight lines.
+      </p>
+      <h4>
+        <code>
+          <i>glob.</i>pinch()
+        </code>
+      </h4>
+      <p>Places the glob's handles at the point between the glob's nodes.</p>
+      <h4>
+        <code>
+          <i>glob.</i>getCenter()
+        </code>
+      </h4>
+      <p>Returns the point between the glob's nodes.</p>
+      <h4>
+        <code>
+          <i>glob.</i>getVector()
+        </code>
+      </h4>
+      <p>Returns the vector between the glob's nodes.</p>
       <h4>
         <code>
           <i>glob.</i>getPoints()
@@ -459,8 +516,66 @@ const vectorC = Vector.from(vectorA)
         Get whether this vector is to the left of <code>b</code> relative to{" "}
         <code>center</code>.
       </p>
+      <h4>
+        <code>
+          <i>vector.</i>nearestPointOnLineThroughPoint(b: Vector, u: Vector)
+        </code>
+      </h4>
+      <p>
+        Get the nearest point on a line with a direction vector <code>u</code>{" "}
+        that passes through the point <code>b</code>.
+      </p>
+      <h4>
+        <code>
+          <i>vector.</i>distanceToLineThroughPoint(b: Vector, u: Vector)
+        </code>
+      </h4>
+      <p>
+        Get the distance to the nearest point on a line with a direction vector{" "}
+        <code>u</code> that passes through the point <code>b</code>.
+      </p>
+      <h4>
+        <code>
+          <i>vector.</i>nearestPointOnLineSegment(p0: Vector, p1: Vector, clamp
+          = true)
+        </code>
+      </h4>
+      <p>
+        Get the nearest point on a line segment that starts at <code>p0</code>{" "}
+        and ends at <code>p1</code>. If <code>clamp</code> is true, then the
+        resulting vector will be a point on the segment; otherwise, the result
+        will be a point on an infinite line that passes through both{" "}
+        <code>p0</code> and <code>p1</code>.
+      </p>
+      <h4>
+        <code>
+          <i>vector.</i>distanceToLineSegment(p0: Vector, p1: Vector, clamp =
+          true)
+        </code>
+      </h4>
+      <p>
+        Get the distance to the nearest point on a line segment that starts at{" "}
+        <code>p0</code> and ends at <code>p1</code>. If <code>clamp</code> is
+        true, then the resulting distance vector will be to a point on the
+        segment; otherwise, the result will be the distance to teh nearest point
+        on an infinite line that passes through both <code>p0</code> and{" "}
+        <code>p1</code>.
+      </p>
       <h3>Static Methods</h3>
-      <p>All of the above methods are implemented as static methods.</p>
+      <p>
+        All of the above methods are implemented as static methods with an
+        additional first argument as an input <code>Vector</code>. Static
+        methods will always create new vectors without mutating their inputs.
+      </p>
+      <pre>
+        <code>{`// The non-static method
+const v0 = vectorA.add(vectorB)`}</code>
+      </pre>
+      <pre>
+        <code>{`// The static method
+const v0 = Vector.add(vectorA, vectorB)
+`}</code>
+      </pre>
       <h4>
         <code>
           <i>Vector.</i>ang3(center: Vector, a: Vector, b: Vector)
@@ -485,6 +600,44 @@ const vectorC = Vector.from(vectorA)
         Create a <code>Vector</code> from <code>a</code> unless it already is
         one.
       </p>
+      <hr />
+      <h3>
+        <code>Utils</code>
+      </h3>
+      <p>
+        The <code>Utils</code> class contains useful static methods.
+      </p>
+      <h4>
+        <code>
+          <i>Utils.</i>getRayRayIntersection(p0: Vector, n0: Vector, p1: Vector,
+          n1: Vector)
+        </code>
+      </h4>
+      <p>
+        Returns the intersection of a line with unit direction vector{" "}
+        <code>n0</code>, on whch is located point vector <code>p0</code>, and a
+        second line with unit direction vector <code>n1</code>, on whch is
+        located point vector <code>p1</code>.
+      </p>
+      <h4>
+        <code>
+          <i>Utils.</i>getRayRayIntersection(p0: Vector, n0: Vector, p1: Vector,
+          n1: Vector)
+        </code>
+      </h4>
+      <p>
+        Returns the intersection of a line with unit direction vector{" "}
+        <code>n0</code>, on whch is located point vector <code>p0</code>, and a
+        second line with unit direction vector <code>n1</code>, on whch is
+        located point vector <code>p1</code>.
+      </p>
+      <h4>
+        <code>
+          <i>Utils.</i>bez1d(a: number, b: number, c: number, d: number, t:
+          number)
+        </code>
+      </h4>
+      <p>A basis function for a bezier curve.</p>
     </StyledDocs>
   )
 }
