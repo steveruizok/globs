@@ -1,3 +1,8 @@
+import * as monaco from "monaco-editor/esm/vs/editor/editor.api"
+
+export type IMonaco = typeof monaco
+export type IMonacoEditor = monaco.editor.IStandaloneCodeEditor
+
 export interface IGlobParams {
   C0: number[]
   r0: number

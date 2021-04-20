@@ -1,4 +1,5 @@
-import React from "react"
+import { createState, useStateDesigner } from "@state-designer/react"
+import React, { useState } from "react"
 import { dark } from "stitches.config"
 
 let theme: "dark" | "light" = "dark"
@@ -12,21 +13,31 @@ if (typeof window !== "undefined") {
   }
 }
 
+const state = createState({
+  data: { theme },
+  on: {
+    TOGGLED_THEME: "toggleTheme",
+  },
+  actions: {
+    toggleTheme(data) {
+      data.theme = data.theme === "dark" ? "light" : "dark"
+    },
+  },
+})
+
 export default function useTheme() {
+  const local = useStateDesigner(state)
+  const { theme } = local.data
+
   // Set dark theme by default
   React.useEffect(() => {
-    theme === "dark" && document.body.classList.add(dark)
-  }, [])
+    document.body.classList.remove(theme === "dark" ? "light" : dark)
+    document.body.classList.add(theme === "dark" ? dark : "light")
+    localStorage.setItem("globs_editor_theme", JSON.stringify({ theme }))
+  }, [theme])
 
   function toggle() {
-    theme = theme === "dark" ? "light" : "dark"
-
-    if (typeof window !== "undefined") {
-      document.body.classList.remove(theme === "dark" ? "light" : dark)
-      document.body.classList.add(theme === "dark" ? dark : "light")
-
-      localStorage.setItem("globs_editor_theme", JSON.stringify({ theme }))
-    }
+    state.send("TOGGLED_THEME")
   }
 
   return { theme, toggle }

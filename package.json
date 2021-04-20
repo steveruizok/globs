@@ -9,6 +9,7 @@
     "cypress:open": "cypress open"
   },
   "dependencies": {
+    "@monaco-editor/react": "^4.1.2",
     "@radix-ui/react-context-menu": "^0.0.10",
     "@state-designer/react": "^1.7.1",
     "@stitches/react": "^0.1.4",
@@ -36,6 +37,7 @@
     "cypress": "^7.0.1",
     "eslint": "^7.24.0",
     "eslint-plugin-react": "^7.23.2",
+    "monaco-editor": "^0.23.0",
     "typescript": "^4.2.3"
   }
 }

@@ -1,11 +1,12 @@
 import { createState } from "@state-designer/core"
 import { useStateDesigner } from "@state-designer/react"
 import { motion } from "framer-motion"
-import { useEffect, useRef } from "react"
+import React, { useEffect, useRef } from "react"
 import evalCode from "lib/code"
 import CodeDocs from "./code-docs"
 import CodeEditor from "./code-editor"
 import state from "lib/state"
+import { IMonaco, IMonacoEditor } from "types"
 
 import {
   X,
@@ -14,8 +15,35 @@ import {
   PlayCircle,
   ChevronUp,
   ChevronDown,
+  Bookmark,
+  BookOpen,
 } from "react-feather"
 import { styled } from "stitches.config"
+
+function computePosition(code: string, offset: number) {
+  let line = 1
+  let col = 1
+  let char = 0
+  while (char < offset) {
+    if (code[char] === "\n") line++, (col = 1)
+    else col++
+    char++
+  }
+  return { lineNumber: line, column: col }
+}
+
+function computeOffset(code: string, pos: any) {
+  let line = 1
+  let col = 1
+  let offset = 0
+  while (offset < code.length) {
+    if (line === pos.lineNumber && col === pos.column) return offset
+    if (code[offset] === "\n") line++, (col = 1)
+    else col++
+    offset++
+  }
+  return -1
+}
 
 let code = `// Basic nodes and globs
 
@@ -169,6 +197,8 @@ const panelState = createState({
 
 export default function LearnPanel() {
   const rContainer = useRef<HTMLDivElement>(null)
+  const rEditor = useRef<IMonacoEditor>(null)
+  const rMonaco = useRef<IMonaco>(null)
   const local = useStateDesigner(panelState)
   const isCollapsed = local.isIn("collapsed")
 
@@ -184,14 +214,12 @@ export default function LearnPanel() {
       data-bp-desktop
       ref={rContainer}
       dragMomentum={false}
-      onKeyDown={(e) => {
+      onKeyDown={(e: React.KeyboardEvent<HTMLDivElement>) => {
         if ((e.key === "s" && e.metaKey) || e.ctrlKey) {
           panelState.send("RAN_CODE")
-          e.preventDefault()
         }
-        e.stopPropagation()
       }}
-      onKeyUp={(e) => e.stopPropagation()}
+      onKeyUp={(e: React.KeyboardEvent<HTMLDivElement>) => e.stopPropagation()}
       isCollapsed={isCollapsed}
     >
       {local.isIn("collapsed") ? (
@@ -206,18 +234,20 @@ export default function LearnPanel() {
             </IconButton>
             <h3>Code</h3>
             <ButtonsGroup>
-              {/* <FontSizeButtons>
+              <FontSizeButtons>
                 <IconButton
+                  disabled={!local.can("INCREASED_FONT_SIZE")}
                   onClick={() => panelState.send("INCREASED_FONT_SIZE")}
                 >
                   <ChevronUp />
                 </IconButton>
                 <IconButton
+                  disabled={!local.can("DECREASED_FONT_SIZE")}
                   onClick={() => panelState.send("DECREASED_FONT_SIZE")}
                 >
                   <ChevronDown />
                 </IconButton>
-              </FontSizeButtons> */}
+              </FontSizeButtons>
               <IconButton onClick={() => panelState.send("TOGGLED_DOCS")}>
                 <Info size={18} />
               </IconButton>
@@ -231,9 +261,8 @@ export default function LearnPanel() {
           </Header>
           <EditorContainer>
             <CodeEditor
-              maximized
-              value={local.data.code.clean}
               fontSize={local.data.style.fontSize}
+              value={local.data.code.clean}
               onChange={(code) => panelState.send("CHANGED_CODE", { code })}
               onSave={(code) => panelState.send("SAVED_CODE", { code })}
             />
