@@ -103,7 +103,7 @@ export default class TransformSession extends BaseSession {
       this.value,
       this.current,
       this.snapshot,
-      inputs.keys.Shift
+      inputs.modifiers.optionKey
     )
     updateGlobPoints(data)
   }
@@ -132,7 +132,7 @@ export default class TransformSession extends BaseSession {
       this.value,
       this.restore,
       this.snapshot,
-      inputs.keys.Shift
+      inputs.modifiers.optionKey
     )
   }
 

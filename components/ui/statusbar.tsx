@@ -12,8 +12,7 @@ export default function StatusBar() {
 
   return (
     <StatusBarContainer>
-      <States>{active.join(" | ")} | </States>
-      <Section>{log}</Section>
+      <States>{active.join(" | ")} | </States> <Section>{log}</Section>
       <Section title="Renders | Time">
         {count} | {time.toString().padStart(3, "0")}
       </Section>
