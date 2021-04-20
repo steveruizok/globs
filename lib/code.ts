@@ -42,9 +42,9 @@ class Utils {
 
     const a = (r0 * r0 - r1 * r1 + d * d) / (2.0 * d),
       n = 1 / d,
-      p = Vector.add(v0, Vector.mulScalar(delta, a * n)),
+      p = Vector.add(v0, Vector.mul(delta, a * n)),
       h = Math.sqrt(r0 * r0 - a * a),
-      k = Vector.mulScalar(Vector.per(delta), h * n)
+      k = Vector.mul(Vector.per(delta), h * n)
 
     return side === 0 ? p.add(k) : p.sub(k)
   }
@@ -173,6 +173,11 @@ class Vector {
     this.y = y
   }
 
+  set(v: Vector | Point) {
+    this.x = v.x
+    this.y = v.y
+  }
+
   copy() {
     return new Vector(this)
   }
@@ -211,56 +216,82 @@ class Vector {
     return n
   }
 
-  mul(b: Vector) {
-    this.x *= b.x
-    this.y *= b.y
+  mul(b: number): Vector
+  mul(b: Vector): Vector
+  mul(b: Vector | number) {
+    if (b instanceof Vector) {
+      this.x *= b.x
+      this.y *= b.y
+    } else {
+      this.x *= b
+      this.y *= b
+    }
     return this
   }
 
-  static mul(a: Vector, b: Vector) {
+  mulScalar(b: number) {
+    return this.mul(b)
+  }
+
+  static mulScalar(a: Vector, b: number) {
+    return Vector.mul(a, b)
+  }
+
+  static mul(a: Vector, b: number): Vector
+  static mul(a: Vector, b: Vector): Vector
+  static mul(a: Vector, b: Vector | number) {
     const n = new Vector(a)
-    n.x *= b.x
-    n.y *= b.y
+    if (b instanceof Vector) {
+      n.x *= b.x
+      n.y *= b.y
+    } else {
+      n.x *= b
+      n.y *= b
+    }
     return n
   }
 
-  mulScalar(num: number) {
-    this.x *= num
-    this.y *= num
+  div(b: number): Vector
+  div(b: Vector): Vector
+  div(b: Vector | number) {
+    if (b instanceof Vector) {
+      if (b.x) {
+        this.x /= b.x
+      }
+      if (b.y) {
+        this.y /= b.y
+      }
+    } else {
+      if (b) {
+        this.x /= b
+        this.y /= b
+      }
+    }
     return this
   }
 
-  static mulScalar(a: Vector, num: number) {
+  static div(a: Vector, b: number): Vector
+  static div(a: Vector, b: Vector): Vector
+  static div(a: Vector, b: Vector | number) {
     const n = new Vector(a)
-    n.x *= num
-    n.y *= num
+    if (b instanceof Vector) {
+      if (b.x) n.x /= b.x
+      if (b.y) n.y /= b.y
+    } else {
+      if (b) {
+        n.x /= b
+        n.y /= b
+      }
+    }
     return n
   }
 
-  div(b: Vector) {
-    this.x /= b.x
-    this.y /= b.y
-    return this
+  divScalar(b: number) {
+    return this.div(b)
   }
 
-  static div(a: Vector, b: Vector) {
-    const n = new Vector(a)
-    n.x /= b.x
-    n.y /= b.y
-    return n
-  }
-
-  divScalar(s: number) {
-    this.x /= s
-    this.y /= s
-    return this
-  }
-
-  static divScalar(a: Vector, s: number) {
-    const n = new Vector(a)
-    n.x /= s
-    n.y /= s
-    return n
+  static divScalar(a: Vector, b: number) {
+    return Vector.div(a, b)
   }
 
   vec(b: Vector) {
@@ -338,12 +369,12 @@ class Vector {
   }
 
   med(b: Vector) {
-    return this.add(b).mulScalar(0.5)
+    return this.add(b).mul(0.5)
   }
 
   static med(a: Vector, b: Vector) {
     const n = new Vector(a)
-    return n.add(b).mulScalar(0.5)
+    return n.add(b).mul(0.5)
   }
 
   rot(r: number) {
@@ -391,45 +422,45 @@ class Vector {
   lrp(b: Vector, t: number) {
     const n = new Vector(this)
     this.vec(b)
-      .mulScalar(t)
+      .mul(t)
       .add(n)
   }
 
   static lrp(a: Vector, b: Vector, t: number) {
     const n = new Vector(a)
     n.vec(b)
-      .mulScalar(t)
+      .mul(t)
       .add(a)
     return n
   }
 
   nudge(b: Vector, d: number) {
-    const n = new Vector(this)
-    return this.vec(b)
-      .uni()
-      .mulScalar(d)
-      .add(n)
+    this.add(b.mul(d))
   }
 
   static nudge(a: Vector, b: Vector, d: number) {
     const n = new Vector(a)
-    return n
-      .vec(b)
-      .uni()
-      .mulScalar(d)
-      .add(a)
+    return n.add(b.mul(d))
+  }
+
+  nudgeToward(b: Vector, d: number) {
+    return this.nudge(Vector.vec(this, b).uni(), d)
+  }
+
+  static nudgeToward(a: Vector, b: Vector, d: number) {
+    return Vector.nudge(a, Vector.vec(a, b).uni(), d)
   }
 
   int(b: Vector, from: number, to: number, s: number) {
     const t = (Math.max(from, to) - from) / (to - from)
-    this.add(Vector.mulScalar(this, 1 - t).add(Vector.mulScalar(b, s)))
+    this.add(Vector.mul(this, 1 - t).add(Vector.mul(b, s)))
     return this
   }
 
   static int(a: Vector, b: Vector, from: number, to: number, s: number) {
     const n = new Vector(a)
     const t = (Math.max(from, to) - from) / (to - from)
-    n.add(Vector.mulScalar(a, 1 - t).add(Vector.mulScalar(b, s)))
+    n.add(Vector.mul(a, 1 - t).add(Vector.mul(b, s)))
     return n
   }
 
@@ -498,12 +529,12 @@ class Vector {
   }
 
   uni() {
-    return this.divScalar(this.len())
+    return this.div(this.len())
   }
 
   static uni(v: Vector) {
     const n = new Vector(v)
-    return n.divScalar(n.len())
+    return n.div(n.len())
   }
 
   isLeft(center: Vector, b: Vector) {
@@ -535,11 +566,11 @@ class Vector {
   }
 
   nearestPointOnLineThroughPoint(b: Vector, u: Vector) {
-    return this.clone().add(u.clone().mulScalar(Vector.sub(this, b).pry(u)))
+    return this.clone().add(u.clone().mul(Vector.sub(this, b).pry(u)))
   }
 
   static nearestPointOnLineThroughPoint(a: Vector, b: Vector, u: Vector) {
-    return a.clone().add(u.clone().mulScalar(Vector.sub(a, b).pry(u)))
+    return a.clone().add(u.clone().mul(Vector.sub(a, b).pry(u)))
   }
 
   distanceToLineThroughPoint(b: Vector, u: Vector) {
@@ -562,12 +593,9 @@ class Vector {
   ) {
     const delta = Vector.sub(p1, p0)
     const length = delta.len()
-    const u = Vector.divScalar(delta, length)
+    const u = Vector.div(delta, length)
 
-    const pt = Vector.add(
-      p0,
-      Vector.mulScalar(u, Vector.pry(Vector.sub(a, p0), u))
-    )
+    const pt = Vector.add(p0, Vector.mul(u, Vector.pry(Vector.sub(a, p0), u)))
 
     if (clamp) {
       const da = p0.dist(pt)
@@ -637,6 +665,17 @@ class Node {
     nodes.delete(this)
   }
 
+  moveBy(v: Vector | Point) {
+    const n = Vector.cast(v).clone()
+    this.point.add(n)
+  }
+
+  moveTo(v: Vector) {
+    const n = Vector.cast(v).clone()
+    const vec = Vector.vec(this.point, n)
+    this.moveBy(vec)
+  }
+
   getBounds() {
     return {
       minX: this.point.x - this.radius,
@@ -646,6 +685,10 @@ class Node {
       width: this.radius * 2,
       height: this.radius * 2,
     }
+  }
+
+  get bounds() {
+    return this.getBounds()
   }
 
   get x() {
@@ -663,12 +706,20 @@ class Node {
   set y(v: number) {
     this.point.y = v
   }
+
+  static cast(a: Node | Vector | Point) {
+    if (a instanceof Node) {
+      return a
+    }
+
+    return new Node({ x: a.x, y: a.y })
+  }
 }
 
 interface GlobOptions {
   name: string
-  start: Node | NodeOptions
-  end: Node | NodeOptions
+  start: Node | Vector | Point
+  end: Node | Vector | Point
   D: Point | Vector
   Dp: Point | Vector
   a: number
@@ -691,19 +742,11 @@ class Glob {
   bp: number
 
   constructor(options = {} as Partial<GlobOptions>) {
-    const {
-      name = "Glob",
-      start = { x: 0, y: 0, radius: 25 },
-      end = { x: 100, y: 100, radius: 25 },
-      a = 0.5,
-      b = 0.5,
-      ap = 0.5,
-      bp = 0.5,
-    } = options
+    const { name = "Glob", a = 0.5, b = 0.5, ap = 0.5, bp = 0.5 } = options
 
     this.name = name
-    this.start = start instanceof Node ? start : new Node(start)
-    this.end = end instanceof Node ? end : new Node(end)
+    this.start = Node.cast(options.start || { x: 0, y: 0 })
+    this.end = Node.cast(options.end || { x: 0, y: 0 })
     this.D =
       options.D === undefined
         ? Vector.med(this.start.point, this.end.point)
@@ -725,26 +768,82 @@ class Glob {
     globs.delete(this)
   }
 
-  pinch = () => {
-    const center = Vector.med(this.start.point, this.end.point)
+  get handleAngle() {
+    return this.getHandleAngle()
+  }
 
-    this.D = center.clone()
-    this.Dp = center.clone()
+  getHandleAngle() {
+    return Vector.ang(this.D, this.Dp)
+  }
 
-    return this
+  get handleVector() {
+    return this.getHandleVector()
+  }
+
+  getHandleVector() {
+    return Vector.vec(this.D, this.Dp).uni()
+  }
+
+  get handleDistance() {
+    return Vector.dist(this.D, this.Dp)
+  }
+
+  getHandleDistance() {
+    return this.handleDistance
+  }
+
+  get handleMidpoint() {
+    return Vector.med(this.D, this.Dp)
+  }
+
+  getHandleMidpoint() {
+    return this.handleMidpoint
   }
 
   straighten = () => {
     const n = Vector.vec(this.start.point, this.end.point)
       .uni()
       .per()
-      .mulScalar((this.start.radius + this.end.radius) / 2)
+      .mul((this.start.radius + this.end.radius) / 2)
 
     const center = Vector.med(this.start.point, this.end.point)
-
     this.D = center.clone().add(n)
     this.Dp = center.clone().sub(n)
+    return this
+  }
 
+  pinch = () => {
+    const mp = this.center
+    this.D.set(mp)
+    this.Dp.set(mp)
+    return this
+  }
+
+  pinchBy = (distance = 0) => {
+    const center = this.center
+    if (this.D.equals(center)) {
+      this.D.nudge(
+        Vector.per(this.vector).neg(),
+        Math.min(this.D.dist(center), distance)
+      )
+    } else {
+      this.D.nudgeToward(center, Math.min(this.D.dist(center), distance))
+    }
+
+    if (this.Dp.equals(center)) {
+      this.Dp.nudge(
+        Vector.per(this.vector),
+        Math.min(this.Dp.dist(center), distance)
+      )
+    } else {
+      this.Dp.nudgeToward(center, Math.min(this.Dp.dist(center), distance))
+    }
+    return this
+  }
+
+  rotateHandles = (angle: number) => {
+    this.D.rotAround(this.center, angle)
+    this.Dp.rotAround(this.center, angle)
     return this
   }
 
@@ -801,9 +900,9 @@ class Glob {
 
     // Get inner / outer normal points
     let N0 = Vector.tangent(C0, Vector.lrp(E0, E0p, 0.5)),
-      N0p = Vector.mulScalar(N0, -1),
+      N0p = Vector.mul(N0, -1),
       N1 = Vector.tangent(Vector.lrp(E1, E1p, 0.5), C1),
-      N1p = Vector.mulScalar(N1, -1)
+      N1p = Vector.mul(N1, -1)
 
     if (Utils.getSweep(C0, E0, E0p) > 0) {
       ;[N0, N0p] = [N0p, N0]
@@ -835,15 +934,22 @@ class Glob {
     }
   }
 
-  move(v: Vector) {
-    this.D.add(v)
-    this.Dp.add(v)
-    this.start.point.add(v)
-    this.end.point.add(v)
+  moveBy(v: Vector | Point) {
+    const n = Vector.cast(v).clone()
+    this.D.add(n)
+    this.Dp.add(n)
+    this.start.point.add(n)
+    this.end.point.add(n)
+  }
+
+  moveTo(v: Vector | Point) {
+    const n = Vector.cast(v).clone()
+    const vec = Vector.vec(this.center, n)
+    this.moveBy(vec)
   }
 
   get vector() {
-    return Vector.vec(this.start.point, this.end.point)
+    return Vector.vec(this.start.point, this.end.point).uni()
   }
 
   getVector() {
@@ -851,15 +957,52 @@ class Glob {
   }
 
   set center(v: Vector) {
-    const vec = Vector.vec(this.center, v)
-    this.move(vec)
+    const n = Vector.cast(v).clone()
+    this.moveTo(n)
   }
 
   get center() {
     return Vector.med(this.start.point, this.end.point)
   }
-  getCenter() {
+
+  setCenter(v: Vector | Point) {
+    this.center = Vector.cast(v)
+  }
+
+  getCenter(): Vector {
     return this.center
+  }
+
+  static from(a: Node | Vector | Point, b: Node | Vector | Point) {
+    return new Glob({ start: Node.cast(a), end: Node.cast(b) })
+  }
+
+  static chain(...a: (Node | Vector | Point)[]) {
+    const globs: Glob[] = []
+
+    if (a.length > 1) {
+      const nodes = a.map((p) => Node.cast(p))
+      for (let i = 1; i < nodes.length; i++) {
+        globs.push(new Glob({ start: nodes[i - 1], end: nodes[i] }))
+      }
+    }
+
+    return globs
+  }
+
+  static branch(a: Node | Vector | Point, ...b: (Node | Vector | Point)[]) {
+    const n = Node.cast(a)
+
+    const globs: Glob[] = []
+
+    if (b.length > 0) {
+      const nodes = b.map((p) => Node.cast(p))
+      for (let i = 0; i < nodes.length; i++) {
+        globs.push(new Glob({ start: n, end: nodes[i] }))
+      }
+    }
+
+    return globs
   }
 }
 

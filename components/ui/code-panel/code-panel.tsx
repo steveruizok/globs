@@ -7,7 +7,14 @@ import CodeDocs from "./code-docs"
 import CodeEditor from "./code-editor"
 import state from "lib/state"
 
-import { X, Code, Info, PlayCircle } from "react-feather"
+import {
+  X,
+  Code,
+  Info,
+  PlayCircle,
+  ChevronUp,
+  ChevronDown,
+} from "react-feather"
 import { styled } from "stitches.config"
 
 let code = `// Basic nodes and globs
@@ -58,8 +65,23 @@ for (let i = 0; i < 21; i++) {
 }
 `
 
+const style = {
+  fontSize: 14,
+  isOpen: false,
+}
+
 const saved = localStorage.getItem("__globs_code")
-if (saved !== null) code = saved
+if (saved !== null) {
+  try {
+    const data = JSON.parse(saved)
+    code = data.code
+    Object.assign(style, data.style)
+  } catch (e) {
+    if (typeof saved === "string") {
+      code = saved
+    }
+  }
+}
 
 const panelState = createState({
   data: {
@@ -67,34 +89,39 @@ const panelState = createState({
       clean: code,
       dirty: code,
     },
+    style,
   },
   on: {
-    UNMOUNTED: "saveCode",
-    CHANGED_CODE: { secretlyDo: "setCode" },
+    UNMOUNTED: "saveData",
+    CHANGED_CODE: { secretlyDo: ["setCode", "saveData"] },
   },
-  initial: "collapsed",
+  initial: style.isOpen ? "expanded" : "collapsed",
   states: {
     collapsed: {
+      onEnter: { secretlyDo: ["setIsCollapsed", "saveData"] },
       on: {
         TOGGLED_COLLAPSED: { to: "expanded" },
       },
     },
     expanded: {
+      onEnter: { secretlyDo: ["setIsExpanded", "saveData"] },
       on: {
         TOGGLED_COLLAPSED: { to: "collapsed" },
       },
-      initial: "code",
+      initial: "editingCode",
       states: {
-        code: {
+        editingCode: {
           on: {
-            SAVED_CODE: ["setCode", "saveDirtyToClean", "evalCode"],
+            SAVED_CODE: ["setCode", "saveData", "saveDirtyToClean", "evalCode"],
             RAN_CODE: ["saveDirtyToClean", "evalCode"],
-            TOGGLED_DOCS: { to: "docs" },
+            TOGGLED_DOCS: { to: "viewingDocs" },
+            INCREASED_FONT_SIZE: ["increaseFontSize", "saveData"],
+            DECREASED_FONT_SIZE: ["decreaseFontSize", "saveData"],
           },
         },
-        docs: {
+        viewingDocs: {
           on: {
-            TOGGLED_DOCS: { to: "code" },
+            TOGGLED_DOCS: { to: "editingCode" },
           },
         },
       },
@@ -102,12 +129,23 @@ const panelState = createState({
   },
   conditions: {},
   actions: {
+    setIsExpanded(data) {
+      data.style.isOpen = true
+    },
+    setIsCollapsed(data) {
+      data.style.isOpen = false
+    },
     setCode(data, payload: { code: string }) {
       data.code.dirty = payload.code
-      localStorage.setItem("__globs_code", data.code.dirty)
     },
-    saveCode(data) {
-      localStorage.setItem("__globs_code", data.code.dirty)
+    saveData(data) {
+      localStorage.setItem(
+        "__globs_code",
+        JSON.stringify({
+          code: data.code.dirty,
+          style: data.style,
+        })
+      )
     },
     saveDirtyToClean(data) {
       data.code.clean = data.code.dirty
@@ -119,6 +157,12 @@ const panelState = createState({
       } catch (e) {
         console.error(e)
       }
+    },
+    increaseFontSize(data) {
+      data.style.fontSize++
+    },
+    decreaseFontSize(data) {
+      data.style.fontSize--
     },
   },
 })
@@ -161,6 +205,18 @@ export default function LearnPanel() {
             </IconButton>
             <h3>Code</h3>
             <ButtonsGroup>
+              {/* <FontSizeButtons>
+                <IconButton
+                  onClick={() => panelState.send("INCREASED_FONT_SIZE")}
+                >
+                  <ChevronUp />
+                </IconButton>
+                <IconButton
+                  onClick={() => panelState.send("DECREASED_FONT_SIZE")}
+                >
+                  <ChevronDown />
+                </IconButton>
+              </FontSizeButtons> */}
               <IconButton onClick={() => panelState.send("TOGGLED_DOCS")}>
                 <Info size={18} />
               </IconButton>
@@ -176,10 +232,11 @@ export default function LearnPanel() {
             <CodeEditor
               maximized
               value={local.data.code.clean}
+              fontSize={local.data.style.fontSize}
               onChange={(code) => panelState.send("CHANGED_CODE", { code })}
               onSave={(code) => panelState.send("SAVED_CODE", { code })}
             />
-            <CodeDocs isHidden={!local.isIn("docs")} />
+            <CodeDocs isHidden={!local.isIn("viewingDocs")} />
           </EditorContainer>
         </Content>
       )}
@@ -289,4 +346,29 @@ const EditorContainer = styled("div", {
   position: "relative",
   pointerEvents: "all",
   overflowY: "scroll",
+})
+
+const ErrorContainer = styled("div", {
+  overflowX: "scroll",
+})
+
+const FontSizeButtons = styled("div", {
+  paddingRight: 4,
+
+  "& > button": {
+    height: "50%",
+    width: "100%",
+
+    "&:nth-of-type(1)": {
+      paddingTop: 4,
+    },
+
+    "&:nth-of-type(2)": {
+      paddingBottom: 4,
+    },
+
+    "& svg": {
+      height: 12,
+    },
+  },
 })

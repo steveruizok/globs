@@ -19,6 +19,7 @@ export default function CopenhagenEditor({
   tabout = false,
   nolines = false,
   readOnly = false,
+  fontSize = 14,
   error,
   onMount,
   onUnmount,
@@ -46,6 +47,7 @@ export default function CopenhagenEditor({
   value?: string
   error?: { lineIndex: number; column: number }
   readOnly?: boolean
+  fontSize?: number
   onMount?: (value: string, editor: ICopenhagenEditor) => void
   onUnmount?: (editor: ICopenhagenEditor) => void
   onChange?: (value: string, editor: ICopenhagenEditor) => void
@@ -227,7 +229,8 @@ export default function CopenhagenEditor({
     },
     [error]
   )
-  return <Container ref={rEditor} data-language="html" data-maxrows="20" />
+
+  return <Container ref={rEditor} />
 }
 
 const Container = styled("div", {

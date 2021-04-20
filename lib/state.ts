@@ -72,6 +72,10 @@ const state = createState({
           states: {
             notPointing: {
               onEnter: { do: "clearPointingId" },
+              repeat: {
+                onRepeat: "saveData",
+                delay: 5,
+              },
               on: {
                 UNDO: "undo",
                 REDO: "redo",
