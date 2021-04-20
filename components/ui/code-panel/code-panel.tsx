@@ -181,6 +181,7 @@ export default function LearnPanel() {
 
   return (
     <PanelContainer
+      data-bp-desktop
       ref={rContainer}
       dragMomentum={false}
       onKeyDown={(e) => {

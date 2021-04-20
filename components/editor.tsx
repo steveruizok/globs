@@ -330,7 +330,7 @@ const Layout = styled("div", {
   "@media (max-width: 768px)": {
     gridTemplateColumns: "0px 1fr auto",
 
-    '& > *[data-bp-desktop="true"]': {
+    '& *[data-bp-desktop="true"]': {
       display: "none",
     },
   },

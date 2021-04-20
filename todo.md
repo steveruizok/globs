@@ -17,14 +17,15 @@
 - [x] Display midline
 - [x] Split globs
 - [x] Snap to midline
-- [ ] Copy to clipboard
+- [x] Copy to clipboard
 - [ ] Select two nodes and glob them
 - [x] Keyboard shortcuts for toolbar
-- [ ] Copy and paste
+- [x] Copy and paste
+- [ ] Cut
 - [x] Bounding box
 - [x] Bounds dragging
 - [ ] Locked globs
-- [ ] Drag-clone selection
+- [x] Drag-clone selection
 - [ ] Drag-glob nodes
 - [x] Locked-axis dragging
 - [x] More node snap points
@@ -33,4 +34,4 @@
 - [ ] Bounds snapping
 - [ ] Multitouch dragging, zooming
 - [x] Undo / Redo
-- [ ] Translate Session
+- [x] Translate Session
