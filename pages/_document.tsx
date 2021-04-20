@@ -34,9 +34,6 @@ class MyDocument extends Document {
           `,
             }}
           />
-          {/* Copenhagen https://copenhagen.autocode.com/docs.html */}
-          <link rel="stylesheet" href="./copenhagen.0-1-4.min.css" />
-          <script src="./copenhagen.0-1-4.min.js"></script>
         </Head>
         <body className={dark}>
           <Main />
