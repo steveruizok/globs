@@ -46,10 +46,27 @@ export default function CodeEditor({
     rMonaco.current = monaco
 
     monaco.languages.typescript.javascriptDefaults.setCompilerOptions({
+      allowJs: true,
+      checkJs: false,
+      strict: false,
       noLib: true,
       lib: ["es6"],
       target: monaco.languages.typescript.ScriptTarget.ES2015,
       allowNonTsExtensions: true,
+    })
+
+    monaco.languages.typescript.typescriptDefaults.setEagerModelSync(true)
+
+    monaco.languages.typescript.javascriptDefaults.setEagerModelSync(true)
+
+    monaco.languages.typescript.javascriptDefaults.setDiagnosticsOptions({
+      noSemanticValidation: true,
+      noSyntaxValidation: true,
+    })
+
+    monaco.languages.typescript.typescriptDefaults.setDiagnosticsOptions({
+      noSemanticValidation: true,
+      noSyntaxValidation: true,
     })
 
     monaco.languages.typescript.javascriptDefaults.addExtraLib(codeAsString)
@@ -60,6 +77,7 @@ export default function CodeEditor({
           parser: "typescript",
           plugins: [parserTypeScript],
           singleQuote: true,
+          trailingComma: "es5",
           semi: false,
         })
 
@@ -83,6 +101,9 @@ export default function CodeEditor({
       fontSize,
       wordBasedSuggestions: false,
       minimap: { enabled: false },
+      lightbulb: {
+        enabled: false,
+      },
     })
   }, [])
 

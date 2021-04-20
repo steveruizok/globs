@@ -2,6 +2,7 @@
 // TODO: Automate this, add JSDoc annotations.
 
 export default `
+
 interface Point {
   x: number
   y: number
