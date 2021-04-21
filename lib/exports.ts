@@ -70,6 +70,9 @@ class Exports {
       ...nodeIdsToCopy.map((id) => getNodeBounds(nodes[id], data.camera.zoom))
     )
 
+    // No content
+    if (!bounds) return
+
     const padding = 16
 
     // Resize the element to the bounding box
