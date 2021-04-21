@@ -215,32 +215,36 @@ export function copyToClipboard(string: string) {
   let result: boolean
 
   try {
-    textarea = document.createElement("textarea")
-    textarea.setAttribute("position", "fixed")
-    textarea.setAttribute("top", "0")
-    textarea.setAttribute("readonly", "true")
-    textarea.setAttribute("contenteditable", "true")
-    textarea.style.position = "fixed" // prevent scroll from jumping to the bottom when focus is set.
-    textarea.value = string
+    navigator.clipboard.writeText(string)
+  } catch (e) {
+    try {
+      textarea = document.createElement("textarea")
+      textarea.setAttribute("position", "fixed")
+      textarea.setAttribute("top", "0")
+      textarea.setAttribute("readonly", "true")
+      textarea.setAttribute("contenteditable", "true")
+      textarea.style.position = "fixed" // prevent scroll from jumping to the bottom when focus is set.
+      textarea.value = string
 
-    document.body.appendChild(textarea)
+      document.body.appendChild(textarea)
 
-    textarea.focus()
-    textarea.select()
+      textarea.focus()
+      textarea.select()
 
-    const range = document.createRange()
-    range.selectNodeContents(textarea)
+      const range = document.createRange()
+      range.selectNodeContents(textarea)
 
-    const sel = window.getSelection()
-    sel.removeAllRanges()
-    sel.addRange(range)
+      const sel = window.getSelection()
+      sel.removeAllRanges()
+      sel.addRange(range)
 
-    textarea.setSelectionRange(0, textarea.value.length)
-    result = document.execCommand("copy")
-  } catch (err) {
-    result = null
-  } finally {
-    document.body.removeChild(textarea)
+      textarea.setSelectionRange(0, textarea.value.length)
+      result = document.execCommand("copy")
+    } catch (err) {
+      result = null
+    } finally {
+      document.body.removeChild(textarea)
+    }
   }
 
   return !!result
@@ -865,7 +869,7 @@ export function throttle<P extends any[], T extends (...args: P) => any>(
 ) {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let inThrottle: boolean, lastFn: any, lastTime: number
-  return function (...args: P) {
+  return function(...args: P) {
     if (preventDefault) args[0].preventDefault()
     // eslint-disable-next-line @typescript-eslint/no-this-alias
     const context = this
@@ -875,7 +879,7 @@ export function throttle<P extends any[], T extends (...args: P) => any>(
       inThrottle = true
     } else {
       clearTimeout(lastFn)
-      lastFn = setTimeout(function () {
+      lastFn = setTimeout(function() {
         if (Date.now() - lastTime >= wait) {
           fn.apply(context, args)
           lastTime = Date.now()

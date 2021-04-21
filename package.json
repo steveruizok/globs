@@ -11,6 +11,8 @@
   "dependencies": {
     "@monaco-editor/react": "^4.1.2",
     "@radix-ui/react-context-menu": "^0.0.10",
+    "@radix-ui/react-dialog": "^0.0.15",
+    "@radix-ui/react-dropdown-menu": "^0.0.17",
     "@state-designer/react": "^1.7.1",
     "@stitches/react": "^0.1.4",
     "@supabase/supabase-js": "^1.11.6",

@@ -1,20 +1,21 @@
 import { createClient } from "@supabase/supabase-js"
+import { IData, IProject } from "./types"
 
-const supabaseUrl = process.env.SUPABASE_URL
-const supabaseKey = process.env.SUPABASE_KEY
-
-const supabase = createClient(supabaseUrl, supabaseKey)
+const supabase = createClient(
+  process.env.SUPABASE_URL,
+  process.env.SUPABASE_KEY
+)
 
 /**
  * Get a shared project from the database.
- * @param id
+ * @param url
  * @returns
  */
-export async function fetchSharedProject(id: string) {
+export async function fetchSharedProject(url: string) {
   const { data, error } = await supabase
     .from("shared-projects")
     .select("*")
-    .eq("id", id)
+    .eq("uuid", url)
 
   if (error) throw error
 
@@ -24,13 +25,13 @@ export async function fetchSharedProject(id: string) {
 /**
  * Create a new shared project. Visits to the project URL will display the project.
  * @param name
- * @param json
+ * @param document
  * @returns
  */
-export async function createSharedProject(name: string, json: string) {
+export async function createSharedProject(name: string, document: string) {
   const { data, error } = await supabase
     .from("shared-projects")
-    .insert([{ document: json, name }])
+    .insert([{ document, name }])
 
   if (error) throw error
 
@@ -44,15 +45,26 @@ export async function createSharedProject(name: string, json: string) {
  * @param json
  * @returns
  */
-export async function updateSharedProject(
-  id: string,
-  name: string,
-  json: string
-) {
+export async function updateSharedProject(d: IData) {
+  const { id, name, nodes, globs, groups, pages, code, version } = d
+
+  const project: IProject = {
+    id,
+    name,
+    nodes,
+    globs,
+    groups,
+    pages,
+    code,
+    version,
+  }
+
+  const document = JSON.stringify(project)
+
   const { data, error } = await supabase
     .from("shared-projects")
-    .update([{ document: json, name }])
-    .eq("id", id)
+    .update([{ document, name }])
+    .eq("id", d.id)
 
   if (error) throw error
 
@@ -61,14 +73,14 @@ export async function updateSharedProject(
 
 /**
  * Delete (unshare) a shared project. Visits to the project URL will no longer return the project.
- * @param id
+ * @param url
  * @returns
  */
-export async function deleteSharedProject(id: string) {
+export async function deleteSharedProject(url: string) {
   const { data, error } = await supabase
     .from("shared-projects")
     .delete()
-    .eq("id", id)
+    .eq("uuid", url)
 
   if (error) throw error
 

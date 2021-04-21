@@ -3,6 +3,7 @@ import { getGlobPoints } from "./utils"
 
 export const initialData: IData = {
   // Document
+  version: 1,
   id: Date.now().toString(),
   name: "My Project",
   code: {

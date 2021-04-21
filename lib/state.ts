@@ -54,6 +54,7 @@ const state = createState({
         PRESSED_SPACE: "toggleFill",
         RELEASED_SPACE: "toggleFill",
         TOGGLED_FILL: "toggleFill",
+        OPENED_SHARE_LINK_MODAL: { to: "shareLinkModal" },
         WHEELED: {
           ifAny: ["hasShift", "isTrackpadZoom"],
           do: ["zoomCamera", "updateMvPointer"],
@@ -577,6 +578,13 @@ const state = createState({
         },
       },
     },
+    shareLinkModal: {
+      on: {
+        CREATED_SHARE_LINK: { do: "setShareLink" },
+        DELETED_SHARE_LINK: { do: "deleteShareLink" },
+        CLOSED_MODAL: { to: "ready" },
+      },
+    },
   },
   conditions: {
     distanceImpliesDrag() {
@@ -1058,6 +1066,14 @@ const state = createState({
       rotateSession = undefined
     },
 
+    // SHARE LINKS
+    setShareLink(data, payload: { url }) {
+      data.shareUrl = payload.url
+    },
+    deleteShareLink(data) {
+      data.shareUrl = undefined
+    },
+
     // DATA
     saveData(data) {
       if (typeof window === "undefined") return
@@ -1231,7 +1247,7 @@ function handleKeyDown(e: KeyboardEvent) {
     e.metaKey
   )
 
-  if (eventName) {
+  if (eventName && state.can(eventName)) {
     state.send(eventName)
     e.preventDefault()
   }
@@ -1248,7 +1264,7 @@ function handleKeyUp(e: KeyboardEvent) {
     e.metaKey
   )
 
-  if (eventName) {
+  if (eventName && state.can(eventName)) {
     state.send(eventName)
     e.preventDefault()
   }

@@ -104,12 +104,15 @@ function migrateToV2(data: Partial<IData>) {
 }
 
 export default function migrate(data: IData) {
-  if ("options" in data.globs[data.globIds[0]]) {
-    migrateToV1(data)
+  if (!("version" in data) || data.version < 1) {
+    if (data.globIds.length > 0 && "options" in data.globs[data.globIds[0]]) {
+      migrateToV1(data)
+    }
+
+    if (!("pageId" in data)) {
+      migrateToV2(data)
+    }
   }
 
-  if (!("pageId" in data)) {
-    migrateToV2(data)
-  }
   return data
 }

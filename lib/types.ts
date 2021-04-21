@@ -10,6 +10,8 @@ export interface IProject {
   nodes: Record<string, INode>
   groups: Record<string, IGroup>
   pages: Record<string, IPage>
+  version: number
+  shareUrl?: string
 }
 
 export interface IData extends IProject {
