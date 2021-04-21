@@ -42,7 +42,7 @@ const state = createState({
     ready: {
       on: {
         UNMOUNTED: { do: "teardown", to: "loading" },
-        EXPORTED: { do: "copySvgToClipboard" },
+        EXPORTED: "copySvgToClipboard",
         RESIZED: "setViewport",
         PRESSED_SPACE: "toggleFill",
         RELEASED_SPACE: "toggleFill",
