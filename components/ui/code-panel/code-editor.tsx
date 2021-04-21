@@ -8,13 +8,6 @@ import React, { useCallback, useEffect, useRef } from "react"
 import { styled } from "stitches.config"
 import { IMonaco, IMonacoEditor } from "types"
 
-class DummyCompletionProvider
-  implements monaco.languages.CompletionItemProvider {
-  public provideCompletionItems() {
-    return null
-  }
-}
-
 interface Props {
   value: string
   fontSize: number

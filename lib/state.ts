@@ -14,7 +14,14 @@ import TranslateSession from "lib/sessions/TranslateSession"
 import TransformSession from "lib/sessions/TransformSession"
 import RotateSession from "lib/sessions/RotateSession"
 import MoveSession from "./sessions/MoveSession"
-import { IGlob, IHandle, IAnchor, ITranslation, INode } from "lib/types"
+import {
+  IGlob,
+  IHandle,
+  IAnchor,
+  ITranslation,
+  INode,
+  ICanvasItems,
+} from "lib/types"
 import { getSelectedBoundingBox, screenToWorld, throttle } from "utils"
 import { roundBounds } from "./bounds-utils"
 import migrate from "./migrations"
@@ -168,7 +175,7 @@ const state = createState({
                   },
                   {
                     if: "isLeftClick",
-                    to: "pointingBounds",
+                    to: "draggingSelection",
                   },
                 ],
                 POINTED_BOUNDS_EDGE: {
@@ -229,7 +236,7 @@ const state = createState({
                 },
               },
             },
-            pointingBounds: {
+            draggingSelection: {
               onExit: ["clearSnaps"],
               onEnter: "beginMove",
               on: {
@@ -285,7 +292,7 @@ const state = createState({
                   on: {
                     MOVED_POINTER: {
                       if: "distanceImpliesDrag",
-                      to: "pointingBounds",
+                      to: "draggingSelection",
                     },
                     STOPPED_POINTING: { to: "notPointing" },
                   },
@@ -294,7 +301,7 @@ const state = createState({
                   on: {
                     MOVED_POINTER: {
                       if: "distanceImpliesDrag",
-                      to: "pointingBounds",
+                      to: "draggingSelection",
                     },
                     STOPPED_POINTING: [
                       {
@@ -314,7 +321,7 @@ const state = createState({
                 maybeSelecting: {
                   onEnter: [
                     {
-                      if: ["hasBoundsSelection", "pointingIsSelectedNode"],
+                      if: "pointingIsSelectedNode",
                       to: "pointingNodeInBounds",
                     },
                     {
@@ -335,21 +342,19 @@ const state = createState({
                     },
                   ],
                 },
+
+                // Possibly combine with pointingNodeInBounds
                 pointingSelectedNode: {
                   on: {
+                    STOPPED_POINTING: { to: "notPointing" },
+                    PRESSED_META: { to: "changingRadius" },
                     MOVED_POINTER: {
                       if: "distanceImpliesDrag",
-                      to: "pointingBounds",
+                      to: "draggingSelection",
                     },
-                    PRESSED_META: [
-                      {
-                        if: "hasOneSelectedNode",
-                        to: "changingRadius",
-                      },
-                    ],
-                    STOPPED_POINTING: { to: "notPointing" },
                   },
                 },
+
                 pointingNodeInBounds: {
                   onEnter: {
                     if: "hasMeta",
@@ -358,7 +363,7 @@ const state = createState({
                   on: {
                     MOVED_POINTER: {
                       if: "distanceImpliesDrag",
-                      to: "pointingBounds",
+                      to: "draggingSelection",
                     },
                     PRESSED_META: {
                       if: "hasOneSelectedNode",
@@ -405,7 +410,7 @@ const state = createState({
                     RELEASED_OPTION: "updateRadiusMove",
                     RELEASED_META: {
                       do: "completeRadiusMove",
-                      to: "pointingBounds",
+                      to: "draggingSelection",
                     },
                     MOVED_POINTER: "updateRadiusMove",
                     STOPPED_POINTING: {
@@ -1102,8 +1107,30 @@ const state = createState({
       }
     },
     hardReset(data) {
+      // Document
+      data.id = Date.now().toString()
+      data.name = "My Project"
+      data.pages = {
+        0: {
+          id: "0",
+          name: "Page 1",
+          type: ICanvasItems.Page,
+          locked: false,
+          childIndex: 0,
+        },
+      }
+      data.code = {
+        0: {
+          id: "0",
+          childIndex: 0,
+          name: "My Code",
+          code: "",
+        },
+      }
+      data.groups = {}
       data.nodes = {}
       data.globs = {}
+      // State
       data.nodeIds = []
       data.globIds = []
       data.selectedGlobs = []

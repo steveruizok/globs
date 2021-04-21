@@ -13,6 +13,7 @@
     "@radix-ui/react-context-menu": "^0.0.10",
     "@state-designer/react": "^1.7.1",
     "@stitches/react": "^0.1.4",
+    "@supabase/supabase-js": "^1.11.6",
     "@types/gtag.js": "^0.0.4",
     "@types/uuid": "^8.3.0",
     "classnames": "^2.2.6",

@@ -630,7 +630,7 @@ type NodeOptions = {
 class Node {
   readonly id = uuid()
   name: string
-  zIndex = 1
+  childIndex = 1
   point: Vector
   radius: number
   locked = false
@@ -729,7 +729,7 @@ interface GlobOptions {
 
 class Glob {
   readonly id = uuid()
-  zIndex = 1
+  childIndex = 1
   name: string
   start: Node
   end: Node

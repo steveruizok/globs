@@ -1,4 +1,121 @@
 import * as monaco from "monaco-editor/esm/vs/editor/editor.api"
+/**
+ * The JSON schema for a shared project.
+ */
+export interface IProject {
+  id: string
+  name: string
+  code: Record<string, ICode>
+  globs: Record<string, IGlob>
+  nodes: Record<string, INode>
+  groups: Record<string, IGroup>
+  pages: Record<string, IPage>
+}
+
+export interface IData extends IProject {
+  // State
+  theme: "dark" | "light"
+  viewport: {
+    point: number[]
+    size: number[]
+    scroll: number[]
+  }
+  document: {
+    point: number[]
+    size: number[]
+  }
+  camera: {
+    zoom: number
+    point: number[]
+  }
+  brush?: IBounds
+  bounds?: IBounds
+  fill: boolean
+  pageId: string
+  nodeIds: string[]
+  globIds: string[]
+  selectedGlobs: string[]
+  pointingId: string
+  hoveredNodes: string[]
+  hoveredGlobs: string[]
+  highlightNodes: string[]
+  highlightGlobs: string[]
+  selectedNodes: string[]
+  selectedHandle?: { id: string; handle: IHandle }
+  snaps: {
+    active: ISnap[]
+  }
+  generated: {
+    nodeIds: string[]
+    globIds: string[]
+  }
+  codePanel: {
+    fontSize: number
+  }
+}
+
+export interface ICode {
+  id: string
+  name: string
+  code: string
+  childIndex: 0
+}
+
+export enum ICanvasItems {
+  Page,
+  Node,
+  Glob,
+  Group,
+  Point,
+  Line,
+}
+
+export interface ICanvasItem {
+  id: string
+  name: string
+  type: ICanvasItems
+  childIndex: number
+  locked: boolean
+}
+
+export interface IPage extends ICanvasItem {
+  type: ICanvasItems.Page
+}
+
+export interface IGroup extends ICanvasItem {
+  type: ICanvasItems.Group
+  parentId: string
+}
+
+export interface IGlob extends ICanvasItem {
+  type: ICanvasItems.Glob
+  parentId: string
+  nodes: string[]
+  points?: IGlobPoints
+  p0?: number[]
+  D: number[]
+  Dp: number[]
+  a: number
+  ap: number
+  b: number
+  bp: number
+}
+
+export interface INode extends ICanvasItem {
+  type: ICanvasItems.Node
+  parentId: string
+  point: number[]
+  radius: number
+  cap: "round" | "flat"
+  locked: boolean
+}
+
+export interface IPoint extends ICanvasItem {
+  type: ICanvasItems.Point
+  parentId: string
+  point: number[]
+  locked: boolean
+}
 
 export type IMonaco = typeof monaco
 export type IMonacoEditor = monaco.editor.IStandaloneCodeEditor
@@ -39,41 +156,6 @@ export interface IGlobPoints {
   Dp1: number[]
   D2: number[]
   Dp2: number[]
-}
-
-export enum ICanvasItems {
-  Node,
-  Handle,
-  Anchor,
-  Radius,
-  Glob,
-}
-
-export interface ICanvasItem {
-  id: string
-  name: string
-  zIndex: number
-}
-
-export interface IGlob extends ICanvasItem {
-  id: string
-  nodes: string[]
-  points?: IGlobPoints
-  p0?: number[]
-  D: number[]
-  Dp: number[]
-  a: number
-  ap: number
-  b: number
-  bp: number
-}
-
-export interface INode extends ICanvasItem {
-  type: ICanvasItems.Node
-  point: number[]
-  radius: number
-  cap: "round" | "flat"
-  locked: boolean
 }
 
 export enum ISnapTypes {
@@ -117,44 +199,6 @@ export type ISnap =
   | NodeYSnap
   | HandleSnap
   | HandleStraightSnap
-
-export interface IData {
-  viewport: {
-    point: number[]
-    size: number[]
-    scroll: number[]
-  }
-  document: {
-    point: number[]
-    size: number[]
-  }
-  camera: {
-    zoom: number
-    point: number[]
-  }
-  brush?: IBounds
-  bounds?: IBounds
-  snaps: {
-    active: ISnap[]
-  }
-  fill: boolean
-  nodeIds: string[]
-  globIds: string[]
-  nodes: Record<string, INode>
-  globs: Record<string, IGlob>
-  selectedGlobs: string[]
-  pointingId: string
-  hoveredNodes: string[]
-  hoveredGlobs: string[]
-  highlightNodes: string[]
-  highlightGlobs: string[]
-  selectedNodes: string[]
-  selectedHandle?: { id: string; handle: IHandle }
-  generated: {
-    nodeIds: string[]
-    globIds: string[]
-  }
-}
 
 export type IAnchor = "a" | "ap" | "b" | "bp"
 export type IHandle = "D" | "Dp"

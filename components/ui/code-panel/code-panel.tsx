@@ -15,88 +15,16 @@ import {
   PlayCircle,
   ChevronUp,
   ChevronDown,
-  Bookmark,
-  BookOpen,
 } from "react-feather"
 import { styled } from "stitches.config"
-
-function computePosition(code: string, offset: number) {
-  let line = 1
-  let col = 1
-  let char = 0
-  while (char < offset) {
-    if (code[char] === "\n") line++, (col = 1)
-    else col++
-    char++
-  }
-  return { lineNumber: line, column: col }
-}
-
-function computeOffset(code: string, pos: any) {
-  let line = 1
-  let col = 1
-  let offset = 0
-  while (offset < code.length) {
-    if (line === pos.lineNumber && col === pos.column) return offset
-    if (code[offset] === "\n") line++, (col = 1)
-    else col++
-    offset++
-  }
-  return -1
-}
-
-let code = `// Basic nodes and globs
-
-const nodeA = new Node({
-  x: -100,
-  y: 0,
-});
-
-const nodeB = new Node({
-  x: 100,
-  y: 0,
-});
-
-const glob = new Glob({
-  start: nodeA,
-  end: nodeB,
-  D: { x: 0, y: 60 },
-  Dp: { x: 0, y: 90 },
-});
-
-// Something more interesting...
-
-const PI2 = Math.PI * 2,
-  center = { x: 0, y: 0 },
-  radius = 400;
-
-let prev;
-
-for (let i = 0; i < 21; i++) {
-  const t = i * (PI2 / 20);
-
-  const node = new Node({
-    x: center.x + radius * Math.sin(t),
-    y: center.y + radius * Math.cos(t),
-  });
-
-  if (prev !== undefined) {
-    new Glob({
-      start: prev,
-      end: node,
-      D: center,
-      Dp: center,
-    });
-  }
-
-  prev = node;
-}
-`
+import exampleCode from "./example-code"
 
 const style = {
   fontSize: 14,
   isOpen: false,
 }
+
+let code = exampleCode
 
 const saved = localStorage.getItem("__globs_code")
 if (saved !== null) {

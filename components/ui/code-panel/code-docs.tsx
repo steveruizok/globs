@@ -10,7 +10,7 @@ export default function CodeDocs({ isHidden }: { isHidden: boolean }) {
         <a
           href="https://developer.mozilla.org/en-US/docs/Learn/Getting_started_with_the_web/JavaScript_basics"
           target="_blank"
-          rel="nofollow"
+          rel="nofollow noreferrer"
         >
           JavaScript
         </a>{" "}
@@ -34,9 +34,9 @@ export default function CodeDocs({ isHidden }: { isHidden: boolean }) {
       <hr />
       <h3 id="docs_introduction">Using the Code Panel</h3>
       <p>
-        In the panel's code editor <b>Code Panel</b>, create instances of the
-        classes above. When your code is run, the editor will create nodes and
-        globs for each of the Node and Glob instances.
+        In the panel&apos;s code editor <b>Code Panel</b>, create instances of
+        the classes above. When your code is run, the editor will create nodes
+        and globs for each of the Node and Glob instances.
       </p>
       <ul>
         <li>Write your code using the API described below.</li>
@@ -248,14 +248,14 @@ const node = new Node({
           <i>glob.</i>center
         </code>
       </h4>
-      <p>The point between the glob's nodes.</p>
+      <p>The point between the glob&apos;s nodes.</p>
       <h4>
         <code>
           <i>glob.</i>vector
         </code>
       </h4>
       <p>
-        <i>Read only.</i> The unit vector between the glob's nodes.
+        <i>Read only.</i> The unit vector between the glob&apos;s nodes.
       </p>
       <h4>
         <code>
@@ -263,7 +263,7 @@ const node = new Node({
         </code>
       </h4>
       <p>
-        <i>Read only.</i> The angle between the glob's <code>D</code> and{" "}
+        <i>Read only.</i> The angle between the glob&apos;s <code>D</code> and{" "}
         <code>Dp</code> handles.
       </p>
       <h4>
@@ -272,8 +272,8 @@ const node = new Node({
         </code>
       </h4>
       <p>
-        <i>Read only.</i> The distance between the glob's <code>D</code> and{" "}
-        <code>Dp</code> handles.
+        <i>Read only.</i> The distance between the glob&apos;s <code>D</code>{" "}
+        and <code>Dp</code> handles.
       </p>
       <h4>
         <code>
@@ -281,7 +281,7 @@ const node = new Node({
         </code>
       </h4>
       <p>
-        <i>Read only.</i> The unit vector of the glob's <code>D</code> and{" "}
+        <i>Read only.</i> The unit vector of the glob&apos;s <code>D</code> and{" "}
         <code>Dp</code> handles.
       </p>
       <h4>
@@ -290,7 +290,7 @@ const node = new Node({
         </code>
       </h4>
       <p>
-        <i>Read only.</i> The point between the glob's <code>D</code> and{" "}
+        <i>Read only.</i> The point between the glob&apos;s <code>D</code> and{" "}
         <code>Dp</code> handles.
       </p>
       <h3>Methods</h3>
@@ -299,35 +299,35 @@ const node = new Node({
           <i>glob.</i>getCenter()
         </code>
       </h4>
-      <p>Returns the point between the glob's nodes.</p>
+      <p>Returns the point between the glob&apos;s nodes.</p>
       <h4>
         <code>
           <i>glob.</i>getVector()
         </code>
       </h4>
-      <p>Returns the vector between the glob's nodes.</p>
+      <p>Returns the vector between the glob&apos;s nodes.</p>
       <h4>
         <code>
           <i>glob.</i>straighten()
         </code>
       </h4>
       <p>
-        Places the glob's handles so that both of the glob's curves form
-        straight lines between the start and end nodes.
+        Places the glob&apos;s handles so that both of the glob&apos;s curves
+        form straight lines between the start and end nodes.
       </p>
       <h4>
         <code>
           <i>glob.</i>pinch()
         </code>
       </h4>
-      <p>Moves the glob's handles to its center point.</p>
+      <p>Moves the glob&apos;s handles to its center point.</p>
       <h4>
         <code>
           <i>glob.</i>pinchBy(distance: number)
         </code>
       </h4>
       <p>
-        Moves the glob's handles toward the center point by the provided
+        Moves the glob&apos;s handles toward the center point by the provided
         distance. A negative distance will move the handles away from the center
         point.
       </p>
@@ -337,8 +337,8 @@ const node = new Node({
         </code>
       </h4>
       <p>
-        Rotates the glob's handles around its center point by the provided angle
-        in radians.
+        Rotates the glob&apos;s handles around its center point by the provided
+        angle in radians.
       </p>
       <h4>
         <code>
@@ -358,8 +358,8 @@ const node = new Node({
         </code>
       </h4>
       <p>
-        Returns the angle between the glob's <code>D</code> and <code>Dp</code>{" "}
-        handles.
+        Returns the angle between the glob&apos;s <code>D</code> and{" "}
+        <code>Dp</code> handles.
       </p>
       <h4>
         <code>
@@ -367,7 +367,7 @@ const node = new Node({
         </code>
       </h4>
       <p>
-        Returns the distance between the glob's <code>D</code> and{" "}
+        Returns the distance between the glob&apos;s <code>D</code> and{" "}
         <code>Dp</code> handles.
       </p>
       <h4>
@@ -376,8 +376,8 @@ const node = new Node({
         </code>
       </h4>
       <p>
-        Returns the unit vector of the glob's <code>D</code> and <code>Dp</code>{" "}
-        handles.
+        Returns the unit vector of the glob&apos;s <code>D</code> and{" "}
+        <code>Dp</code> handles.
       </p>
       <h4>
         <code>
@@ -385,8 +385,8 @@ const node = new Node({
         </code>
       </h4>
       <p>
-        Returns the point between the glob's <code>D</code> and <code>Dp</code>{" "}
-        handles.
+        Returns the point between the glob&apos;s <code>D</code> and{" "}
+        <code>Dp</code> handles.
       </p>
       <h4>
         <code>

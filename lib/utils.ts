@@ -865,7 +865,7 @@ export function throttle<P extends any[], T extends (...args: P) => any>(
 ) {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let inThrottle: boolean, lastFn: any, lastTime: number
-  return function(...args: P) {
+  return function (...args: P) {
     if (preventDefault) args[0].preventDefault()
     // eslint-disable-next-line @typescript-eslint/no-this-alias
     const context = this
@@ -875,7 +875,7 @@ export function throttle<P extends any[], T extends (...args: P) => any>(
       inThrottle = true
     } else {
       clearTimeout(lastFn)
-      lastFn = setTimeout(function() {
+      lastFn = setTimeout(function () {
         if (Date.now() - lastTime >= wait) {
           fn.apply(context, args)
           lastTime = Date.now()
@@ -1496,6 +1496,7 @@ export function getNewGlob(A: INode, B: INode): IGlob {
   return {
     id,
     name: "Glob",
+    type: ICanvasItems.Glob,
     nodes: [A.id, B.id],
     D,
     Dp,
@@ -1504,7 +1505,9 @@ export function getNewGlob(A: INode, B: INode): IGlob {
     ap,
     bp,
     points: getGlob(C0, r0, C1, r1, D, Dp, a, b, ap, bp),
-    zIndex: 1,
+    parentId: "0",
+    childIndex: 1,
+    locked: false,
   }
 }
 
@@ -1518,7 +1521,7 @@ export function getGlobClone(glob: IGlob) {
     nodes: [...nodes],
     D: [...D],
     Dp: [...Dp],
-    zIndex: glob.zIndex + 1,
+    childIndex: glob.childIndex + 1,
   }
 }
 
@@ -1532,7 +1535,8 @@ export function getNewNode(point: number[], radius = 25): INode {
     type: ICanvasItems.Node,
     radius,
     cap: "round",
-    zIndex: 1,
+    childIndex: 1,
+    parentId: "0",
     locked: false,
   }
 }
@@ -1544,7 +1548,7 @@ export function getNodeClone(node: INode) {
     ...node,
     id,
     point: [...node.point],
-    zIndex: node.zIndex + 1,
+    childIndex: node.childIndex + 1,
   }
 }
 

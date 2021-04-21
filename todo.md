@@ -35,3 +35,19 @@
 - [ ] Multitouch dragging, zooming
 - [x] Undo / Redo
 - [x] Translate Session
+
+## V2
+
+- [ ] Point code editor to state object for code / styles
+- [ ] Point theme to state object for theme
+- [ ] Remove other saves to local storage
+- [ ] Rewrite drag and drop to update childIndex
+- [ ] Add pages, current page when creating nodes / globs
+- [ ] Add share links
+  - [ ] Fetch share link status for a project
+  - [ ] Create share link
+  - [ ] View share link
+  - [ ] Update share link
+  - [ ] Delete share link
+  - [ ] Readonly state for viewing share links
+  - [ ] Copy share link content to new page in a user's local project
