@@ -163,6 +163,8 @@ export function pasteSelection(
 
         const bounds = getSelectedBoundingBox(data)
 
+        if (!bounds) return
+
         const point = screenToWorld(vec.div(data.viewport.size, 2), data.camera)
 
         const delta = vec.sub(

@@ -39,9 +39,15 @@ class Clipboard {
     let toPaste: Copied
 
     if (fromClipboard) {
-      const copied = JSON.parse(fromClipboard)
-      if ("nodes" in copied && "globs" in copied) {
-        toPaste = copied
+      try {
+        const copied = JSON.parse(fromClipboard)
+        if ("nodes" in copied && "globs" in copied) {
+          toPaste = copied
+        }
+      } catch (e) {
+        console.warn(
+          "Could not parse the pasted text. It's probably not from around here."
+        )
       }
     } else {
       toPaste = JSON.parse(this.copied)
