@@ -2,24 +2,17 @@ import Editor, { Monaco } from "@monaco-editor/react"
 import useTheme from "hooks/useTheme"
 import prettier from "prettier/standalone"
 import parserTypeScript from "prettier/parser-typescript"
-import * as monaco from "monaco-editor/esm/vs/editor/editor.api"
 import codeAsString from "./code-as-string"
 import React, { useCallback, useEffect, useRef } from "react"
 import { styled } from "stitches.config"
 import { IMonaco, IMonacoEditor } from "types"
-
-class DummyCompletionProvider
-  implements monaco.languages.CompletionItemProvider {
-  public provideCompletionItems() {
-    return null
-  }
-}
 
 interface Props {
   value: string
   fontSize: number
   monacoRef?: React.MutableRefObject<IMonaco>
   editorRef?: React.MutableRefObject<IMonacoEditor>
+  readOnly?: boolean
   onMount?: (value: string, editor: IMonacoEditor) => void
   onUnmount?: (editor: IMonacoEditor) => void
   onChange?: (value: string, editor: IMonacoEditor) => void
@@ -32,6 +25,7 @@ export default function CodeEditor({
   monacoRef,
   fontSize,
   value,
+  readOnly,
   onChange,
   onSave,
 }: Props) {
@@ -91,7 +85,7 @@ export default function CodeEditor({
     })
   }, [])
 
-  const handleMount = useCallback((editor: IMonacoEditor, monaco: Monaco) => {
+  const handleMount = useCallback((editor: IMonacoEditor) => {
     if (editorRef) {
       editorRef.current = editor
     }
@@ -104,6 +98,7 @@ export default function CodeEditor({
       lightbulb: {
         enabled: false,
       },
+      readOnly,
     })
   }, [])
 

@@ -23,7 +23,8 @@ const BaseGlob = forwardRef<SVGPathElement, Props>(function BaseGlob(
     <path
       ref={ref}
       d={outline}
-      onPointerDown={(e) =>
+      onPointerDown={(e) => {
+        if (e.buttons !== 1) return
         state.send("POINTED_GLOB", {
           id,
           shiftKey: e.shiftKey,
@@ -31,7 +32,7 @@ const BaseGlob = forwardRef<SVGPathElement, Props>(function BaseGlob(
           metaKey: e.metaKey || e.ctrlKey,
           ctrlKey: e.ctrlKey,
         })
-      }
+      }}
       className={classNames([
         "strokewidth-m",
         {

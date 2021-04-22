@@ -11,7 +11,7 @@
       "type": 0,
       "radius": 25,
       "cap": "round",
-      "zIndex": 1,
+      "childIndex": 1,
       "locked": false
     },
     "b": {
@@ -21,7 +21,7 @@
       "type": 0,
       "radius": 50,
       "cap": "round",
-      "zIndex": 1,
+      "childIndex": 1,
       "locked": false
     }
   },
@@ -60,7 +60,7 @@
         "D2": [250, -86.60254037844385],
         "Dp2": [232.38113196437067, 106.28139882621049]
       },
-      "zIndex": 1
+      "childIndex": 1
     }
   },
   "snaps": { "active": [] },

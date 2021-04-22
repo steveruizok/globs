@@ -10,6 +10,7 @@ interface Props {
   min?: number
   max?: number
   step?: number
+  readOnly: boolean
   onPanStart?: () => void
   onPanEnd?: () => void
   onChange: (value: number) => void
@@ -23,6 +24,7 @@ function NumberInput({
   label,
   onPanStart,
   onPanEnd,
+  readOnly,
   onChange,
 }: Props) {
   const rInput = useRef<HTMLInputElement>(null)
@@ -150,6 +152,7 @@ function NumberInput({
       >
         <input
           ref={rInput}
+          readOnly={readOnly}
           type="number"
           value={val}
           min={min}

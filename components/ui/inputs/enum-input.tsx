@@ -4,11 +4,12 @@ import { PropContainer } from "./shared"
 interface Props {
   value: string | "mixed"
   label: string
+  readOnly: boolean
   children: React.ReactNode
   onChange: (value: string) => void
 }
 
-function EnumInput({ children, value, label, onChange }: Props) {
+function EnumInput({ children, value, label, readOnly, onChange }: Props) {
   function handleKeyDown(e: React.KeyboardEvent) {
     e.stopPropagation()
   }
@@ -18,6 +19,7 @@ function EnumInput({ children, value, label, onChange }: Props) {
       <label>{label}</label>
       <select
         value={value}
+        disabled={readOnly}
         onKeyDown={handleKeyDown}
         onChange={({ currentTarget: { value } }) => onChange(value)}
       >

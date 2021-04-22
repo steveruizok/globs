@@ -510,7 +510,7 @@ export function splitGlob(data: IData, id: string) {
     D1p = getLineLineIntersection(PLp[0], PLp[1], E1p, Dp)
 
     if (!(D0 && D1 && D0p && D1p)) {
-      console.log("Could not split glob there.")
+      console.warn("Could not split glob there.")
       return
     }
 
@@ -972,7 +972,7 @@ export function resizeNode(
   )
 }
 
-export function toggleNodeCap(data: IData, id: string) {
+export function toggleSelectedNodesCap(data: IData, id: string) {
   const cap = data.nodes[id].cap
   history.execute(
     data,

@@ -215,32 +215,36 @@ export function copyToClipboard(string: string) {
   let result: boolean
 
   try {
-    textarea = document.createElement("textarea")
-    textarea.setAttribute("position", "fixed")
-    textarea.setAttribute("top", "0")
-    textarea.setAttribute("readonly", "true")
-    textarea.setAttribute("contenteditable", "true")
-    textarea.style.position = "fixed" // prevent scroll from jumping to the bottom when focus is set.
-    textarea.value = string
+    navigator.clipboard.writeText(string)
+  } catch (e) {
+    try {
+      textarea = document.createElement("textarea")
+      textarea.setAttribute("position", "fixed")
+      textarea.setAttribute("top", "0")
+      textarea.setAttribute("readonly", "true")
+      textarea.setAttribute("contenteditable", "true")
+      textarea.style.position = "fixed" // prevent scroll from jumping to the bottom when focus is set.
+      textarea.value = string
 
-    document.body.appendChild(textarea)
+      document.body.appendChild(textarea)
 
-    textarea.focus()
-    textarea.select()
+      textarea.focus()
+      textarea.select()
 
-    const range = document.createRange()
-    range.selectNodeContents(textarea)
+      const range = document.createRange()
+      range.selectNodeContents(textarea)
 
-    const sel = window.getSelection()
-    sel.removeAllRanges()
-    sel.addRange(range)
+      const sel = window.getSelection()
+      sel.removeAllRanges()
+      sel.addRange(range)
 
-    textarea.setSelectionRange(0, textarea.value.length)
-    result = document.execCommand("copy")
-  } catch (err) {
-    result = null
-  } finally {
-    document.body.removeChild(textarea)
+      textarea.setSelectionRange(0, textarea.value.length)
+      result = document.execCommand("copy")
+    } catch (err) {
+      result = null
+    } finally {
+      document.body.removeChild(textarea)
+    }
   }
 
   return !!result
@@ -1496,6 +1500,7 @@ export function getNewGlob(A: INode, B: INode): IGlob {
   return {
     id,
     name: "Glob",
+    type: ICanvasItems.Glob,
     nodes: [A.id, B.id],
     D,
     Dp,
@@ -1504,7 +1509,9 @@ export function getNewGlob(A: INode, B: INode): IGlob {
     ap,
     bp,
     points: getGlob(C0, r0, C1, r1, D, Dp, a, b, ap, bp),
-    zIndex: 1,
+    parentId: "0",
+    childIndex: 1,
+    locked: false,
   }
 }
 
@@ -1518,7 +1525,7 @@ export function getGlobClone(glob: IGlob) {
     nodes: [...nodes],
     D: [...D],
     Dp: [...Dp],
-    zIndex: glob.zIndex + 1,
+    childIndex: glob.childIndex + 1,
   }
 }
 
@@ -1532,7 +1539,8 @@ export function getNewNode(point: number[], radius = 25): INode {
     type: ICanvasItems.Node,
     radius,
     cap: "round",
-    zIndex: 1,
+    childIndex: 1,
+    parentId: "0",
     locked: false,
   }
 }
@@ -1544,7 +1552,7 @@ export function getNodeClone(node: INode) {
     ...node,
     id,
     point: [...node.point],
-    zIndex: node.zIndex + 1,
+    childIndex: node.childIndex + 1,
   }
 }
 
@@ -1801,4 +1809,20 @@ export function getRayRayIntersection(
     y = m0 * x + b0
 
   return [x, y]
+}
+
+export async function postJsonToEndpoint(
+  endpoint: string,
+  data: { [key: string]: unknown }
+) {
+  const d = await fetch(
+    `${process.env.NEXT_PUBLIC_BASE_API_URL}/api/${endpoint}`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+    }
+  )
+
+  return await d.json()
 }

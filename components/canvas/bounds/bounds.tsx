@@ -59,6 +59,7 @@ export default function Bounds() {
         height={p}
         onSelect={(e) => {
           e.stopPropagation()
+          if (e.buttons !== 1) return
           state.send("POINTED_BOUNDS_EDGE", {
             edge: 0,
             shiftKey: e.shiftKey,
@@ -76,6 +77,7 @@ export default function Bounds() {
         height={Math.max(0, height - p * 2)}
         onSelect={(e) => {
           e.stopPropagation()
+          if (e.buttons !== 1) return
           state.send("POINTED_BOUNDS_EDGE", {
             edge: 1,
             shiftKey: e.shiftKey,
@@ -93,6 +95,7 @@ export default function Bounds() {
         height={p}
         onSelect={(e) => {
           e.stopPropagation()
+          if (e.buttons !== 1) return
           state.send("POINTED_BOUNDS_EDGE", {
             edge: 2,
             shiftKey: e.shiftKey,
@@ -110,6 +113,7 @@ export default function Bounds() {
         height={Math.max(0, height - p * 2)}
         onSelect={(e) => {
           e.stopPropagation()
+          if (e.buttons !== 1) return
           state.send("POINTED_BOUNDS_EDGE", {
             edge: 3,
             shiftKey: e.shiftKey,
@@ -154,6 +158,7 @@ function Corner({
         onTap={restoreCursor}
         onPointerDown={(e) => {
           e.stopPropagation()
+          if (e.buttons !== 1) return
           state.send("POINTED_ROTATE_CORNER", {
             corner,
             shiftKey: e.shiftKey,
@@ -174,6 +179,7 @@ function Corner({
         onPointerEnter={onHover}
         onPointerDown={(e) => {
           e.stopPropagation()
+          if (e.buttons !== 1) return
           state.send("POINTED_BOUNDS_CORNER", {
             corner,
             shiftKey: e.shiftKey,

@@ -1,5 +1,6 @@
 import { IBounds, ICanvasItems, IGlob, INode } from "./types"
 import { v4 as uuid } from "uuid"
+import { clamp } from "./utils"
 
 const nodes = new Set<Node>([])
 const globs = new Set<Glob>([])
@@ -502,7 +503,7 @@ class Vector {
   }
 
   per() {
-    let t = this.x
+    const t = this.x
     this.x = this.y
     this.y = -t
     return this
@@ -626,16 +627,19 @@ type NodeOptions = {
   name?: string
   cap?: "flat" | "round"
   radius?: number
+  parentId?: string
+  locked?: boolean
 } & ({ x: number; y: number } | { point: Vector })
 
 class Node {
   readonly id = uuid()
-  name: string
-  zIndex = 1
+  name = "Node"
+  childIndex = 1
+  locked = false
+  parentId = "0"
+  cap: "round" | "flat" = "round"
   point: Vector
   radius: number
-  locked = false
-  cap: "round" | "flat" = "round"
 
   constructor(options = {} as NodeOptions) {
     if ("x" in options) {
@@ -646,10 +650,20 @@ class Node {
       this.point = new Vector(point)
     }
 
-    const { name = "Node", cap = "round", radius = 25 } = options
+    const {
+      name = "Node",
+      cap = "round",
+      locked = false,
+      parentId = "0",
+      radius = 25,
+    } = options
+
     this.name = name
     this.cap = cap
     this.radius = radius
+    this.locked = locked
+    this.parentId = parentId
+
     nodes.add(this)
   }
 
@@ -726,11 +740,15 @@ interface GlobOptions {
   b: number
   ap: number
   bp: number
+  parentId: string
+  locked: boolean
 }
 
 class Glob {
   readonly id = uuid()
-  zIndex = 1
+  childIndex = 1
+  locked = false
+  parentId = "0"
   name: string
   start: Node
   end: Node
@@ -742,7 +760,15 @@ class Glob {
   bp: number
 
   constructor(options = {} as Partial<GlobOptions>) {
-    const { name = "Glob", a = 0.5, b = 0.5, ap = 0.5, bp = 0.5 } = options
+    const {
+      name = "Glob",
+      parentId = "0",
+      locked = false,
+      a = 0.5,
+      b = 0.5,
+      ap = 0.5,
+      bp = 0.5,
+    } = options
 
     this.name = name
     this.start = Node.cast(options.start || { x: 0, y: 0 })
@@ -751,15 +777,16 @@ class Glob {
       options.D === undefined
         ? Vector.med(this.start.point, this.end.point)
         : Vector.cast(options.D)
-
     this.Dp =
       options.Dp === undefined
         ? Vector.med(this.start.point, this.end.point)
         : Vector.cast(options.Dp)
-    this.a = a
-    this.b = b
-    this.ap = ap
-    this.bp = bp
+    this.a = clamp(a, 0, 1)
+    this.b = clamp(b, 0, 1)
+    this.ap = clamp(ap, 0, 1)
+    this.bp = clamp(bp, 0, 1)
+    this.parentId = parentId
+    this.locked = locked
 
     globs.add(this)
   }
@@ -914,9 +941,9 @@ class Glob {
 
     return {
       C0,
-      r0,
       C1,
-      r1,
+      D,
+      Dp,
       E0,
       E0p,
       E1,
@@ -929,8 +956,8 @@ class Glob {
       N0p,
       N1,
       N1p,
-      D,
-      Dp,
+      r0,
+      r1,
     }
   }
 
@@ -1015,7 +1042,7 @@ export default function evalCode(
   return {
     nodes: Object.fromEntries(
       Array.from(nodes.values()).map((node) => {
-        const { id, name, radius, cap, locked, point, zIndex } = node
+        const { id, name, radius, cap, locked, point, childIndex } = node
         return [
           id,
           {
@@ -1026,19 +1053,34 @@ export default function evalCode(
             radius,
             cap,
             locked,
-            zIndex,
+            parentId: "0",
+            childIndex,
           },
         ]
       })
     ),
     globs: Object.fromEntries(
       Array.from(globs.values()).map((glob) => {
-        const { id, name, start, end, D, Dp, a, b, ap, bp, zIndex } = glob
+        const {
+          id,
+          name,
+          start,
+          end,
+          D,
+          Dp,
+          a,
+          b,
+          ap,
+          bp,
+          childIndex,
+          locked,
+        } = glob
         return [
           glob.id,
           {
             id,
             name,
+            type: ICanvasItems.Glob,
             nodes: [start.id, end.id],
             D: D.toArray(),
             Dp: Dp.toArray(),
@@ -1046,7 +1088,9 @@ export default function evalCode(
             b,
             ap,
             bp,
-            zIndex,
+            parentId: "0",
+            childIndex,
+            locked,
           },
         ]
       })
