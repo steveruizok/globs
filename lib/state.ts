@@ -43,21 +43,23 @@ const state = createState({
     PRESSED_SPACE: "toggleFill",
     RELEASED_SPACE: "toggleFill",
     TOGGLED_FILL: "toggleFill",
+    MOVED_POINTER: [
+      { secretlyDo: "updateMvPointer" },
+      { if: "hasMiddleButton", do: "panCamera" },
+    ],
     WHEELED: {
       ifAny: ["hasShift", "isTrackpadZoom"],
       do: ["zoomCamera", "updateMvPointer"],
       else: ["wheelPanCamera", "updateMvPointer"],
     },
-    MOVED_POINTER: [
-      { secretlyDo: "updateMvPointer" },
-      { if: "hasMiddleButton", do: "panCamera" },
-    ],
     STARTED_MOVING_THUMBSTICK: {
-      to: "draggingThumbstick",
+      if: "hasSelection",
+      to: "panningWithThumbstick",
+      else: { to: "draggingWithThumbstick" },
     },
     ZOOMED_TO_FIT: "zoomToFit",
     COPIED: "copyToClipboard",
-    CUT: ["copyToClipboard", "deleteSelection", "saveData"],
+    CUT: ["copyToClipboard", "deleteSelection"],
     OPENED_SHARE_LINK: { to: "viewingShareLink" },
     OPENED_SHARE_LINK_MODAL: { to: "shareLinkModal" },
   },
@@ -65,11 +67,14 @@ const state = createState({
   states: {
     loading: {
       on: {
-        MOUNTED: {
-          if: "isShareLink",
-          to: "viewingShareLink",
-          else: { to: "ready" },
-        },
+        MOUNTED: [
+          "setViewport",
+          {
+            if: "isShareLink",
+            to: "viewingShareLink",
+            else: { to: "ready" },
+          },
+        ],
       },
     },
     viewingShareLink: {
@@ -79,9 +84,9 @@ const state = createState({
       },
     },
     ready: {
-      onEnter: ["setup", "setViewport"],
+      onEnter: ["setup"],
       on: {
-        PASTED: ["startPasteFromClipboard", "saveData"],
+        PASTED: ["startPasteFromClipboard"],
         FINISHED_PASTE: "finishPasteFromClipboard",
         CHANGED_CODE: "setCode",
       },
@@ -92,15 +97,15 @@ const state = createState({
           states: {
             notPointing: {
               onEnter: { do: "clearPointingId" },
-              repeat: {
-                onRepeat: "saveData",
-                delay: 5,
-              },
               on: {
+                // Keyboard / Menus
                 UNDO: "undo",
                 REDO: "redo",
                 CANCELLED: "clearSelection",
-                DELETED: ["deleteSelection", "saveData"],
+                SELECTED_ALL: "selectAll",
+                DELETED: ["deleteSelection"],
+                HARD_RESET: ["hardReset"],
+                // Pointer
                 TOGGLED_CAP: "toggleNodeCap",
                 HIGHLIT_GLOB: "pushHighlightGlob",
                 HIGHLIT_NODE: "pushHighlightNode",
@@ -110,8 +115,101 @@ const state = createState({
                 UNHOVERED_GLOB: "pullHoveredGlob",
                 HOVERED_NODE: "pushHoveredNode",
                 UNHOVERED_NODE: "pullHoveredNode",
-                MOVED_NODE_ORDER: "moveNodeOrder",
-                MOVED_GLOB_ORDER: "moveGlobOrder",
+                POINTED_NODE: [
+                  "setPointingId",
+                  {
+                    if: "pointingSelectedNode",
+                    then: {
+                      if: "hasShift",
+                      then: {
+                        do: "pullPointingFromSelectedNodes",
+                        to: "notPointing",
+                      },
+                      else: {
+                        to: "pointingSelectedNode",
+                      },
+                    },
+                    else: {
+                      if: "hasShift",
+                      then: {
+                        do: "pushPointingToSelectedNodes",
+                        to: "pointingSelectedNode",
+                      },
+                      else: {
+                        do: "setPointingToSelectedNodes",
+                        to: "pointingSelectedNode",
+                      },
+                    },
+                  },
+                ],
+                POINTED_GLOB: [
+                  "setPointingId",
+                  {
+                    if: "pointingSelectedGlob",
+                    then: {
+                      if: "hasShift",
+                      then: {
+                        do: "pullPointingFromSelectedGlobs",
+                        to: "notPointing",
+                      },
+                      else: {
+                        to: "pointingSelectedGlob",
+                      },
+                    },
+                    else: {
+                      if: "hasShift",
+                      then: {
+                        do: "pushPointingToSelectedGlobs",
+                        to: "pointingSelectedGlob",
+                      },
+                      else: {
+                        do: "setPointingToSelectedGlobs",
+                        to: "pointingSelectedGlob",
+                      },
+                    },
+                  },
+                ],
+                POINTED_BOUNDS: [
+                  {
+                    if: "hasMeta",
+                    to: "brushSelecting",
+                    else: {
+                      to: "draggingSelection",
+                    },
+                  },
+                ],
+                POINTED_CANVAS: [
+                  {
+                    unless: "hasShift",
+                    do: "clearSelection",
+                  },
+                  { to: "brushSelecting" },
+                ],
+                POINTED_ANCHOR: [
+                  {
+                    do: "setPointingId",
+                    to: "pointingAnchor",
+                  },
+                ],
+                POINTED_HANDLE: {
+                  do: "setPointingId",
+                  to: "pointingHandle",
+                },
+                POINTED_BOUNDS_EDGE: {
+                  do: "beginEdgeTransform",
+                  to: "transforming",
+                },
+                POINTED_BOUNDS_CORNER: {
+                  do: "beginCornerTransform",
+                  to: "transforming",
+                },
+                POINTED_ROTATE_CORNER: {
+                  to: "rotating",
+                },
+                // Panel
+                STARTED_translating: {
+                  to: "translating",
+                },
                 SET_NODES_X: "setPointingToSelectedNodessPointX",
                 SET_NODES_Y: "setPointingToSelectedNodessPointY",
                 SET_NODES_RADIUS: "setPointingToSelectedNodessRadius",
@@ -123,106 +221,161 @@ const state = createState({
                 CHANGED_BOUNDS_Y: "changeBoundsY",
                 CHANGED_BOUNDS_WIDTH: "changeBoundsWidth",
                 CHANGED_BOUNDS_HEIGHT: "changeBoundsHeight",
-                HARD_RESET: ["hardReset", "saveData"],
-                SELECTED_ALL: "selectAll",
                 LOCKED_NODES: "lockSelectedNodes",
                 GENERATED_ITEMS: "refreshGeneratedItems",
-                POINTED_NODE: [
-                  { unless: "isLeftClick", break: true },
-                  "setPointingId",
-                  {
-                    if: "nodeIsHovered",
-                    to: "pointingNode",
-                    else: {
-                      if: "hasShift",
-                      then: {
-                        if: "pointingIsSelectedNode",
-                        do: "pullPointingFromSelectedNodes",
-                        else: "pushPointingToSelectedNodes",
-                      },
-                      else: "setPointingToSelectedNodes",
-                    },
-                  },
-                ],
-                POINTED_GLOB: [
-                  { unless: "isLeftClick", break: true },
-                  "setPointingId",
-                  {
-                    if: ["globIsHovered", "pointingIsSelectedGlob", "hasMeta"],
-                    to: "splittingGlob",
-                  },
-                  {
-                    if: "globIsHovered",
-                    to: "pointingGlob",
-                    else: {
-                      if: "hasShift",
-                      then: {
-                        if: "pointingIsSelectedGlob",
-                        do: "pullPointingFromSelectedGlobs",
-                        else: "pushPointingToSelectedGlobs",
-                      },
-                      else: "setPointingToSelectedGlobs",
-                    },
-                  },
-                ],
-                POINTED_CANVAS: [
-                  { unless: "isLeftClick", break: true },
-                  { to: "pointingCanvas" },
-                ],
-                POINTED_ANCHOR: [
-                  {
-                    if: "isLeftClick",
-                    do: "setPointingId",
-                    to: "pointingAnchor",
-                  },
-                ],
-                POINTED_HANDLE: {
-                  if: "isLeftClick",
-                  do: "setPointingId",
-                  to: "pointingHandle",
-                },
-                POINTED_BOUNDS: [
-                  {
-                    if: ["hasMeta", "isLeftClick"],
-                    to: "brushSelecting",
-                  },
-                  {
-                    if: "isLeftClick",
-                    to: "draggingSelection",
-                  },
-                ],
-                POINTED_BOUNDS_EDGE: {
-                  if: "isLeftClick",
-                  to: "edgeResizing",
-                },
-                POINTED_BOUNDS_CORNER: {
-                  if: "isLeftClick",
-                  to: "cornerResizing",
-                },
-                POINTED_ROTATE_CORNER: {
-                  if: "isLeftClick",
-                  to: "cornerRotating",
-                },
-                STARTED_TRANSLATING: {
-                  to: "translating",
-                },
+                // Navigator
+                MOVED_NODE_ORDER: "moveNodeOrder",
+                MOVED_GLOB_ORDER: "moveGlobOrder",
+                // Toolbar
                 STARTED_CREATING_NODES: {
                   to: "creatingNodes",
-                },
-                PRESSED_TOOLBAR_BUTTON_GLOBBING_NODES: {
-                  if: "hasSelectedNodes",
-                  to: "globbingNodes",
-                  else: {
-                    to: "creatingNodes.glob",
-                  },
                 },
                 STARTED_GLOBBING_NODES: {
                   if: "hasSelectedNodes",
                   to: "globbingNodes",
                   else: {
-                    to: "creatingNodes.glob",
+                    to: "creatingNodes",
                   },
                 },
+              },
+            },
+            pointingSelectedGlob: {
+              on: {
+                STOPPED_POINTING: { to: "notPointing" },
+                MOVED_POINTER: {
+                  if: "distanceImpliesDrag",
+                  to: "draggingSelection",
+                },
+              },
+            },
+            pointingSelectedNode: {
+              on: {
+                STOPPED_POINTING: { to: "notPointing" },
+                PRESSED_META: { to: "resizingSelectedNodes" },
+                MOVED_POINTER: {
+                  if: "distanceImpliesDrag",
+                  to: "draggingSelection",
+                },
+              },
+            },
+            draggingSelection: {
+              onEnter: "beginMove",
+              onExit: "clearSnaps",
+              on: {
+                CANCELLED: { do: "cancelMove", to: "notPointing" },
+                WHEELED: "updateMove",
+                PRESSED_OPTION: "updateMove",
+                RELEASED_OPTION: "updateMove",
+                MOVED_POINTER: "updateMove",
+                STOPPED_POINTING: {
+                  do: ["completeMove"],
+                  to: "notPointing",
+                },
+              },
+            },
+            // Possibly combine
+            resizingSelectedNodes: {
+              onEnter: "beginRadiusMove",
+              on: {
+                PRESSED_SHIFT: "updateRadiusMove",
+                RELEASED_SHIFT: "updateRadiusMove",
+                PRESSED_OPTION: "updateRadiusMove",
+                RELEASED_OPTION: "updateRadiusMove",
+                RELEASED_META: {
+                  do: "completeRadiusMove",
+                  to: "pointingSelectedNode",
+                },
+                MOVED_POINTER: "updateRadiusMove",
+                STOPPED_POINTING: {
+                  do: ["completeRadiusMove"],
+                  to: "notPointing",
+                },
+              },
+            },
+
+            pointingHandle: {
+              onEnter: [
+                "beginHandleMove",
+                "setPointingToSelectedGlobs",
+                "setSelectedHandle",
+              ],
+              onExit: ["clearSnaps", "clearSelectedHandle"],
+              on: {
+                WHEELED: "updateHandleMove",
+                MOVED_POINTER: "updateHandleMove",
+                CANCELLED: {
+                  do: "cancelHandleMove",
+                  to: "notPointing",
+                },
+                STOPPED_POINTING: {
+                  do: ["completeHandleMove"],
+                  to: "notPointing",
+                },
+              },
+            },
+            pointingAnchor: {
+              onEnter: ["beginAnchorMove", "setPointingToSelectedGlobs"],
+              onExit: "clearSnaps",
+              on: {
+                WHEELED: "updateAnchorMove",
+                MOVED_POINTER: "updateAnchorMove",
+                CANCELLED: {
+                  do: "cancelAnchorMove",
+                  to: "notPointing",
+                },
+                STOPPED_POINTING: {
+                  do: ["completeAnchorMove"],
+                  to: "notPointing",
+                },
+              },
+            },
+            brushSelecting: {
+              onEnter: ["startBrush", "clearHovers"],
+              on: {
+                HOVERED_GLOB: "pushHoveredGlob",
+                UNHOVERED_GLOB: "pullHoveredGlob",
+                HOVERED_NODE: "pushHoveredNode",
+                UNHOVERED_NODE: "pullHoveredNode",
+                MOVED_POINTER: "updateBrush",
+                WHEELED: "updateBrush",
+                STOPPED_POINTING: {
+                  do: "completeBrush",
+                  to: "notPointing",
+                },
+                POINTED_CANVAS: {
+                  do: "cancelBrush",
+                  to: "notPointing",
+                },
+                CANCELLED: {
+                  do: "cancelBrush",
+                  to: "notPointing",
+                },
+              },
+            },
+            transforming: {
+              on: {
+                MOVED_POINTER: "updateTransform",
+                WHEELED: "updateTransform",
+                STOPPED_POINTING: {
+                  do: ["completeTransform"],
+                  to: "notPointing",
+                },
+                CANCELLED: {
+                  do: "cancelTransform",
+                  to: "notPointing",
+                },
+              },
+            },
+            rotating: {
+              onEnter: "beginRotate",
+              on: {
+                MOVED_POINTER: "updateRotate",
+                WHEELED: "updateRotate",
+                STOPPED_POINTING: {
+                  do: ["completeRotate"],
+                  to: "notPointing",
+                },
+                CANCELLED: { do: "cancelRotate", to: "notPointing" },
               },
             },
             translating: {
@@ -237,353 +390,65 @@ const state = createState({
                 },
               },
             },
-            pointingCanvas: {
-              onEnter: { unless: "hasShift", do: "clearSelection" },
+            panningWithThumbstick: {
               on: {
-                MOVED_POINTER: {
-                  if: "distanceImpliesDrag",
-                  to: "brushSelecting",
-                },
-                STOPPED_POINTING: {
-                  to: "notPointing",
-                },
-              },
-            },
-            draggingSelection: {
-              onExit: ["clearSnaps"],
-              onEnter: "beginMove",
-              on: {
-                CANCELLED: { do: "cancelMove", to: "notPointing" },
-                WHEELED: "updateMove",
-                PRESSED_OPTION: "updateMove",
-                RELEASED_OPTION: "updateMove",
-                MOVED_POINTER: "updateMove",
-                STOPPED_POINTING: {
-                  do: ["completeMove", "saveData"],
-                  to: "notPointing",
-                },
+                MOVED_THUMBSTICK: "panCamera",
+                STOPPED_MOVING_THUMBSTICK: { to: "notPointing" },
               },
             },
             draggingThumbstick: {
               onEnter: "beginMove",
               on: {
-                MOVED_THUMBSTICK: {
-                  if: "hasSelection",
-                  do: "updateMove",
-                  else: "panCamera",
-                },
+                MOVED_THUMBSTICK: "updateMove",
                 STOPPED_MOVING_THUMBSTICK: {
-                  do: ["completeMove", "saveData"],
+                  do: ["completeMove"],
                   to: "notPointing",
                 },
-              },
-            },
-            pointingGlob: {
-              initial: "maybeSelecting",
-              states: {
-                maybeSelecting: {
-                  onEnter: [
-                    {
-                      if: ["hasBoundsSelection", "pointingIsSelectedGlob"],
-                      to: "pointingGlobInBounds",
-                    },
-                    {
-                      if: "hasShift",
-                      then: {
-                        if: "pointingIsSelectedGlob",
-                        do: "pullPointingFromSelectedGlobs",
-                        else: "pushPointingToSelectedGlobs",
-                      },
-                      else: "setPointingToSelectedGlobs",
-                    },
-                    {
-                      to: "pointingSelectedGlob",
-                    },
-                  ],
-                },
-                pointingSelectedGlob: {
-                  on: {
-                    MOVED_POINTER: {
-                      if: "distanceImpliesDrag",
-                      to: "draggingSelection",
-                    },
-                    STOPPED_POINTING: { to: "notPointing" },
-                  },
-                },
-                pointingGlobInBounds: {
-                  on: {
-                    MOVED_POINTER: {
-                      if: "distanceImpliesDrag",
-                      to: "draggingSelection",
-                    },
-                    STOPPED_POINTING: [
-                      {
-                        if: "hasShift",
-                        then: "pullPointingFromSelectedGlobs",
-                        else: "setPointingToSelectedGlobs",
-                      },
-                      { to: "notPointing" },
-                    ],
-                  },
-                },
-              },
-            },
-            pointingNode: {
-              initial: "maybeSelecting",
-              states: {
-                maybeSelecting: {
-                  onEnter: [
-                    {
-                      if: "pointingIsSelectedNode",
-                      to: "pointingNodeInBounds",
-                    },
-                    {
-                      if: "hasShift",
-                      then: {
-                        if: "pointingIsSelectedNode",
-                        do: "pullPointingFromSelectedNodes",
-                        else: "pushPointingToSelectedNodes",
-                      },
-                      else: "setPointingToSelectedNodes",
-                    },
-                    {
-                      if: ["hasOneSelectedNode", "hasMeta"],
-                      to: "changingRadius",
-                      else: {
-                        to: "pointingSelectedNode",
-                      },
-                    },
-                  ],
-                },
-
-                // Possibly combine with pointingNodeInBounds
-                pointingSelectedNode: {
-                  on: {
-                    STOPPED_POINTING: { to: "notPointing" },
-                    PRESSED_META: { to: "changingRadius" },
-                    MOVED_POINTER: {
-                      if: "distanceImpliesDrag",
-                      to: "draggingSelection",
-                    },
-                  },
-                },
-
-                pointingNodeInBounds: {
-                  onEnter: {
-                    if: "hasMeta",
-                    to: "resizingAllNodesInBounds",
-                  },
-                  on: {
-                    MOVED_POINTER: {
-                      if: "distanceImpliesDrag",
-                      to: "draggingSelection",
-                    },
-                    PRESSED_META: {
-                      if: "hasOneSelectedNode",
-                      to: "resizingAllNodesInBounds",
-                    },
-                    STOPPED_POINTING: [
-                      {
-                        if: "hasShift",
-                        then: {
-                          if: "pointingIsSelectedNode",
-                          do: "pullPointingFromSelectedNodes",
-                          else: "pushPointingToSelectedNodes",
-                        },
-                        else: "setPointingToSelectedNodes",
-                      },
-                      { to: "notPointing" },
-                    ],
-                  },
-                },
-                changingRadius: {
-                  onEnter: "beginRadiusMove",
-                  on: {
-                    PRESSED_SHIFT: "updateRadiusMove",
-                    RELEASED_SHIFT: "updateRadiusMove",
-                    PRESSED_OPTION: "updateRadiusMove",
-                    RELEASED_OPTION: "updateRadiusMove",
-                    RELEASED_META: {
-                      do: "completeRadiusMove",
-                      to: "pointingSelectedNode",
-                    },
-                    MOVED_POINTER: "updateRadiusMove",
-                    STOPPED_POINTING: {
-                      do: ["completeRadiusMove", "saveData"],
-                      to: "notPointing",
-                    },
-                  },
-                },
-                resizingAllNodesInBounds: {
-                  onEnter: "beginRadiusMove",
-                  on: {
-                    PRESSED_SHIFT: "updateRadiusMove",
-                    RELEASED_SHIFT: "updateRadiusMove",
-                    PRESSED_OPTION: "updateRadiusMove",
-                    RELEASED_OPTION: "updateRadiusMove",
-                    RELEASED_META: {
-                      do: "completeRadiusMove",
-                      to: "draggingSelection",
-                    },
-                    MOVED_POINTER: "updateRadiusMove",
-                    STOPPED_POINTING: {
-                      do: ["completeRadiusMove", "saveData"],
-                      to: "notPointing",
-                    },
-                  },
-                },
-              },
-            },
-            pointingHandle: {
-              onEnter: [
-                "beginHandleMove",
-                "setPointingToSelectedGlobs",
-                "setSelectedHandle",
-              ],
-              onExit: ["clearSnaps", "clearSelectedHandle"],
-              on: {
-                WHEELED: ["updateHandleMove"],
-                MOVED_POINTER: "updateHandleMove",
-                CANCELLED: { do: "cancelHandleMove", to: "notPointing" },
-                STOPPED_POINTING: {
-                  do: ["completeHandleMove", "saveData"],
-                  to: "notPointing",
-                },
-              },
-            },
-            pointingAnchor: {
-              onEnter: ["beginAnchorMove", "setPointingToSelectedGlobs"],
-              onExit: ["clearSnaps"],
-              on: {
-                WHEELED: "updateAnchorMove",
-                MOVED_POINTER: "updateAnchorMove",
-                CANCELLED: { do: "cancelAnchorMove", to: "notPointing" },
-                STOPPED_POINTING: {
-                  do: ["completeAnchorMove", "saveData"],
-                  to: "notPointing",
-                },
-              },
-            },
-            brushSelecting: {
-              onEnter: "startBrush",
-              on: {
-                HOVERED_GLOB: "pushHoveredGlob",
-                UNHOVERED_GLOB: "pullHoveredGlob",
-                HOVERED_NODE: "pushHoveredNode",
-                UNHOVERED_NODE: "pullHoveredNode",
-                MOVED_POINTER: "updateBrush",
-                WHEELED: "updateBrush",
-                STOPPED_POINTING: { do: "completeBrush", to: "notPointing" },
-                POINTED_CANVAS: { do: "cancelBrush", to: "notPointing" },
-                CANCELLED: { do: "cancelBrush", to: "notPointing" },
-              },
-            },
-            edgeResizing: {
-              onEnter: ["beginEdgeTransform"],
-              on: {
-                MOVED_POINTER: "updateTransform",
-                WHEELED: "updateTransform",
-                STOPPED_POINTING: {
-                  do: ["completeTransform", "saveData"],
-                  to: "notPointing",
-                },
-                CANCELLED: { do: "cancelTransform", to: "notPointing" },
-              },
-            },
-            cornerResizing: {
-              onEnter: ["beginCornerTransform"],
-              on: {
-                MOVED_POINTER: ["updateTransform"],
-                WHEELED: ["updateTransform"],
-                STOPPED_POINTING: {
-                  do: ["completeTransform", "saveData"],
-                  to: "notPointing",
-                },
-                CANCELLED: { do: "cancelTransform", to: "notPointing" },
-              },
-            },
-            cornerRotating: {
-              onEnter: "beginRotate",
-              on: {
-                MOVED_POINTER: "updateRotate",
-                WHEELED: "updateRotate",
-                STOPPED_POINTING: {
-                  do: ["completeRotate", "saveData"],
-                  to: "notPointing",
-                },
-                CANCELLED: { do: "cancelRotate", to: "notPointing" },
               },
             },
           },
         },
         creatingNodes: {
           on: {
-            STARTED_CREATING_NODES: {
-              to: "selecting",
-            },
+            CANCELLED: { to: "selecting" },
+            STARTED_CREATING_NODES: { to: "selecting" },
             STARTED_GLOBBING_NODES: {
               if: "hasSelectedNodes",
               to: "globbingNodes",
             },
-            CANCELLED: { to: "selecting" },
-          },
-          initial: "node",
-          states: {
-            node: {
-              on: {
-                POINTED_CANVAS: [
-                  "createNode",
-                  "saveData",
-                  {
-                    to: "selecting",
-                  },
-                ],
-              },
-            },
-            glob: {
-              on: {
-                POINTED_CANVAS: [
-                  "createNode",
-                  "saveData",
-                  {
-                    to: "globbingNodes",
-                  },
-                ],
-              },
+            POINTED_CANVAS: {
+              do: ["createNode"],
+              to: "selecting",
             },
           },
         },
         globbingNodes: {
           on: {
             CANCELLED: { to: "selecting" },
-            PRESSED_TOOLBAR_BUTTON_GLOBBING_NODES: {
+            STARTED_GLOBBING_NODES: { to: "selecting" },
+            STARTED_CREATING_NODES: { to: "creatingNodes" },
+            HOVERED_NODE: { do: "pushHoveredNode" },
+            UNHOVERED_NODE: { do: "pullHoveredNode" },
+            POINTED_NODE: {
+              do: ["createGlobBetweenNodes"],
               to: "selecting",
-            },
-            STARTED_CREATING_NODES: {
-              to: "creatingNodes",
             },
             POINTED_CANVAS: {
-              do: ["createGlobToNewNode", "saveData"],
+              do: ["createGlobToNewNode"],
               to: "selecting",
             },
-            POINTED_NODE: [
-              "createGlobBetweenNodes",
-              "saveData",
-              {
-                to: "selecting",
-              },
-            ],
-            HOVERED_NODE: { do: "setHoveredNode" },
-            UNHOVERED_NODE: { do: "pullHoveredNode" },
           },
         },
         splittingGlob: {
           on: {
-            POINTED_CANVAS: { unless: "hasMeta", to: "selecting" },
             CANCELLED: { to: "selecting" },
             RELEASED_META: { to: "selecting" },
             SPLIT_GLOB: {
-              do: ["splitGlob", "clearSelection", "saveData"],
+              do: ["splitGlob", "clearSelection"],
+              to: "selecting",
+            },
+            POINTED_CANVAS: {
+              unless: "hasMeta",
               to: "selecting",
             },
           },
@@ -594,7 +459,7 @@ const state = createState({
       on: {
         CREATED_SHARE_LINK: { do: "setShareLink" },
         DELETED_SHARE_LINK: { do: "deleteShareLink" },
-        CLOSED_MODAL: { to: "ready" },
+        CLOSED_SHARE_LINK_MODAL: { to: "ready" },
       },
     },
   },
@@ -613,41 +478,20 @@ const state = createState({
       const { selectedNodes, selectedGlobs } = data
       return selectedGlobs.length + selectedNodes.length > 1
     },
-    nodeIsHovered(data, payload: { id: string }) {
-      return data.hoveredNodes.includes(payload.id)
-    },
-    pointingIsSelectedNode(data) {
+    pointingSelectedNode(data) {
       return data.selectedNodes.includes(data.pointingId)
     },
-    pointingIsSelectedGlob(data) {
+    pointingSelectedGlob(data) {
       return data.selectedGlobs.includes(data.pointingId)
-    },
-    hasOneSelectedNode(data) {
-      return data.selectedNodes.length === 1
     },
     hasSelectedNodes(data) {
       return data.selectedNodes.length > 0
     },
-    hasSelectedGlobs(data) {
-      return data.selectedGlobs.length > 0
-    },
-    globIsHovered(data, payload: { id: string }) {
-      return data.hoveredGlobs.includes(payload.id)
-    },
-    globIsSelected(data, payload: { id: string }) {
-      return data.selectedGlobs.includes(payload.id)
-    },
     isTrackpadZoom(_, payload: { ctrlKey: boolean }) {
       return inputs.keys.Alt || payload.ctrlKey
     },
-    isScaleZoom(_, payload: { scale: number }) {
-      return payload.scale !== undefined
-    },
     hasMiddleButton(_, payload: { isPan: boolean }) {
       return payload.isPan
-    },
-    isLeftClick() {
-      return inputs.pointer.buttons === 1
     },
     hasMeta() {
       return inputs.keys.Meta
@@ -655,19 +499,9 @@ const state = createState({
     hasShift() {
       return inputs.keys.Shift
     },
-    hasSpace() {
-      return inputs.keys[" "]
-    },
-    isMultitouch() {
-      return inputs.pointer.points.size > 1
-    },
   },
   actions: {
-    copySvgToClipboard(data) {
-      exports.copyToSvg(data, elms)
-    },
-
-    // CODE GENERATED ITEMS
+    // Code panel
     refreshGeneratedItems(
       data,
       payload: { nodes: Record<string, INode>; globs: Record<string, IGlob> }
@@ -675,7 +509,10 @@ const state = createState({
       commands.refreshGeneratedItems(data, payload)
     },
 
-    // CLIPBOARD
+    // Clipboard
+    copySvgToClipboard(data) {
+      exports.copyToSvg(data, elms)
+    },
     copyToClipboard(data) {
       clipboard.copy(data)
     },
@@ -686,7 +523,7 @@ const state = createState({
       clipboard.finishPaste(data, copied)
     },
 
-    // HISTORY
+    // History
     undo(data) {
       history.undo(data)
     },
@@ -694,7 +531,7 @@ const state = createState({
       history.redo(data)
     },
 
-    // ELEMENT REFERENCES
+    // Elements (Maybe remove?)
     mountElement(
       data,
       payload: { id: string; elm: MutableRefObject<SVGElement> }
@@ -705,24 +542,14 @@ const state = createState({
       delete elms[payload.id]
     },
 
-    // POINTER
+    // Display
+    toggleFill(data) {
+      data.fill = !data.fill
+    },
     updateMvPointer(data) {
       mvPointer.screen.set(inputs.pointer.point)
       mvPointer.world.set(screenToWorld(inputs.pointer.point, data.camera))
     },
-
-    // DISPLAY
-    enableFill(data) {
-      data.fill = true
-    },
-    disableFill(data) {
-      data.fill = false
-    },
-    toggleFill(data) {
-      data.fill = !data.fill
-    },
-
-    // CAMERA / VIEWPORT
     panCamera(data) {
       const { camera, document } = data
       const delta = vec.div(inputs.pointer.delta, camera.zoom)
@@ -780,8 +607,14 @@ const state = createState({
       camera.point = document.point
     },
 
-    // SELECTION / HOVERS / HIGHLIGHTS
-
+    // Selection
+    deleteSelection(data) {
+      commands.deleteSelection(data)
+    },
+    selectAll(data) {
+      data.selectedGlobs = [...data.globIds]
+      data.selectedNodes = [...data.nodeIds]
+    },
     // Brush selection
     startBrush(data) {
       brushSession = new BrushSession(data)
@@ -797,18 +630,12 @@ const state = createState({
       brushSession.complete(data)
       brushSession = undefined
     },
+    // Pointing Id
     setPointingId(data, payload: { id: string }) {
       data.pointingId = payload.id
     },
     clearPointingId(data) {
       data.pointingId = undefined
-    },
-    deleteSelection(data) {
-      commands.deleteSelection(data)
-    },
-    selectAll(data) {
-      data.selectedGlobs = [...data.globIds]
-      data.selectedNodes = [...data.nodeIds]
     },
     clearSelection(data) {
       data.bounds = undefined
@@ -849,7 +676,7 @@ const state = createState({
         (id) => id !== data.pointingId
       )
     },
-    // highlights
+    // Highlights
     pushHighlightNode(data, payload: { id: string }) {
       if (data.highlightNodes.includes(payload.id)) return
       data.highlightNodes.push(payload.id)
@@ -865,9 +692,6 @@ const state = createState({
     pullHoveredNode(data, payload: { id: string }) {
       const index = data.hoveredNodes.indexOf(payload.id)
       data.hoveredNodes.splice(index, 1)
-    },
-    setHoveredNode(data) {
-      data.hoveredNodes = []
     },
     pushHighlightGlob(data, payload: { id: string }) {
       if (data.highlightGlobs.includes(payload.id)) return
@@ -885,20 +709,12 @@ const state = createState({
       const index = data.hoveredGlobs.indexOf(payload.id)
       data.hoveredGlobs.splice(index, 1)
     },
-    setHoveredGlobs(data, payload: { ids: string[] }) {
-      data.hoveredGlobs = payload.ids
-      data.highlightGlobs = []
-    },
-    setHoveredGlob(data, payload: { id: string }) {
-      data.hoveredGlobs = [payload.id]
-      data.highlightGlobs = []
-    },
     clearHovers(data) {
       data.hoveredGlobs = []
       data.hoveredNodes = []
     },
 
-    // NODES
+    // Nodes
     createNode(data) {
       commands.createNode(data)
     },
@@ -945,7 +761,7 @@ const state = createState({
       data.nodes[payload.id].locked = !data.nodes[payload.id].locked
     },
 
-    // GLOBS
+    // Globs
     setPointingToSelectedGlobsOptions(data, payload: Partial<IGlob>) {
       commands.updateGlobOptions(data, payload)
     },
@@ -962,7 +778,13 @@ const state = createState({
       commands.splitGlob(data, payload.id)
     },
 
-    // HANDLES
+    // Handles
+    setSelectedHandle(data, payload: { id: string; handle: IHandle }) {
+      data.selectedHandle = payload
+    },
+    clearSelectedHandle(data) {
+      data.selectedHandle = undefined
+    },
     beginHandleMove(data, payload: { id: string; handle: IHandle }) {
       data.selectedHandle = payload
       handleSession = new HandleSession(data, payload.id, payload.handle)
@@ -978,14 +800,8 @@ const state = createState({
       handleSession.complete(data)
       handleSession = undefined
     },
-    setSelectedHandle(data, payload: { id: string; handle: IHandle }) {
-      data.selectedHandle = payload
-    },
-    clearSelectedHandle(data) {
-      data.selectedHandle = undefined
-    },
 
-    // ANCHORS
+    // Anchors
     beginAnchorMove(data, payload: { id: string; anchor: IAnchor }) {
       anchorSession = new AnchorSession(data, payload.id, payload.anchor)
     },
@@ -1001,7 +817,7 @@ const state = createState({
       anchorSession = undefined
     },
 
-    // Dragging
+    // Moving Stuff
     beginMove(data) {
       moveSession = new MoveSession(data)
     },
@@ -1019,7 +835,8 @@ const state = createState({
     clearSnaps(data) {
       data.snaps.active = []
     },
-    // Translations (single properties)
+
+    // Translations (from the panel)
     beginTranslation(data, payload: ITranslation) {
       translateSession = new TranslateSession(data, payload)
     },
@@ -1034,7 +851,8 @@ const state = createState({
       translateSession.complete(data)
       translateSession = undefined
     },
-    // Moving bounds (single properties)
+
+    // Moving bounds (from the panel)
     changeBoundsX(data, payload: { value: number }) {
       commands.moveBounds(data, [payload.value, 0])
     },
@@ -1047,7 +865,8 @@ const state = createState({
     changeBoundsHeight(data, payload: { value: number }) {
       commands.resizeBounds(data, [0, payload.value])
     },
-    // Edge / Corner Transforms
+
+    // Edge or corner transforms
     beginEdgeTransform(data, payload: { edge: number }) {
       transformSession = new TransformSession(data, "edge", payload.edge)
     },
@@ -1065,6 +884,7 @@ const state = createState({
       transformSession.complete(data)
       transformSession = undefined
     },
+
     // Rotations
     beginRotate(data) {
       rotateSession = new RotateSession(data)
@@ -1094,13 +914,6 @@ const state = createState({
       data.shareUrl = undefined
     },
 
-    // DATA
-    saveData(data) {
-      if (typeof window === "undefined") return
-      if (typeof localStorage === "undefined") return
-      localStorage.setItem("glob_aldata_v6", JSON.stringify(data))
-    },
-
     // EVENTS
     setup(data) {
       if (typeof window === "undefined") return
@@ -1117,8 +930,6 @@ const state = createState({
       data.hoveredNodes = []
       data.hoveredGlobs = []
       data.snaps.active = []
-      // data.generated.nodeIds = []
-      // data.generated.globIds = []
       data.fill = false
 
       if (typeof window !== "undefined") {

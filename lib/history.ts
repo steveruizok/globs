@@ -96,6 +96,7 @@ class BaseHistory<T> {
     const command = this.stack[this.pointer]
     command.undo(data)
     this.pointer--
+    this.save(data)
   }
 
   redo = (data: T) => {
@@ -103,6 +104,13 @@ class BaseHistory<T> {
     const command = this.stack[this.pointer + 1]
     command.redo(data, false)
     this.pointer++
+    this.save(data)
+  }
+
+  save = (data: T) => {
+    if (typeof window === "undefined") return
+    if (typeof localStorage === "undefined") return
+    localStorage.setItem("glob_aldata_v6", JSON.stringify(data))
   }
 }
 

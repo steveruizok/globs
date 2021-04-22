@@ -87,7 +87,8 @@ export default function Handles({
         position={isPrime ? points.F0p : points.F0}
         isSelected={isSelected}
         isPrime={isPrime}
-        onSelect={(e) =>
+        onSelect={(e) => {
+          if (e.buttons !== 1) return
           state.send("POINTED_ANCHOR", {
             id,
             anchor: isPrime ? "ap" : "a",
@@ -96,13 +97,14 @@ export default function Handles({
             metaKey: e.metaKey || e.ctrlKey,
             ctrlKey: e.ctrlKey,
           })
-        }
+        }}
       />
       <Anchor
         position={isPrime ? points.F1p : points.F1}
         isSelected={isSelected}
         isPrime={isPrime}
-        onSelect={(e) =>
+        onSelect={(e) => {
+          if (e.buttons !== 1) return
           state.send("POINTED_ANCHOR", {
             id,
             anchor: isPrime ? "bp" : "b",
@@ -111,13 +113,14 @@ export default function Handles({
             metaKey: e.metaKey || e.ctrlKey,
             ctrlKey: e.ctrlKey,
           })
-        }
+        }}
       />
       {/* Handle */}
       <Handle
         isPrime={isPrime}
         position={position}
-        onSelect={(e) =>
+        onSelect={(e) => {
+          if (e.buttons !== 1) return
           state.send("POINTED_HANDLE", {
             id,
             handle: isPrime ? "Dp" : "D",
@@ -126,7 +129,7 @@ export default function Handles({
             metaKey: e.metaKey || e.ctrlKey,
             ctrlKey: e.ctrlKey,
           })
-        }
+        }}
       />
     </g>
   )

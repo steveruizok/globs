@@ -109,6 +109,7 @@ export default function Editor({ isShareLink = false, project }: Props) {
 
   const handlePointerCancel = useCallback(
     (e: React.PointerEvent<HTMLDivElement>) => {
+      if (e.buttons !== 1) return
       inputs.handlePointerCancel(
         e.clientX,
         e.clientY,
@@ -131,7 +132,7 @@ export default function Editor({ isShareLink = false, project }: Props) {
   )
 
   const handlePointerDown = useCallback((e: PointerEvent) => {
-    // pointer.points.add(e.pointerId)
+    if (e.buttons !== 1) return
     inputs.handlePointerDown(
       e.clientX,
       e.clientY,
@@ -211,6 +212,8 @@ export default function Editor({ isShareLink = false, project }: Props) {
   const handleWrapperPointerDown = useCallback(
     (e: React.PointerEvent<HTMLDivElement>) => {
       if (e.target.constructor.name !== "SVGSVGElement") return
+
+      if (e.buttons !== 1) return
       state.send("POINTED_CANVAS", {
         shiftKey: e.shiftKey,
         optionKey: e.altKey,

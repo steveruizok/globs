@@ -44,6 +44,7 @@ const BaseNode = forwardRef<SVGCircleElement, Props>(function BaseNode(
         fill="transparent"
         stroke="transparent"
         onPointerDown={(e) => {
+          if (e.buttons !== 1) return
           state.send("POINTED_NODE", {
             id,
             shiftKey: e.shiftKey,
@@ -52,7 +53,8 @@ const BaseNode = forwardRef<SVGCircleElement, Props>(function BaseNode(
             ctrlKey: e.ctrlKey,
           })
         }}
-        onDoubleClick={(e) =>
+        onDoubleClick={(e) => {
+          if (e.buttons !== 1) return
           state.send("TOGGLED_CAP", {
             id,
             shiftKey: e.shiftKey,
@@ -60,9 +62,10 @@ const BaseNode = forwardRef<SVGCircleElement, Props>(function BaseNode(
             metaKey: e.metaKey || e.ctrlKey,
             ctrlKey: e.ctrlKey,
           })
-        }
+        }}
         onPointerEnter={(e) => {
           e.stopPropagation()
+          if (e.buttons !== 1) return
           state.send("HOVERED_NODE", {
             id,
             shiftKey: e.shiftKey,
@@ -71,7 +74,8 @@ const BaseNode = forwardRef<SVGCircleElement, Props>(function BaseNode(
             ctrlKey: e.ctrlKey,
           })
         }}
-        onPointerOut={(e) =>
+        onPointerOut={(e) => {
+          if (e.buttons !== 1) return
           state.send("UNHOVERED_NODE", {
             id,
             shiftKey: e.shiftKey,
@@ -79,7 +83,7 @@ const BaseNode = forwardRef<SVGCircleElement, Props>(function BaseNode(
             metaKey: e.metaKey || e.ctrlKey,
             ctrlKey: e.ctrlKey,
           })
-        }
+        }}
       />
       {!isFilled &&
         (isLocked ? (

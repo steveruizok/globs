@@ -55,10 +55,10 @@ export default function Toolbar() {
           <Disc />
         </IconButton>
         <IconButton
-          title="Create Globs (L)"
+          title="Create Globs (G)"
           disabled={!hasSelectedNodes}
           data-active={isGlobbing}
-          onClick={() => state.send("PRESSED_TOOLBAR_BUTTON_GLOBBING_NODES")}
+          onClick={() => state.send("STARTED_GLOBBING_NODES")}
         >
           <ArrowRight />
         </IconButton>

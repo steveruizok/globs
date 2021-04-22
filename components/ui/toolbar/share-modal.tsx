@@ -1,17 +1,15 @@
 import * as Dialog from "@radix-ui/react-dialog"
 import { useStateDesigner } from "@state-designer/react"
 import state, { useSelector } from "lib/state"
-import { IProject } from "lib/types"
-import { copyToClipboard, postJsonToEndpoint } from "lib/utils"
-import { useEffect, useRef } from "react"
 import {
-  BookOpen,
-  Copy,
-  RotateCcw,
-  RotateCw,
-  Share,
-  Trash,
-} from "react-feather"
+  createSharedProject,
+  deleteSharedProject,
+  fetchSharedProject,
+  updateSharedProject,
+} from "lib/supabase"
+import { copyToClipboard } from "lib/utils"
+import { useEffect, useRef } from "react"
+import { BookOpen, Copy, RotateCw, Share, Trash } from "react-feather"
 import { styled } from "stitches.config"
 import Button from "../button"
 import IconButton from "../icon-button"
@@ -135,9 +133,11 @@ export default function ShareModal() {
           shared: {
             on: {
               DELETED_SHARE_LINK: {
+                if: "hasShareUrl",
                 to: "deletingShareLink",
               },
               UPDATED_SHARE_LINK: {
+                if: "hasShareUrl",
                 to: "updatingShareLink",
               },
             },
@@ -180,7 +180,7 @@ export default function ShareModal() {
     },
     conditions: {
       hasShareUrl(data) {
-        return !!data.shareUrl
+        return !!state.data.shareUrl
       },
     },
     actions: {
@@ -193,91 +193,38 @@ export default function ShareModal() {
     },
     asyncs: {
       async fetchShareLink(data) {
-        const result = await postJsonToEndpoint("fetch-share-link", {
-          id: state.data.id,
-        })
+        const result = await fetchSharedProject(state.data)
 
-        if (result.response === "Success.") {
-          data.shareUrl = result.url
+        if (result.error === null) {
+          const { uuid } = result.data[0]
+          data.shareUrl = uuid
         } else {
-          throw Error("Did not find a share link for this project ID.")
+          throw result.error
         }
       },
       async createShareUrl(data) {
-        const {
-          id,
-          name,
-          nodes,
-          globs,
-          groups,
-          pages,
-          code,
-          version,
-        } = state.data
+        const result = await createSharedProject(state.data)
 
-        const project: IProject = {
-          id,
-          name,
-          nodes,
-          globs,
-          groups,
-          pages,
-          version,
-          code,
-        }
-
-        const result = await postJsonToEndpoint("create-share-link", {
-          name,
-          document: JSON.stringify(project),
-        })
-
-        if (result.response === "Success.") {
-          data.shareUrl = result.url
-          state.send("CREATED_SHARE_LINK", { url: result.url })
+        if (result.error === null) {
+          const { uuid } = result.data[0]
+          data.shareUrl = uuid
+          state.send("CREATED_SHARE_LINK", { url: uuid })
         } else {
-          throw Error(result.response)
+          throw result.error
         }
       },
       async deleteShareUrl(data) {
-        const result = await postJsonToEndpoint("delete-share-link", {
-          url: data.shareUrl,
-        })
+        const result = await deleteSharedProject(state.data)
 
-        if (result.response === "Success.") {
-          data.shareUrl = undefined
+        if (result.error === null) {
           state.send("DELETED_SHARE_LINK")
+          data.shareUrl = undefined
         } else {
-          throw Error(result.response)
+          throw result.error
         }
       },
-      async updateShareLink() {
-        const {
-          id,
-          name,
-          nodes,
-          globs,
-          groups,
-          pages,
-          code,
-          version,
-        } = state.data
-
-        const project: IProject = {
-          id,
-          name,
-          nodes,
-          globs,
-          groups,
-          pages,
-          version,
-          code,
-        }
-
-        await postJsonToEndpoint("update-share-link", {
-          id: state.data.id,
-          name,
-          document: JSON.stringify(project),
-        })
+      async updateShareLink(data) {
+        await updateSharedProject(state.data)
       },
     },
   })
