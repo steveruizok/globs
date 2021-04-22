@@ -111,7 +111,6 @@ export default function Editor({ isShareLink = false, project }: Props) {
 
   const handlePointerCancel = useCallback(
     (e: React.PointerEvent<HTMLDivElement>) => {
-      if (e.buttons !== 1) return
       inputs.handlePointerCancel(
         e.clientX,
         e.clientY,

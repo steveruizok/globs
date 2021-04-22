@@ -407,7 +407,7 @@ const state = createState({
                 STOPPED_MOVING_THUMBSTICK: { to: "notPointing" },
               },
             },
-            draggingThumbstick: {
+            draggingWithThumbstick: {
               onEnter: "beginMove",
               on: {
                 MOVED_THUMBSTICK: "updateMove",
