@@ -17,20 +17,20 @@ export default function ZoomPanel() {
   )
 }
 
-const Container = styled('div', {
-  position: 'absolute',
-  bottom: '0px',
-  left: '0px',
-  borderRadius: '4px',
-  pointerEvents: 'all',
-  userSelect: 'none',
-  padding: '4px 8px',
-  font: '$mono',
-  color: '$muted',
-  backgroundColor: '$panel',
-  border: '1px solid $border',
+const Container = styled("div", {
+  position: "absolute",
+  bottom: "0px",
+  left: "0px",
+  borderRadius: "4px",
+  pointerEvents: "all",
+  userSelect: "none",
+  padding: "4px 8px",
+  font: "$mono-ui",
+  color: "$muted",
+  backgroundColor: "$panel",
+  border: "1px solid $border",
 
-  '&:hover': {
-    color: '$text',
-  }
+  "&:hover": {
+    color: "$text",
+  },
 })

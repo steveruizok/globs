@@ -2,10 +2,9 @@ import { ICanvasItems, IData } from "lib/types"
 import { getGlobPoints } from "./utils"
 
 export const initialData: IData = {
-  // Document
   version: "1",
   id: Date.now().toString(),
-  name: "My Project",
+  name: "Loading...",
   code: {
     0: {
       id: "0",
@@ -25,6 +24,51 @@ export const initialData: IData = {
     },
   },
   groups: {},
+  nodes: {},
+  globs: {},
+  // Client state
+  nodeIds: [],
+  globIds: [],
+  theme: "dark",
+  codePanel: {
+    fontSize: 13,
+  },
+  viewport: {
+    point: [0, 0],
+    size: [0, 0],
+    scroll: [0, 0],
+  },
+  document: {
+    point: [400, 300],
+    size: [0, 0],
+  },
+  camera: {
+    point: [400, 300],
+    zoom: 1,
+  },
+  fill: false,
+  brush: undefined,
+  bounds: undefined,
+  snaps: {
+    active: [],
+  },
+  readOnly: false,
+  pointingId: undefined,
+  hoveredNodes: [],
+  hoveredGlobs: [],
+  highlightNodes: [],
+  highlightGlobs: [],
+  selectedNodes: [],
+  selectedGlobs: [],
+  selectedHandle: undefined,
+  generated: {
+    nodeIds: [],
+    globIds: [],
+  },
+}
+
+export const defaultData: IData = {
+  ...initialData,
   nodes: {
     1: {
       id: "1",
@@ -132,44 +176,8 @@ export const initialData: IData = {
       locked: false,
     },
   },
-  // Client state
-  theme: "dark",
-  codePanel: {
-    fontSize: 13,
-  },
-  viewport: {
-    point: [0, 0],
-    size: [0, 0],
-    scroll: [0, 0],
-  },
-  document: {
-    point: [400, 300],
-    size: [0, 0],
-  },
-  camera: {
-    point: [400, 300],
-    zoom: 1,
-  },
-  fill: false,
-  brush: undefined,
-  bounds: undefined,
-  snaps: {
-    active: [],
-  },
   nodeIds: ["1", "2", "3", "4", "5"],
   globIds: ["g0", "g1", "g2"],
-  pointingId: undefined,
-  hoveredNodes: [],
-  hoveredGlobs: [],
-  highlightNodes: [],
-  highlightGlobs: [],
-  selectedNodes: [],
-  selectedGlobs: [],
-  selectedHandle: undefined,
-  generated: {
-    nodeIds: [],
-    globIds: [],
-  },
 }
 
 for (const key in initialData.globs) {

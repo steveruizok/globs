@@ -91,6 +91,8 @@ class BaseHistory<T> {
       this.stack = this.stack.slice(this.stack.length - this.maxLength)
       this.pointer = this.maxLength - 1
     }
+
+    this.save(data)
   }
 
   undo = (data: T) => {

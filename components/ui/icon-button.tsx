@@ -10,6 +10,7 @@ const IconButton = styled("button", {
   justifyContent: "center",
   cursor: "pointer",
   outline: "none",
+  color: "$text",
 
   "@media (min-width: 768px)": {
     "&:hover:enabled": {

@@ -21,6 +21,7 @@ import CodePanel from "./ui/code-panel/code-panel"
 import ZoomPanel from "./ui/zoom-panel"
 import Thumbstick from "./ui/thumbstick"
 import { IProject } from "lib/types"
+import ReadOnlyPanel from "./ui/read-only"
 
 const DOT_RADIUS = 2,
   ANCHOR_RADIUS = 4,
@@ -48,6 +49,7 @@ export default function Editor({ isShareLink = false, project }: Props) {
 
   const isLoading = useSelector((state) => state.isIn("loading"))
   const isFilled = useSelector((state) => state.data.fill)
+  const isReadOnly = useSelector((state) => state.data.readOnly)
 
   // When we zoom or pan, manually update the svg's viewbox
   // This is expensive, so we want to set this property
@@ -303,6 +305,7 @@ export default function Editor({ isShareLink = false, project }: Props) {
               <CodePanel />
               <ZoomPanel />
               <Thumbstick />
+              {isReadOnly && <ReadOnlyPanel />}
             </Main>
           </Layout>
         </EditorContainer>

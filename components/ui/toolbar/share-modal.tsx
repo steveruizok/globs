@@ -45,7 +45,7 @@ const Trigger = styled(Dialog.Trigger, {
 })
 
 const Overlay = styled(Dialog.Overlay, {
-  backgroundColor: "rgba(255, 255, 255, .7)",
+  backgroundColor: "$soft",
   position: "fixed",
   top: 0,
   right: 0,
@@ -63,7 +63,8 @@ const Content = styled(Dialog.Content, {
   maxHeight: "85vh",
   padding: "20px 24px",
   marginTop: "-5vh",
-  backgroundColor: "white",
+  color: "$text",
+  backgroundColor: "$panel",
   borderRadius: 16,
   font: "$docs",
   boxShadow:
@@ -90,6 +91,8 @@ const ActionContainer = styled("div", {
     marginRight: 8,
     padding: "0px 12px",
     outline: "none",
+    backgroundColor: "$canvas",
+    color: "$text",
   },
 })
 
@@ -112,7 +115,7 @@ export default function ShareModal() {
   const local = useStateDesigner({
     data: { shareUrl, error: "" },
     on: {
-      OPENED_MODAL: { to: "fetchingShareLink" },
+      OPENED_SHARE_LINK_MODAL: { to: "fetchingShareLink" },
     },
     initial: "fetchingShareLink",
     states: {
@@ -198,6 +201,7 @@ export default function ShareModal() {
         if (result.error === null) {
           const { uuid } = result.data[0]
           data.shareUrl = uuid
+          state.send("GOT_SHARE_LINK", { url: uuid })
         } else {
           throw result.error
         }
@@ -240,7 +244,7 @@ export default function ShareModal() {
   return (
     <Dialog.Root
       onOpenChange={(isOpen) => {
-        local.send("OPENED_MODAL")
+        local.send("OPENED_SHARE_LINK_MODAL")
         state.send(
           isOpen ? "OPENED_SHARE_LINK_MODAL" : "CLOSED_SHARE_LINK_MODAL"
         )
@@ -250,7 +254,7 @@ export default function ShareModal() {
       <Trigger title="Share">
         <Share />
       </Trigger>
-      <Content>
+      <Content onKeyDown={(e) => e.stopPropagation()}>
         <ActionContainer>
           {local.whenIn({
             shared: (

@@ -35,8 +35,8 @@ export async function getServerSideProps(
 
   const { data, error } = await fetchSharedProjectByUuid(uuid.toString())
 
-  if (error !== null) {
-    context.res.setHeader("Location", `/not-found`)
+  if ((data && data[0] === undefined) || error !== null) {
+    context.res.setHeader("Location", `/`)
     context.res.statusCode = 307
     return {
       props: {},

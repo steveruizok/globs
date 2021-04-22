@@ -1,8 +1,11 @@
+import router from "next/router"
+import { v4 as uuid } from "uuid"
+import { MutableRefObject } from "react"
 import { motionValue } from "framer-motion"
 import { createState, createSelectorHook } from "@state-designer/react"
 import * as vec from "lib/vec"
-
-import { initialData } from "./data"
+import { current } from "immer"
+import { initialData, defaultData } from "./data"
 import history from "lib/history"
 import inputs from "lib/inputs"
 import exports from "lib/exports"
@@ -21,19 +24,18 @@ import {
   ITranslation,
   INode,
   ICanvasItems,
+  IProject,
 } from "lib/types"
 import { getSelectedBoundingBox, screenToWorld, throttle } from "utils"
 import { roundBounds } from "./bounds-utils"
 import migrate from "./migrations"
 import clipboard from "./clipboard"
-import { MutableRefObject } from "react"
 import BrushSession from "./sessions/BrushSession"
 
 export const elms: Record<string, MutableRefObject<SVGElement>> = {}
 
 const state = createState({
   data: initialData,
-  onEnter: "setup",
   on: {
     MOUNTED_ELEMENT: { secretlyDo: "mountElement" },
     UNMOUNTED_ELEMENT: { secretlyDo: "deleteElement" },
@@ -64,20 +66,19 @@ const state = createState({
     OPENED_EDITABLE_PROJECT: ["clearReadonly", "enableHistory"],
     OPENED_SHARE_LINK: { to: "viewingShareLink" },
     OPENED_SHARE_LINK_MODAL: { to: "shareLinkModal" },
+    DOWNLOADED_SHARE_LINK: { do: "mergeSharedLinkToLocal" },
   },
   initial: "loading",
   states: {
     loading: {
       on: {
         MOUNTED: [
-          "setup",
-          "setViewport",
           {
             if: "isShareLink",
-            do: ["setReadonly", "disableHistory"],
-            else: ["clearReadonly", "enableHistory"],
+            do: ["setReadonly", "disableHistory", "loadProject"],
+            else: ["clearReadonly", "enableHistory", "loadLocalProject"],
           },
-          { to: "ready" },
+          { do: ["setViewport", "setup"], to: "ready" },
         ],
       },
     },
@@ -467,6 +468,7 @@ const state = createState({
     },
     shareLinkModal: {
       on: {
+        GOT_SHARE_LINK: { do: "setShareLink" },
         CREATED_SHARE_LINK: { do: "setShareLink" },
         DELETED_SHARE_LINK: { do: "deleteShareLink" },
         CLOSED_SHARE_LINK_MODAL: { to: "ready" },
@@ -936,16 +938,61 @@ const state = createState({
     deleteShareLink(data) {
       data.shareUrl = undefined
     },
+    mergeSharedLinkToLocal(data) {
+      if (typeof window === "undefined") return
+      if (typeof localStorage === "undefined") return
+      const saved = localStorage.getItem("glob_aldata_v6")
+      const d = current(data)
+
+      if (saved) {
+        const toSave = migrate(JSON.parse(saved))
+        let id: string
+        for (let nodeId in d.nodes) {
+          id = nodeId
+          if (toSave.nodes[id]) id = uuid()
+          toSave.nodes[id] = d.nodes[nodeId]
+        }
+        for (let globId in d.globs) {
+          id = globId
+          if (toSave.globs[id]) id = uuid()
+          toSave.globs[id] = d.globs[globId]
+        }
+        for (let groupId in d.groups) {
+          id = groupId
+          if (toSave.groups[id]) id = uuid()
+          toSave.groups[id] = d.groups[groupId]
+        }
+        toSave.nodeIds = Object.keys(toSave.nodes)
+        toSave.globIds = Object.keys(toSave.globs)
+        localStorage.setItem("glob_aldata_v6", JSON.stringify(toSave))
+      } else {
+        localStorage.setItem("glob_aldata_v6", JSON.stringify(d))
+      }
+
+      router.push("/")
+    },
 
     // EVENTS
-    setup(data) {
+    loadLocalProject(data) {
       if (typeof window === "undefined") return
       if (typeof localStorage === "undefined") return
       const saved = localStorage.getItem("glob_aldata_v6")
       if (saved) {
         Object.assign(data, migrate(JSON.parse(saved)))
+      } else {
+        Object.assign(data, defaultData)
       }
-
+    },
+    loadProject(
+      data,
+      payload: { project: { name: string; document: IProject } }
+    ) {
+      data.name = payload.project.name
+      Object.assign(data, payload.project.document)
+      data.nodeIds = Object.keys(data.nodes)
+      data.globIds = Object.keys(data.globs)
+    },
+    setup(data) {
       data.selectedNodes = []
       data.selectedGlobs = []
       data.highlightGlobs = []
