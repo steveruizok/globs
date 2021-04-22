@@ -126,7 +126,9 @@ const state = createState({
                         to: "notPointing",
                       },
                       else: {
-                        to: "pointingSelectedNode",
+                        if: "hasMeta",
+                        to: "resizingSelectedNodes",
+                        else: { to: "pointingSelectedNode" },
                       },
                     },
                     else: {
@@ -135,10 +137,14 @@ const state = createState({
                         do: "pushPointingToSelectedNodes",
                         to: "pointingSelectedNode",
                       },
-                      else: {
-                        do: "setPointingToSelectedNodes",
-                        to: "pointingSelectedNode",
-                      },
+                      else: [
+                        "setPointingToSelectedNodes",
+                        {
+                          if: "hasMeta",
+                          to: "resizingSelectedNodes",
+                          else: { to: "pointingSelectedNode" },
+                        },
+                      ],
                     },
                   },
                 ],
@@ -430,11 +436,11 @@ const state = createState({
             HOVERED_NODE: { do: "pushHoveredNode" },
             UNHOVERED_NODE: { do: "pullHoveredNode" },
             POINTED_NODE: {
-              do: ["createGlobBetweenNodes"],
+              do: "createGlobBetweenNodes",
               to: "selecting",
             },
             POINTED_CANVAS: {
-              do: ["createGlobToNewNode"],
+              do: "createGlobToNewNode",
               to: "selecting",
             },
           },
