@@ -54,12 +54,14 @@ const state = createState({
     },
     STARTED_MOVING_THUMBSTICK: {
       if: "hasSelection",
-      to: "panningWithThumbstick",
-      else: { to: "draggingWithThumbstick" },
+      to: "draggingWithThumbstick",
+      else: { to: "panningWithThumbstick" },
     },
     ZOOMED_TO_FIT: "zoomToFit",
     COPIED: "copyToClipboard",
     CUT: ["copyToClipboard", "deleteSelection"],
+    OPENED_READ_ONLY_PROJECT: ["setReadonly", "disableHistory"],
+    OPENED_EDITABLE_PROJECT: ["clearReadonly", "enableHistory"],
     OPENED_SHARE_LINK: { to: "viewingShareLink" },
     OPENED_SHARE_LINK_MODAL: { to: "shareLinkModal" },
   },
@@ -68,25 +70,20 @@ const state = createState({
     loading: {
       on: {
         MOUNTED: [
+          "setup",
           "setViewport",
           {
             if: "isShareLink",
-            to: "viewingShareLink",
-            else: { to: "ready" },
+            do: ["setReadonly", "disableHistory"],
+            else: ["clearReadonly", "enableHistory"],
           },
+          { to: "ready" },
         ],
       },
     },
-    viewingShareLink: {
-      onEnter: ["setViewport"],
-      on: {
-        OPENED_EDITABLE: { to: "loading" },
-      },
-    },
     ready: {
-      onEnter: ["setup"],
       on: {
-        PASTED: ["startPasteFromClipboard"],
+        PASTED: { unless: "isReadOnly", do: "startPasteFromClipboard" },
         FINISHED_PASTE: "finishPasteFromClipboard",
         CHANGED_CODE: "setCode",
       },
@@ -106,7 +103,7 @@ const state = createState({
                 DELETED: ["deleteSelection"],
                 HARD_RESET: ["hardReset"],
                 // Pointer
-                TOGGLED_CAP: "toggleNodeCap",
+                TOGGLED_CAP: "toggleSelectedNodesCap",
                 HIGHLIT_GLOB: "pushHighlightGlob",
                 HIGHLIT_NODE: "pushHighlightNode",
                 UNHIGHLIT_GLOB: "pullHighlightGlob",
@@ -126,6 +123,7 @@ const state = createState({
                         to: "notPointing",
                       },
                       else: {
+                        unless: "isReadOnly",
                         if: "hasMeta",
                         to: "resizingSelectedNodes",
                         else: { to: "pointingSelectedNode" },
@@ -140,6 +138,7 @@ const state = createState({
                       else: [
                         "setPointingToSelectedNodes",
                         {
+                          unless: "isReadOnly",
                           if: "hasMeta",
                           to: "resizingSelectedNodes",
                           else: { to: "pointingSelectedNode" },
@@ -175,15 +174,14 @@ const state = createState({
                     },
                   },
                 ],
-                POINTED_BOUNDS: [
-                  {
-                    if: "hasMeta",
-                    to: "brushSelecting",
-                    else: {
-                      to: "draggingSelection",
-                    },
+                POINTED_BOUNDS: {
+                  if: "hasMeta",
+                  to: "brushSelecting",
+                  else: {
+                    unless: "isReadOnly",
+                    to: "draggingSelection",
                   },
-                ],
+                },
                 POINTED_CANVAS: [
                   {
                     unless: "hasShift",
@@ -191,29 +189,33 @@ const state = createState({
                   },
                   { to: "brushSelecting" },
                 ],
-                POINTED_ANCHOR: [
-                  {
-                    do: "setPointingId",
-                    to: "pointingAnchor",
-                  },
-                ],
+                POINTED_ANCHOR: {
+                  unless: "isReadOnly",
+                  do: "setPointingId",
+                  to: "pointingAnchor",
+                },
                 POINTED_HANDLE: {
+                  unless: "isReadOnly",
                   do: "setPointingId",
                   to: "pointingHandle",
                 },
                 POINTED_BOUNDS_EDGE: {
+                  unless: "isReadOnly",
                   do: "beginEdgeTransform",
                   to: "transforming",
                 },
                 POINTED_BOUNDS_CORNER: {
+                  unless: "isReadOnly",
                   do: "beginCornerTransform",
                   to: "transforming",
                 },
                 POINTED_ROTATE_CORNER: {
+                  unless: "isReadOnly",
                   to: "rotating",
                 },
                 // Panel
                 STARTED_translating: {
+                  unless: "isReadOnly",
                   to: "translating",
                 },
                 SET_NODES_X: "setPointingToSelectedNodessPointX",
@@ -221,13 +223,13 @@ const state = createState({
                 SET_NODES_RADIUS: "setPointingToSelectedNodessRadius",
                 SET_NODES_CAP: "setPointingToSelectedNodessCap",
                 SET_NODES_LOCKED: "setPointingToSelectedNodessLocked",
-                TOGGLED_NODE_LOCKED: "toggleNodeLocked",
-                SET_GLOB_OPTIONS: "setPointingToSelectedGlobsOptions",
+                TOGGLED_NODE_LOCKED: "toggleSelectedNodesLocked",
+                SET_GLOB_OPTIONS: "setSelectedGlobOptions",
                 CHANGED_BOUNDS_X: "changeBoundsX",
                 CHANGED_BOUNDS_Y: "changeBoundsY",
                 CHANGED_BOUNDS_WIDTH: "changeBoundsWidth",
                 CHANGED_BOUNDS_HEIGHT: "changeBoundsHeight",
-                LOCKED_NODES: "lockSelectedNodes",
+                LOCKED_NODES: "toggleSelectedNodesLocked",
                 GENERATED_ITEMS: "refreshGeneratedItems",
                 // Navigator
                 MOVED_NODE_ORDER: "moveNodeOrder",
@@ -249,6 +251,7 @@ const state = createState({
               on: {
                 STOPPED_POINTING: { to: "notPointing" },
                 MOVED_POINTER: {
+                  unless: "isReadOnly",
                   if: "distanceImpliesDrag",
                   to: "draggingSelection",
                 },
@@ -259,6 +262,7 @@ const state = createState({
                 STOPPED_POINTING: { to: "notPointing" },
                 PRESSED_META: { to: "resizingSelectedNodes" },
                 MOVED_POINTER: {
+                  unless: "isReadOnly",
                   if: "distanceImpliesDrag",
                   to: "draggingSelection",
                 },
@@ -274,7 +278,7 @@ const state = createState({
                 RELEASED_OPTION: "updateMove",
                 MOVED_POINTER: "updateMove",
                 STOPPED_POINTING: {
-                  do: ["completeMove"],
+                  do: "completeMove",
                   to: "notPointing",
                 },
               },
@@ -293,7 +297,7 @@ const state = createState({
                 },
                 MOVED_POINTER: "updateRadiusMove",
                 STOPPED_POINTING: {
-                  do: ["completeRadiusMove"],
+                  do: "completeRadiusMove",
                   to: "notPointing",
                 },
               },
@@ -314,7 +318,7 @@ const state = createState({
                   to: "notPointing",
                 },
                 STOPPED_POINTING: {
-                  do: ["completeHandleMove"],
+                  do: "completeHandleMove",
                   to: "notPointing",
                 },
               },
@@ -330,7 +334,7 @@ const state = createState({
                   to: "notPointing",
                 },
                 STOPPED_POINTING: {
-                  do: ["completeAnchorMove"],
+                  do: "completeAnchorMove",
                   to: "notPointing",
                 },
               },
@@ -378,7 +382,7 @@ const state = createState({
                 MOVED_POINTER: "updateRotate",
                 WHEELED: "updateRotate",
                 STOPPED_POINTING: {
-                  do: ["completeRotate"],
+                  do: "completeRotate",
                   to: "notPointing",
                 },
                 CANCELLED: { do: "cancelRotate", to: "notPointing" },
@@ -407,7 +411,7 @@ const state = createState({
               on: {
                 MOVED_THUMBSTICK: "updateMove",
                 STOPPED_MOVING_THUMBSTICK: {
-                  do: ["completeMove"],
+                  do: "completeMove",
                   to: "notPointing",
                 },
               },
@@ -470,6 +474,9 @@ const state = createState({
     },
   },
   conditions: {
+    isReadOnly(data) {
+      return data.readOnly
+    },
     isShareLink(data, payload: { isShareLink: boolean }) {
       return payload.isShareLink
     },
@@ -529,7 +536,21 @@ const state = createState({
       clipboard.finishPaste(data, copied)
     },
 
+    // Readonly
+    setReadonly(data) {
+      data.readOnly = true
+    },
+    clearReadonly(data) {
+      data.readOnly = false
+    },
+
     // History
+    enableHistory() {
+      history.enable()
+    },
+    disableHistory() {
+      history.disable()
+    },
     undo(data) {
       history.undo(data)
     },
@@ -724,11 +745,11 @@ const state = createState({
     createNode(data) {
       commands.createNode(data)
     },
-    lockSelectedNodes(data) {
+    toggleSelectedNodesLocked(data) {
       commands.toggleSelectionLocked(data)
     },
-    toggleNodeCap(data, payload: { id: string }) {
-      commands.toggleNodeCap(data, payload.id)
+    toggleSelectedNodesCap(data, payload: { id: string }) {
+      commands.toggleSelectedNodesCap(data, payload.id)
     },
     setPointingToSelectedNodessPointX(data, payload: { value: number }) {
       commands.setPropertyOnSelectedNodes(data, { x: payload.value })
@@ -762,13 +783,9 @@ const state = createState({
       resizeSession.complete(data)
       resizeSession = undefined
     },
-    // TODO: Make a command
-    toggleNodeLocked(data, payload: { id: string }) {
-      data.nodes[payload.id].locked = !data.nodes[payload.id].locked
-    },
 
     // Globs
-    setPointingToSelectedGlobsOptions(data, payload: Partial<IGlob>) {
+    setSelectedGlobOptions(data, payload: Partial<IGlob>) {
       commands.updateGlobOptions(data, payload)
     },
     createGlobToNewNode(data) {

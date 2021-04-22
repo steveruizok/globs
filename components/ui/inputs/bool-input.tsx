@@ -4,10 +4,11 @@ import { PropContainer } from "./shared"
 interface Props {
   value: boolean | "mixed"
   label: string
+  readOnly: boolean
   onChange: (value: boolean) => void
 }
 
-function BoolInput({ value, label, onChange }: Props) {
+function BoolInput({ value, label, readOnly, onChange }: Props) {
   const rInput = useRef<HTMLInputElement>(null)
 
   function handleKeyDown(e: React.KeyboardEvent) {
@@ -24,6 +25,7 @@ function BoolInput({ value, label, onChange }: Props) {
       <input
         ref={rInput}
         type="checkbox"
+        readOnly={readOnly}
         checked={value === "mixed" ? true : value}
         onKeyDown={handleKeyDown}
         onChange={({ currentTarget: { checked } }) =>

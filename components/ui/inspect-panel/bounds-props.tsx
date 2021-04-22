@@ -10,6 +10,8 @@ import { deepCompare, round, deepCompareArrays } from "lib/utils"
 export default function BoundsProps() {
   const bounds = useSelector((s) => s.values.selectionBounds, deepCompare)
 
+  const isReadOnly = useSelector((s) => s.data.readOnly)
+
   const selectedNodes = useSelector(
     ({ data: { selectedNodes, nodes } }) =>
       selectedNodes.map((id) => nodes[id]),
@@ -56,6 +58,7 @@ export default function BoundsProps() {
         value={round(minX)}
         label="x"
         onChange={handleXChange}
+        readOnly={isReadOnly}
         onPanStart={() =>
           state.send("STARTED_TRANSLATING", { type: "point", axis: "x" })
         }
@@ -64,6 +67,7 @@ export default function BoundsProps() {
         value={round(minY)}
         label="y"
         onChange={handleYChange}
+        readOnly={isReadOnly}
         onPanStart={() =>
           state.send("STARTED_TRANSLATING", { type: "point", axis: "y" })
         }
@@ -72,13 +76,20 @@ export default function BoundsProps() {
         value={round(width)}
         label="width"
         onChange={handleWidthChange}
+        readOnly={isReadOnly}
       />
       <NumberInput
         value={round(height)}
         label="height"
         onChange={handleHeightChange}
+        readOnly={isReadOnly}
       />
-      <BoolInput label="locked" value={locked} onChange={handleLockedChange} />
+      <BoolInput
+        label="locked"
+        value={locked}
+        onChange={handleLockedChange}
+        readOnly={isReadOnly}
+      />
     </>
   )
 }

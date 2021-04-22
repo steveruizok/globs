@@ -11,7 +11,6 @@ const ITEM_HEIGHT = 28
 export default function NodeList() {
   const nodeIds = useSelector((s) => s.data.nodeIds)
   const selectedNodeIds = useSelector((s) => s.data.selectedNodes)
-
   const rContainer = useRef<HTMLDivElement>(null)
   const rList = useRef<HTMLOListElement>(null)
 

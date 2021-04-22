@@ -192,7 +192,7 @@ export default function LearnPanel() {
           <EditorContainer>
             <CodeEditor
               fontSize={local.data.style.fontSize}
-              readOnly={state.isIn("viewingShareLink")}
+              readOnly={state.data.readOnly}
               value={local.data.code.clean}
               onChange={(code) => panelState.send("CHANGED_CODE", { code })}
               onSave={(code) => panelState.send("SAVED_CODE", { code })}

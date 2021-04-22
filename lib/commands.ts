@@ -972,7 +972,7 @@ export function resizeNode(
   )
 }
 
-export function toggleNodeCap(data: IData, id: string) {
+export function toggleSelectedNodesCap(data: IData, id: string) {
   const cap = data.nodes[id].cap
   history.execute(
     data,

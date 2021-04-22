@@ -16,6 +16,7 @@ export interface IProject {
 
 export interface IData extends IProject {
   // State
+  readOnly: boolean
   theme: "dark" | "light"
   viewport: {
     point: number[]

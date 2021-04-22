@@ -5,6 +5,8 @@ import NumberInput from "../inputs/number-input"
 import { useCallback } from "react"
 
 export default function GlobsProps() {
+  const isReadOnly = useSelector((s) => s.data.readOnly)
+
   const selectedGlobs = useSelector(({ data: { selectedGlobs, globs } }) =>
     selectedGlobs.map((id) => globs[id], deepCompareArrays)
   )
@@ -96,6 +98,7 @@ export default function GlobsProps() {
         max={1}
         step={0.01}
         onChange={handleAChange}
+        readOnly={isReadOnly}
         onPanStart={() =>
           state.send("STARTED_TRANSLATING", {
             type: "anchor",
@@ -110,6 +113,7 @@ export default function GlobsProps() {
         max={1}
         step={0.01}
         onChange={handleBChange}
+        readOnly={isReadOnly}
         onPanStart={() =>
           state.send("STARTED_TRANSLATING", {
             type: "anchor",
@@ -124,6 +128,7 @@ export default function GlobsProps() {
         max={1}
         step={0.01}
         onChange={handleApChange}
+        readOnly={isReadOnly}
         onPanStart={() =>
           state.send("STARTED_TRANSLATING", {
             type: "anchor",
@@ -138,6 +143,7 @@ export default function GlobsProps() {
         max={1}
         step={0.01}
         onChange={handleBpChange}
+        readOnly={isReadOnly}
         onPanStart={() =>
           state.send("STARTED_TRANSLATING", {
             type: "anchor",
@@ -151,6 +157,7 @@ export default function GlobsProps() {
             value={selectedGlobs[0].D[0]}
             label="Dx"
             onChange={handleDxChange}
+            readOnly={isReadOnly}
             onPanStart={() =>
               state.send("STARTED_TRANSLATING", {
                 type: "handle",
@@ -163,6 +170,7 @@ export default function GlobsProps() {
             value={selectedGlobs[0].D[1]}
             label="Dy"
             onChange={handleDyChange}
+            readOnly={isReadOnly}
             onPanStart={() =>
               state.send("STARTED_TRANSLATING", {
                 type: "handle",
@@ -175,6 +183,7 @@ export default function GlobsProps() {
             value={selectedGlobs[0].Dp[0]}
             label="Dpx"
             onChange={handleDpxChange}
+            readOnly={isReadOnly}
             onPanStart={() =>
               state.send("STARTED_TRANSLATING", {
                 type: "handle",
@@ -187,6 +196,7 @@ export default function GlobsProps() {
             value={selectedGlobs[0].Dp[1]}
             label="Dpy"
             onChange={handleDpyChange}
+            readOnly={isReadOnly}
             onPanStart={() =>
               state.send("STARTED_TRANSLATING", {
                 type: "handle",
