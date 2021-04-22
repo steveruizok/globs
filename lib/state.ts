@@ -1026,19 +1026,6 @@ export const mvPointer = {
   world: motionValue([0, 0]),
 }
 
-// export const pointer = {
-//   id: -1,
-//   type: "mouse",
-//   point: [0, 0],
-//   delta: [0, 0],
-//   origin: [0, 0],
-//   buttons: 0,
-//   axis: "any" as "any" | "x" | "y",
-//   points: new Set<number>(),
-// }
-
-// export const keys: Record<string, boolean> = {}
-
 /* ------------------ INPUT EVENTS ------------------ */
 
 let prevScale = 1
@@ -1079,7 +1066,7 @@ function handleKeyDown(e: KeyboardEvent) {
     e.metaKey
   )
 
-  if (eventName && state.can(eventName)) {
+  if (eventName) {
     state.send(eventName)
     e.preventDefault()
   }
@@ -1104,7 +1091,7 @@ function handleKeyUp(e: KeyboardEvent) {
     e.preventDefault()
   }
 
-  if (eventName && state.can(eventName)) {
+  if (eventName) {
     state.send(eventName)
     e.preventDefault()
   }
