@@ -982,6 +982,8 @@ const state = createState({
       } else {
         Object.assign(data, defaultData)
       }
+      data.nodeIds = Object.keys(data.nodes)
+      data.globIds = Object.keys(data.globs)
     },
     loadProject(
       data,

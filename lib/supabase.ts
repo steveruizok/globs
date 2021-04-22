@@ -67,7 +67,6 @@ export async function updateSharedProject(data: IData) {
  */
 export async function deleteSharedProject(data: IData) {
   const { shareUrl } = data
-  console.log(shareUrl)
   return supabase
     .from("projects")
     .delete()

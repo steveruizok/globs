@@ -180,8 +180,8 @@ export const defaultData: IData = {
   globIds: ["g0", "g1", "g2"],
 }
 
-for (const key in initialData.globs) {
-  const glob = initialData.globs[key]
-  const [start, end] = glob.nodes.map((id) => initialData.nodes[id])
+for (const key in defaultData.globs) {
+  const glob = defaultData.globs[key]
+  const [start, end] = glob.nodes.map((id) => defaultData.nodes[id])
   glob.points = getGlobPoints(glob, start, end)
 }
