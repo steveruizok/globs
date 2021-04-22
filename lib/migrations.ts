@@ -82,7 +82,7 @@ function migrateToV2(data: Partial<IData>) {
       const json = JSON.parse(saved)
       data.theme = json.theme as IData["theme"]
     } catch (e) {
-      console.log("Could not parse saved theme.")
+      console.warn("Could not parse saved theme.")
     }
     localStorage.removeItem("globs_editor_theme")
   }
@@ -97,14 +97,14 @@ function migrateToV2(data: Partial<IData>) {
       data.code["0"].code = json.code
       data.codePanel.fontSize = json.style.fontSize
     } catch (e) {
-      console.log("Could not parse saved theme.")
+      console.warn("Could not parse code.")
     }
-    localStorage.removeItem("globs_editor_theme")
+    localStorage.removeItem("__globs_code")
   }
 }
 
 export default function migrate(data: IData) {
-  if (!("version" in data) || data.version < 1) {
+  if (!("version" in data) || Number(data.version) < 1) {
     if (data.globIds.length > 0 && "options" in data.globs[data.globIds[0]]) {
       migrateToV1(data)
     }

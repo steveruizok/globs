@@ -1,7 +1,7 @@
-import { createSharedProject } from "lib/supabase-server"
+import { updateSharedProject } from "lib/supabase-server"
 import { NextApiRequest, NextApiResponse } from "next"
 
-export default async function createShareLink(
+export default async function updateShareLink(
   req: NextApiRequest,
   res: NextApiResponse
 ) {
@@ -10,16 +10,16 @@ export default async function createShareLink(
     res.send({ response: "You need to post to this endpoint." })
     return
   }
-
+  const id = req.body.id.toString()
   const name = req.body.name.toString()
   const document = req.body.document.toString()
 
-  const { data, error } = await createSharedProject(name, document)
+  const { error } = await updateSharedProject(id, name, document)
 
   if (error !== null) {
     res.send({ response: error })
   } else {
-    res.send({ response: "Success.", url: data[0].uuid })
+    res.send({ response: "Success." })
   }
 }
 

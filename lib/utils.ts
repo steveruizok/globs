@@ -1810,3 +1810,19 @@ export function getRayRayIntersection(
 
   return [x, y]
 }
+
+export async function postJsonToEndpoint(
+  endpoint: string,
+  data: { [key: string]: unknown }
+) {
+  const d = await fetch(
+    `${process.env.NEXT_PUBLIC_BASE_API_URL}/api/${endpoint}`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+    }
+  )
+
+  return await d.json()
+}

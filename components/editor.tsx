@@ -20,6 +20,7 @@ import LearnPanel from "./ui/learn-panel"
 import CodePanel from "./ui/code-panel/code-panel"
 import ZoomPanel from "./ui/zoom-panel"
 import Thumbstick from "./ui/thumbstick"
+import { IProject } from "lib/types"
 
 const DOT_RADIUS = 2,
   ANCHOR_RADIUS = 4,
@@ -28,7 +29,12 @@ const DOT_RADIUS = 2,
   TOUCH_RADIUS = 12,
   CORNER_SIZE = 5
 
-export default function Editor() {
+interface Props {
+  isShareLink?: boolean
+  project?: IProject
+}
+
+export default function Editor({ isShareLink = false, project }: Props) {
   const rContainer = useRef<HTMLDivElement>(null)
   const rSvg = useRef<SVGSVGElement>(null)
   const rDot = useRef<SVGCircleElement>(null)
@@ -93,7 +99,11 @@ export default function Editor() {
   useEffect(() => {
     const svg = rSvg.current!
     const rect = svg.getBoundingClientRect()
-    state.send("MOUNTED", { size: [rect.width, rect.height] })
+    state.send("MOUNTED", {
+      size: [rect.width, rect.height],
+      isShareLink,
+      project,
+    })
     return () => void state.send("UNMOUNTED")
   }, [])
 

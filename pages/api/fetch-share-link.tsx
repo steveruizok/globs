@@ -1,7 +1,7 @@
-import { createSharedProject } from "lib/supabase-server"
+import { fetchSharedProjectById } from "lib/supabase-server"
 import { NextApiRequest, NextApiResponse } from "next"
 
-export default async function createShareLink(
+export default async function fetchShareLink(
   req: NextApiRequest,
   res: NextApiResponse
 ) {
@@ -11,13 +11,12 @@ export default async function createShareLink(
     return
   }
 
-  const name = req.body.name.toString()
-  const document = req.body.document.toString()
+  const id = req.body.id.toString()
 
-  const { data, error } = await createSharedProject(name, document)
+  const { data, error } = await fetchSharedProjectById(id)
 
   if (error !== null) {
-    res.send({ response: error })
+    res.send({ response: "Failure." })
   } else {
     res.send({ response: "Success.", url: data[0].uuid })
   }

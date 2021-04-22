@@ -5,12 +5,12 @@ import * as monaco from "monaco-editor/esm/vs/editor/editor.api"
 export interface IProject {
   id: string
   name: string
-  code: Record<string, ICode>
   globs: Record<string, IGlob>
   nodes: Record<string, INode>
   groups: Record<string, IGroup>
   pages: Record<string, IPage>
-  version: number
+  code: Record<string, ICode>
+  version: string
   shareUrl?: string
 }
 

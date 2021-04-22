@@ -422,12 +422,16 @@ class Vector {
 
   lrp(b: Vector, t: number) {
     const n = new Vector(this)
-    this.vec(b).mul(t).add(n)
+    this.vec(b)
+      .mul(t)
+      .add(n)
   }
 
   static lrp(a: Vector, b: Vector, t: number) {
     const n = new Vector(a)
-    n.vec(b).mul(t).add(a)
+    n.vec(b)
+      .mul(t)
+      .add(a)
     return n
   }
 
@@ -937,9 +941,9 @@ class Glob {
 
     return {
       C0,
-      r0,
       C1,
-      r1,
+      D,
+      Dp,
       E0,
       E0p,
       E1,
@@ -952,8 +956,8 @@ class Glob {
       N0p,
       N1,
       N1p,
-      D,
-      Dp,
+      r0,
+      r1,
     }
   }
 

@@ -2,9 +2,16 @@ import * as Dialog from "@radix-ui/react-dialog"
 import { useStateDesigner } from "@state-designer/react"
 import state, { useSelector } from "lib/state"
 import { IProject } from "lib/types"
-import { copyToClipboard } from "lib/utils"
+import { copyToClipboard, postJsonToEndpoint } from "lib/utils"
 import { useEffect, useRef } from "react"
-import { BookOpen, Copy, Share, Trash } from "react-feather"
+import {
+  BookOpen,
+  Copy,
+  RotateCcw,
+  RotateCw,
+  Share,
+  Trash,
+} from "react-feather"
 import { styled } from "stitches.config"
 import Button from "../button"
 import IconButton from "../icon-button"
@@ -53,8 +60,8 @@ const Content = styled(Dialog.Content, {
   top: "50%",
   left: "50%",
   transform: "translate(-50%, -50%)",
-  minWidth: 200,
-  maxWidth: 400,
+  minWidth: 360,
+  maxWidth: 360,
   maxHeight: "85vh",
   padding: "20px 24px",
   marginTop: "-5vh",
@@ -74,6 +81,8 @@ const Content = styled(Dialog.Content, {
 const ActionContainer = styled("div", {
   display: "flex",
   height: 40,
+  minWidth: 0,
+  width: "100%",
 
   "& input": {
     flexGrow: 2,
@@ -88,6 +97,8 @@ const ActionContainer = styled("div", {
 
 const InfoBox = styled("div", {
   display: "grid",
+  minWidth: 0,
+  width: "100%",
   gridTemplateColumns: "auto 1fr",
   alignItems: "flex-start",
   font: "$docs",
@@ -101,8 +112,11 @@ export default function ShareModal() {
   const shareUrl = useSelector((state) => state.data.shareUrl)
 
   const local = useStateDesigner({
-    data: { shareUrl },
-    initial: "idle",
+    data: { shareUrl, error: "" },
+    on: {
+      OPENED_MODAL: { to: "fetchingShareLink" },
+    },
+    initial: "fetchingShareLink",
     states: {
       idle: {
         initial: {
@@ -120,45 +134,47 @@ export default function ShareModal() {
           },
           shared: {
             on: {
-              DELETED_SHARE_URL: {
+              DELETED_SHARE_LINK: {
                 to: "deletingShareLink",
+              },
+              UPDATED_SHARE_LINK: {
+                to: "updatingShareLink",
               },
             },
           },
         },
       },
+      fetchingShareLink: {
+        async: {
+          await: "fetchShareLink",
+          onResolve: { to: "shared" },
+          onReject: { to: "notShared" },
+        },
+      },
       creatingShareLink: {
-        initial: "creatingLink",
-        states: {
-          creatingLink: {
-            async: {
-              await: "createShareUrl",
-              onResolve: { to: "idle" },
-              onReject: { to: "errorCreatingLink" },
-            },
-          },
-          errorCreatingLink: {
-            on: {
-              CONFIRMED: { to: "idle" },
-            },
-          },
+        async: {
+          await: "createShareUrl",
+          onResolve: { wait: 0.5, do: "clearError", to: "idle" },
+          onReject: { do: "setError", to: "error" },
         },
       },
       deletingShareLink: {
-        initial: "deletingLink",
-        states: {
-          deletingLink: {
-            async: {
-              await: "deleteShareUrl",
-              onResolve: { to: "idle" },
-              onReject: { to: "errorDeletingLink" },
-            },
-          },
-          errorDeletingLink: {
-            on: {
-              CONFIRMED: { to: "idle" },
-            },
-          },
+        async: {
+          await: "deleteShareUrl",
+          onResolve: { wait: 0.5, do: "clearError", to: "idle" },
+          onReject: { do: "setError", to: "error" },
+        },
+      },
+      updatingShareLink: {
+        async: {
+          await: "updateShareLink",
+          onResolve: { wait: 0.5, do: "clearError", to: "idle" },
+          onReject: { do: "setError", to: "error" },
+        },
+      },
+      error: {
+        on: {
+          CONTINUED: { to: "idle" },
         },
       },
     },
@@ -167,12 +183,27 @@ export default function ShareModal() {
         return !!data.shareUrl
       },
     },
-    actions: {},
+    actions: {
+      setError(data, payload, result: { message: string }) {
+        data.error = result.message
+      },
+      clearError(data) {
+        data.error = ""
+      },
+    },
     asyncs: {
-      async createShareUrl(data) {
-        // const result = await createSharedProject(state.data)
-        // console.log(result)
+      async fetchShareLink(data) {
+        const result = await postJsonToEndpoint("fetch-share-link", {
+          id: state.data.id,
+        })
 
+        if (result.response === "Success.") {
+          data.shareUrl = result.url
+        } else {
+          throw Error("Did not find a share link for this project ID.")
+        }
+      },
+      async createShareUrl(data) {
         const {
           id,
           name,
@@ -191,40 +222,62 @@ export default function ShareModal() {
           globs,
           groups,
           pages,
-          code,
           version,
+          code,
         }
 
-        const document = JSON.stringify(project)
-
-        const path = `/api/create-share-link`
-        const url = process.env.NEXT_PUBLIC_BASE_API_URL + path
-
-        const result = await fetch(url, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ name, document }),
-        }).then((d) => d.json())
+        const result = await postJsonToEndpoint("create-share-link", {
+          name,
+          document: JSON.stringify(project),
+        })
 
         if (result.response === "Success.") {
           data.shareUrl = result.url
           state.send("CREATED_SHARE_LINK", { url: result.url })
+        } else {
+          throw Error(result.response)
         }
       },
       async deleteShareUrl(data) {
-        const path = `/api/delete-share-link`
-        const url = process.env.NEXT_PUBLIC_BASE_API_URL + path
-
-        const result = await fetch(url, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ url: data.shareUrl }),
-        }).then((d) => d.json())
+        const result = await postJsonToEndpoint("delete-share-link", {
+          url: data.shareUrl,
+        })
 
         if (result.response === "Success.") {
           data.shareUrl = undefined
           state.send("DELETED_SHARE_LINK")
+        } else {
+          throw Error(result.response)
         }
+      },
+      async updateShareLink() {
+        const {
+          id,
+          name,
+          nodes,
+          globs,
+          groups,
+          pages,
+          code,
+          version,
+        } = state.data
+
+        const project: IProject = {
+          id,
+          name,
+          nodes,
+          globs,
+          groups,
+          pages,
+          version,
+          code,
+        }
+
+        await postJsonToEndpoint("update-share-link", {
+          id: state.data.id,
+          name,
+          document: JSON.stringify(project),
+        })
       },
     },
   })
@@ -240,7 +293,7 @@ export default function ShareModal() {
   return (
     <Dialog.Root
       onOpenChange={(isOpen) => {
-        console.log(isOpen)
+        local.send("OPENED_MODAL")
         state.send(
           isOpen ? "OPENED_SHARE_LINK_MODAL" : "CLOSED_SHARE_LINK_MODAL"
         )
@@ -262,15 +315,19 @@ export default function ShareModal() {
                     "/p/" +
                     local.data.shareUrl
                   }
+                  onClick={(e) => e.currentTarget.select()}
                   onChange={() => null}
                   readOnly
                 />
                 <IconButton
-                  onClick={() => copyToClipboard(local.data.shareUrl)}
+                  onClick={() => copyToClipboard(rInput.current.value)}
                 >
                   <Copy size={18} />
                 </IconButton>
-                <IconButton onClick={() => local.send("DELETED_SHARE_URL")}>
+                <IconButton onClick={() => local.send("UPDATED_SHARE_LINK")}>
+                  <RotateCw size={18} />
+                </IconButton>
+                <IconButton onClick={() => local.send("DELETED_SHARE_LINK")}>
                   <Trash size={18} />
                 </IconButton>
               </>
@@ -280,26 +337,35 @@ export default function ShareModal() {
                 Create a Share Link
               </Button>
             ),
-            creatingLink: <Button disabled>Creating Share Link...</Button>,
-            deletingLink: <Button disabled>Deleting Share Link...</Button>,
-            errorCreatingLink: (
-              <Button onClick={() => local.send("CONTINUED")}>
-                Try Again?
-              </Button>
-            ),
-            errorDeletingLink: (
+            fetchingShareLink: <Button disabled>Getting Share Link...</Button>,
+            updatingShareLink: <Button disabled>Updating Share Link...</Button>,
+            creatingShareLink: <Button disabled>Creating Share Link...</Button>,
+            deletingShareLink: <Button disabled>Deleting Share Link...</Button>,
+            error: (
               <Button onClick={() => local.send("CONTINUED")}>
                 Try Again?
               </Button>
             ),
           })}
         </ActionContainer>
+        {local.data.error && <p>{local.data.error}</p>}
         <InfoBox>
           <BookOpen size={18} />
-          <p>
-            Anyone with your Share Link can view a snapshot of this project (as
-            it is right now) and copy it down to their own project.
-          </p>
+          {local.whenIn({
+            shared: (
+              <p>
+                To update your Share Link with your current project state, click
+                the <RotateCw strokeWidth={3} size={11} /> button. To delete the
+                link, click the <Trash strokeWidth={3} size={11} /> button.
+              </p>
+            ),
+            default: (
+              <p>
+                Anyone with your Share Link can view a snapshot of this project
+                (as it is right now) and copy it down to their own project.
+              </p>
+            ),
+          })}
         </InfoBox>
       </Content>
     </Dialog.Root>

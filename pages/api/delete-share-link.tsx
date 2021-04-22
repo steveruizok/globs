@@ -1,7 +1,7 @@
-import { deleteSharedProject } from "lib/supabase"
+import { deleteSharedProject } from "lib/supabase-server"
 import { NextApiRequest, NextApiResponse } from "next"
 
-export default async function sandbox(
+export default async function deleteShareLink(
   req: NextApiRequest,
   res: NextApiResponse
 ) {
@@ -13,12 +13,12 @@ export default async function sandbox(
 
   const url = req.body.url.toString()
 
-  const result = await deleteSharedProject(url)
+  const { error } = await deleteSharedProject(url)
 
-  if (result[0]) {
-    res.send({ response: "Success." })
+  if (error !== null) {
+    res.send({ response: error })
   } else {
-    res.send({ response: "Failure." })
+    res.send({ response: "Success." })
   }
 }
 

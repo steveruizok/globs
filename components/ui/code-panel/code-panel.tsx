@@ -95,6 +95,8 @@ const panelState = createState({
       data.code.dirty = payload.code
     },
     saveData(data) {
+      state.send("CHANGED_CODE", { fileId: "0", code: data.code.dirty })
+
       localStorage.setItem(
         "__globs_code",
         JSON.stringify({
@@ -190,6 +192,7 @@ export default function LearnPanel() {
           <EditorContainer>
             <CodeEditor
               fontSize={local.data.style.fontSize}
+              readOnly={state.isIn("viewingShareLink")}
               value={local.data.code.clean}
               onChange={(code) => panelState.send("CHANGED_CODE", { code })}
               onSave={(code) => panelState.send("SAVED_CODE", { code })}

@@ -3,7 +3,7 @@ import { getGlobPoints } from "./utils"
 
 export const initialData: IData = {
   // Document
-  version: 1,
+  version: "1",
   id: Date.now().toString(),
   name: "My Project",
   code: {
@@ -156,7 +156,7 @@ export const initialData: IData = {
   snaps: {
     active: [],
   },
-  nodeIds: ["0", "1", "2", "3", "4"],
+  nodeIds: ["1", "2", "3", "4", "5"],
   globIds: ["g0", "g1", "g2"],
   pointingId: undefined,
   hoveredNodes: [],

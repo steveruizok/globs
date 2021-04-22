@@ -38,40 +38,52 @@ const state = createState({
     MOUNTED_ELEMENT: { secretlyDo: "mountElement" },
     UNMOUNTED_ELEMENT: { secretlyDo: "deleteElement" },
     UNMOUNTED: { do: "teardown", to: "loading" },
+    EXPORTED: "copySvgToClipboard",
+    RESIZED: "setViewport",
+    PRESSED_SPACE: "toggleFill",
+    RELEASED_SPACE: "toggleFill",
+    TOGGLED_FILL: "toggleFill",
+    WHEELED: {
+      ifAny: ["hasShift", "isTrackpadZoom"],
+      do: ["zoomCamera", "updateMvPointer"],
+      else: ["wheelPanCamera", "updateMvPointer"],
+    },
+    MOVED_POINTER: [
+      { secretlyDo: "updateMvPointer" },
+      { if: "hasMiddleButton", do: "panCamera" },
+    ],
+    STARTED_MOVING_THUMBSTICK: {
+      to: "draggingThumbstick",
+    },
+    ZOOMED_TO_FIT: "zoomToFit",
+    COPIED: "copyToClipboard",
+    CUT: ["copyToClipboard", "deleteSelection", "saveData"],
+    OPENED_SHARE_LINK: { to: "viewingShareLink" },
+    OPENED_SHARE_LINK_MODAL: { to: "shareLinkModal" },
   },
   initial: "loading",
   states: {
     loading: {
       on: {
-        MOUNTED: { do: ["setup", "setViewport"], to: "ready" },
+        MOUNTED: {
+          if: "isShareLink",
+          to: "viewingShareLink",
+          else: { to: "ready" },
+        },
+      },
+    },
+    viewingShareLink: {
+      onEnter: ["setViewport"],
+      on: {
+        OPENED_EDITABLE: { to: "loading" },
       },
     },
     ready: {
+      onEnter: ["setup", "setViewport"],
       on: {
-        UNMOUNTED: { do: "teardown", to: "loading" },
-        EXPORTED: "copySvgToClipboard",
-        RESIZED: "setViewport",
-        PRESSED_SPACE: "toggleFill",
-        RELEASED_SPACE: "toggleFill",
-        TOGGLED_FILL: "toggleFill",
-        OPENED_SHARE_LINK_MODAL: { to: "shareLinkModal" },
-        WHEELED: {
-          ifAny: ["hasShift", "isTrackpadZoom"],
-          do: ["zoomCamera", "updateMvPointer"],
-          else: ["wheelPanCamera", "updateMvPointer"],
-        },
-        MOVED_POINTER: [
-          { secretlyDo: "updateMvPointer" },
-          { if: "hasMiddleButton", do: "panCamera" },
-        ],
-        STARTED_MOVING_THUMBSTICK: {
-          to: "draggingThumbstick",
-        },
-        ZOOMED_TO_FIT: "zoomToFit",
-        COPIED: "copyToClipboard",
-        CUT: ["copyToClipboard", "deleteSelection", "saveData"],
         PASTED: ["startPasteFromClipboard", "saveData"],
         FINISHED_PASTE: "finishPasteFromClipboard",
+        CHANGED_CODE: "setCode",
       },
       initial: "selecting",
       states: {
@@ -587,6 +599,9 @@ const state = createState({
     },
   },
   conditions: {
+    isShareLink(data, payload: { isShareLink: boolean }) {
+      return payload.isShareLink
+    },
     distanceImpliesDrag() {
       return vec.dist(inputs.pointer.origin, inputs.pointer.point) > 3
     },
@@ -1066,6 +1081,11 @@ const state = createState({
       rotateSession = undefined
     },
 
+    // CODE
+    setCode(data, payload: { fileId: string; code: string }) {
+      data.code[payload.fileId].code = payload.code
+    },
+
     // SHARE LINKS
     setShareLink(data, payload: { url }) {
       data.shareUrl = payload.url
@@ -1158,6 +1178,7 @@ const state = createState({
       data.snaps.active = []
       data.selectedHandle = undefined
       data.bounds = undefined
+      data.shareUrl = ""
       window.alert("Hard Reset!")
     },
   },
@@ -1253,6 +1274,10 @@ function handleKeyDown(e: KeyboardEvent) {
   }
 
   state.send("PRESSED_KEY", { key: e.key })
+
+  if (e.key === "s" && (isDarwin ? e.metaKey : e.ctrlKey)) {
+    e.preventDefault()
+  }
 }
 
 function handleKeyUp(e: KeyboardEvent) {
@@ -1264,6 +1289,10 @@ function handleKeyUp(e: KeyboardEvent) {
     e.metaKey
   )
 
+  if (eventName && eventName === "SAVED") {
+    e.preventDefault()
+  }
+
   if (eventName && state.can(eventName)) {
     state.send(eventName)
     e.preventDefault()
@@ -1273,6 +1302,7 @@ function handleKeyUp(e: KeyboardEvent) {
 }
 
 export const useSelector = createSelectorHook(state)
+
 export default state
 
 // state.onUpdate((s) => console.log(s.active, s.log[0]))

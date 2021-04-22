@@ -12,7 +12,7 @@ const Button = styled("button", {
   fontWeight: 600,
   transition: "border .2s",
 
-  "&:hover": {
+  "&:hover:not(:disabled)": {
     border: "1px solid $text",
   },
 })
