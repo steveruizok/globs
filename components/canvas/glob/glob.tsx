@@ -20,6 +20,8 @@ export default function Glob({ id, fill, isSelected }: Props) {
   const start = useSelector((s) => s.data.nodes[glob?.nodes[0]])
   const end = useSelector((s) => s.data.nodes[glob?.nodes[1]])
 
+  // console.log(glob.nodes)
+
   const ref = useRegisteredElement<SVGPathElement>(id)
 
   const isDraggingD = useSelector(

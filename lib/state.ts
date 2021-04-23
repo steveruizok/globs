@@ -943,7 +943,8 @@ const state = createState({
       if (typeof window === "undefined") return
       if (typeof localStorage === "undefined") return
       const saved = localStorage.getItem("glob_aldata_v6")
-      const currentDoc = current(data)
+      const currentDoc = { ...current(data) }
+      currentDoc.shareUrls = []
 
       if (saved) {
         const localDoc = migrate(JSON.parse(saved))
@@ -951,14 +952,12 @@ const state = createState({
         const currentBounds = getAllSelectedBoundingBox(currentDoc)
 
         // Center selection on new canvas
-
         const delta = [
           localBounds.minX - currentBounds.minX,
           localBounds.maxX + 200 - currentBounds.minY,
         ]
 
         const { selectedNodes, nodes, selectedGlobs, globs } = currentDoc
-
         for (const nodeId of selectedNodes) {
           nodes[nodeId].point = vec.round(
             vec.add(currentDoc.nodes[nodeId].point, delta)
@@ -974,16 +973,13 @@ const state = createState({
           )
         }
 
-        // Merge data into local document
-
+        // // Merge data into local document
         let id: string
-
-        const nodeMap: Record<string, string>
-
+        const nodeMap: Record<string, string> = {}
         for (const nodeId in currentDoc.nodes) {
           id = nodeId
-          nodeMap[id] = nodeId
-          const node = currentDoc.nodes[nodeId]
+          nodeMap[nodeId] = nodeId
+          const node = { ...currentDoc.nodes[nodeId] }
           if (localDoc.nodes[id]) {
             id = uuid()
             node.id = id
@@ -991,19 +987,21 @@ const state = createState({
           }
           localDoc.nodes[id] = node
         }
+
         for (const globId in currentDoc.globs) {
           id = globId
-          const glob = currentDoc.globs[globId]
+          const glob = { ...currentDoc.globs[globId] }
           if (localDoc.globs[id]) {
             id = uuid()
             glob.id = id
-            glob.nodes = glob.nodes.map((nodeId) => nodeMap[nodeId])
           }
+          glob.nodes = glob.nodes.map((nodeId) => nodeMap[nodeId])
           localDoc.globs[id] = glob
         }
+
         for (const groupId in currentDoc.groups) {
           id = groupId
-          const group = currentDoc.groups[groupId]
+          const group = { ...currentDoc.groups[groupId] }
           if (localDoc.groups[id]) {
             id = uuid()
             group.id = id
@@ -1012,7 +1010,6 @@ const state = createState({
         }
         localDoc.nodeIds = Object.keys(localDoc.nodes)
         localDoc.globIds = Object.keys(localDoc.globs)
-
         localStorage.setItem("glob_aldata_v6", JSON.stringify(localDoc))
       } else {
         localStorage.setItem("glob_aldata_v6", JSON.stringify(currentDoc))
@@ -1033,6 +1030,7 @@ const state = createState({
       }
       data.nodeIds = Object.keys(data.nodes)
       data.globIds = Object.keys(data.globs)
+      data.readOnly = false
     },
     loadProject(
       data,

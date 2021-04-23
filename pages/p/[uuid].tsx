@@ -3,7 +3,7 @@ import dynamic from "next/dynamic"
 import useTheme from "hooks/useTheme"
 import { GetServerSidePropsContext, GetServerSidePropsResult } from "next"
 import { IProject } from "lib/types"
-import { fetchSharedProjectByUuid } from "lib/supabase-server"
+import { fetchSharedProjectByUuid } from "lib/supabase"
 
 const Editor = dynamic(() => import("components/editor"), { ssr: false })
 
