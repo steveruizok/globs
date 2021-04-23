@@ -644,7 +644,7 @@ const state = createState({
       const bounds = getAllSelectedBoundingBox(data)
 
       const s0 =
-        (viewport.size[0] > 400 ? viewport.size[0] - 528 : viewport.size[0]) /
+        (viewport.size[0] > 720 ? viewport.size[0] - 528 : viewport.size[0]) /
         bounds.width
       const s1 = (viewport.size[1] - 128) / bounds.height
 
