@@ -1,6 +1,4 @@
-import state from "./state"
 import { IData } from "./types"
-import { saveSelectionState } from "./utils"
 
 /* ------------------ Command Class ----------------- */
 
@@ -42,8 +40,12 @@ class BaseCommand<T extends any> {
     this.doFn = options.do
     this.undoFn = options.undo
     this.manualSelection = options.manualSelection || false
-    this.restoreBeforeSelectionState = () => () => {}
-    this.restoreAfterSelectionState = () => () => {}
+    this.restoreBeforeSelectionState = () => () => {
+      null
+    }
+    this.restoreAfterSelectionState = () => () => {
+      null
+    }
   }
 
   undo = (data: T) => {

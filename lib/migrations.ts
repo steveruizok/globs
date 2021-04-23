@@ -103,6 +103,13 @@ function migrateToV2(data: Partial<IData>) {
   }
 }
 
+function supportShareUrls(data: IData) {
+  // @ts-ignore
+  data.shareUrls = [data.shareUrl]
+  // @ts-ignore
+  delete data.shareUrl
+}
+
 export default function migrate(data: IData) {
   if (!("version" in data) || Number(data.version) < 1) {
     if (data.globIds.length > 0 && "options" in data.globs[data.globIds[0]]) {
@@ -111,6 +118,10 @@ export default function migrate(data: IData) {
 
     if (!("pageId" in data)) {
       migrateToV2(data)
+    }
+
+    if ("shareUrl" in data) {
+      supportShareUrls(data)
     }
   }
 

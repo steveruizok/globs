@@ -11,7 +11,6 @@ export interface IProject {
   pages: Record<string, IPage>
   code: Record<string, ICode>
   version: string
-  shareUrl?: string
 }
 
 export interface IData extends IProject {
@@ -55,6 +54,7 @@ export interface IData extends IProject {
   codePanel: {
     fontSize: number
   }
+  shareUrls: string[]
 }
 
 export interface ICode {

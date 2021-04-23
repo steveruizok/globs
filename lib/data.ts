@@ -65,6 +65,7 @@ export const initialData: IData = {
     nodeIds: [],
     globIds: [],
   },
+  shareUrls: [],
 }
 
 export const defaultData: IData = {

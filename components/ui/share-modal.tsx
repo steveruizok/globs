@@ -9,10 +9,17 @@ import {
 } from "lib/supabase"
 import { copyToClipboard } from "lib/utils"
 import { useEffect, useRef } from "react"
-import { BookOpen, Copy, RotateCw, Share, Trash } from "react-feather"
+import {
+  BookOpen,
+  Copy,
+  ExternalLink,
+  RotateCw,
+  Share,
+  Trash,
+} from "react-feather"
 import { styled } from "stitches.config"
-import Button from "../button"
-import IconButton from "../icon-button"
+import Button from "./button"
+import IconButton from "./icon-button"
 
 const Trigger = styled(Dialog.Trigger, {
   background: "none",
@@ -51,6 +58,8 @@ const Overlay = styled(Dialog.Overlay, {
   right: 0,
   bottom: 0,
   left: 0,
+  width: "100%",
+  height: "100%",
 })
 
 const Content = styled(Dialog.Content, {
@@ -75,9 +84,13 @@ const Content = styled(Dialog.Content, {
   "&:focus": {
     outline: "none",
   },
+
+  "& a:hover > svg": {
+    color: "$selected",
+  },
 })
 
-const ActionContainer = styled("div", {
+const InputRow = styled("div", {
   display: "flex",
   height: 40,
   minWidth: 0,
@@ -110,10 +123,10 @@ const InfoBox = styled("div", {
 })
 
 export default function ShareModal() {
-  const shareUrl = useSelector((state) => state.data.shareUrl)
+  const shareUrls = useSelector((state) => state.data.shareUrls)
 
   const local = useStateDesigner({
-    data: { shareUrl, error: "" },
+    data: { shareUrls, error: "" },
     on: {
       OPENED_SHARE_LINK_MODAL: { to: "fetchingShareLink" },
     },
@@ -121,7 +134,7 @@ export default function ShareModal() {
     states: {
       idle: {
         initial: {
-          if: "hasShareUrl",
+          if: "hasShareUrls",
           to: "shared",
           else: { to: "notShared" },
         },
@@ -135,12 +148,13 @@ export default function ShareModal() {
           },
           shared: {
             on: {
+              CREATED_SHARE_LINK: {
+                to: "creatingShareLink",
+              },
               DELETED_SHARE_LINK: {
-                if: "hasShareUrl",
                 to: "deletingShareLink",
               },
               UPDATED_SHARE_LINK: {
-                if: "hasShareUrl",
                 to: "updatingShareLink",
               },
             },
@@ -156,14 +170,14 @@ export default function ShareModal() {
       },
       creatingShareLink: {
         async: {
-          await: "createShareUrl",
+          await: "createShareLink",
           onResolve: { wait: 0.5, do: "clearError", to: "idle" },
           onReject: { do: "setError", to: "error" },
         },
       },
       deletingShareLink: {
         async: {
-          await: "deleteShareUrl",
+          await: "deleteShareLink",
           onResolve: { wait: 0.5, do: "clearError", to: "idle" },
           onReject: { do: "setError", to: "error" },
         },
@@ -182,8 +196,8 @@ export default function ShareModal() {
       },
     },
     conditions: {
-      hasShareUrl(data) {
-        return !!state.data.shareUrl
+      hasShareUrls(data) {
+        return !!data.shareUrls.length
       },
     },
     actions: {
@@ -199,36 +213,42 @@ export default function ShareModal() {
         const result = await fetchSharedProject(state.data)
 
         if (result.error === null) {
-          const { uuid } = result.data[0]
-          data.shareUrl = uuid
-          state.send("GOT_SHARE_LINK", { url: uuid })
+          for (const doc of result.data) {
+            if (!data.shareUrls.includes(doc.uuid)) {
+              data.shareUrls.push(doc.uuid)
+            }
+          }
         } else {
           throw result.error
         }
+        state.send("CHANGED_SHARE_LINKS", { uuids: data.shareUrls })
       },
-      async createShareUrl(data) {
+      async createShareLink(data) {
         const result = await createSharedProject(state.data)
 
         if (result.error === null) {
           const { uuid } = result.data[0]
-          data.shareUrl = uuid
-          state.send("CREATED_SHARE_LINK", { url: uuid })
+          data.shareUrls.push(uuid)
+          console.log(data.shareUrls)
+          state.send("CHANGED_SHARE_LINKS", { uuids: data.shareUrls })
         } else {
           throw result.error
         }
       },
-      async deleteShareUrl(data) {
-        const result = await deleteSharedProject(state.data)
+      async deleteShareLink(data, payload: { uuid: string }) {
+        const result = await deleteSharedProject(state.data, payload.uuid)
 
         if (result.error === null) {
-          state.send("DELETED_SHARE_LINK")
-          data.shareUrl = undefined
+          data.shareUrls = data.shareUrls.filter(
+            (uuid) => uuid !== payload.uuid
+          )
+          state.send("CHANGED_SHARE_LINKS", { uuids: data.shareUrls })
         } else {
           throw result.error
         }
       },
-      async updateShareLink(data) {
-        await updateSharedProject(state.data)
+      async updateShareLink(data, payload: { uuid: string }) {
+        await updateSharedProject(state.data, payload.uuid)
       },
     },
   })
@@ -254,52 +274,53 @@ export default function ShareModal() {
       <Trigger title="Share">
         <Share />
       </Trigger>
-      <Content onKeyDown={(e) => e.stopPropagation()}>
-        <ActionContainer>
-          {local.whenIn({
-            shared: (
-              <>
-                <input
-                  ref={rInput}
-                  value={
-                    process.env.NEXT_PUBLIC_BASE_API_URL +
-                    "/p/" +
-                    local.data.shareUrl
-                  }
-                  onClick={(e) => e.currentTarget.select()}
-                  onChange={() => null}
-                  readOnly
-                />
-                <IconButton
-                  onClick={() => copyToClipboard(rInput.current.value)}
-                >
-                  <Copy size={18} />
-                </IconButton>
-                <IconButton onClick={() => local.send("UPDATED_SHARE_LINK")}>
-                  <RotateCw size={18} />
-                </IconButton>
-                <IconButton onClick={() => local.send("DELETED_SHARE_LINK")}>
-                  <Trash size={18} />
-                </IconButton>
-              </>
-            ),
-            notShared: (
-              <Button onClick={() => local.send("CREATED_SHARE_LINK")}>
-                Create a Share Link
-              </Button>
-            ),
-            fetchingShareLink: <Button disabled>Getting Share Link...</Button>,
-            updatingShareLink: <Button disabled>Updating Share Link...</Button>,
-            creatingShareLink: <Button disabled>Creating Share Link...</Button>,
-            deletingShareLink: <Button disabled>Deleting Share Link...</Button>,
-            error: (
-              <Button onClick={() => local.send("CONTINUED")}>
-                Try Again?
-              </Button>
-            ),
-          })}
-        </ActionContainer>
-        {local.data.error && <p>{local.data.error}</p>}
+      <Content
+        onKeyDown={(e) => {
+          if (e.key !== "Escape") {
+            e.stopPropagation()
+          }
+        }}
+      >
+        {local.data.shareUrls.map((uuid) => (
+          <InputRow key={uuid}>
+            <input
+              ref={rInput}
+              value={process.env.NEXT_PUBLIC_BASE_API_URL + "/p/" + uuid}
+              onClick={(e) => e.currentTarget.select()}
+              onChange={() => null}
+              readOnly
+            />
+            <IconButton onClick={() => copyToClipboard(rInput.current.value)}>
+              <Copy size={18} />
+            </IconButton>
+            <IconButton
+              as="a"
+              href={process.env.NEXT_PUBLIC_BASE_API_URL + "/p/" + uuid}
+              target="_blank"
+              rel="nofollow"
+            >
+              <ExternalLink size={18} />
+            </IconButton>
+            <IconButton
+              onClick={() => local.send("UPDATED_SHARE_LINK", { uuid })}
+            >
+              <RotateCw size={18} />
+            </IconButton>
+            <IconButton
+              onClick={() => local.send("DELETED_SHARE_LINK", { uuid })}
+            >
+              <Trash size={18} />
+            </IconButton>
+          </InputRow>
+        ))}
+
+        <Button
+          disabled={!local.can("CREATED_SHARE_LINK")}
+          onClick={() => local.send("CREATED_SHARE_LINK")}
+        >
+          {local.data.error ? "Try Again?" : "Create a New Share Link"}
+        </Button>
+        {/* {local.data.error && <p>{local.data.error}</p>} */}
         <InfoBox>
           <BookOpen size={18} />
           {local.whenIn({

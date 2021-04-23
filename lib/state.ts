@@ -26,7 +26,12 @@ import {
   ICanvasItems,
   IProject,
 } from "lib/types"
-import { getSelectedBoundingBox, screenToWorld, throttle } from "utils"
+import {
+  getAllSelectedBoundingBox,
+  getSelectedBoundingBox,
+  screenToWorld,
+  throttle,
+} from "utils"
 import { roundBounds } from "./bounds-utils"
 import migrate from "./migrations"
 import clipboard from "./clipboard"
@@ -468,9 +473,7 @@ const state = createState({
     },
     shareLinkModal: {
       on: {
-        GOT_SHARE_LINK: { do: "setShareLink" },
-        CREATED_SHARE_LINK: { do: "setShareLink" },
-        DELETED_SHARE_LINK: { do: "deleteShareLink" },
+        CHANGED_SHARE_LINKS: { do: "setShareLinks" },
         CLOSED_SHARE_LINK_MODAL: { to: "ready" },
       },
     },
@@ -932,41 +935,81 @@ const state = createState({
     },
 
     // SHARE LINKS
-    setShareLink(data, payload: { url }) {
-      data.shareUrl = payload.url
-    },
-    deleteShareLink(data) {
-      data.shareUrl = undefined
+    setShareLinks(data, payload: { uuids: string[] }) {
+      data.shareUrls = payload.uuids
+      history.save(data)
     },
     mergeSharedLinkToLocal(data) {
       if (typeof window === "undefined") return
       if (typeof localStorage === "undefined") return
       const saved = localStorage.getItem("glob_aldata_v6")
-      const d = current(data)
+      const currentDoc = current(data)
 
       if (saved) {
-        const toSave = migrate(JSON.parse(saved))
+        const localDoc = migrate(JSON.parse(saved))
+        const localBounds = getAllSelectedBoundingBox(localDoc)
+        const currentBounds = getAllSelectedBoundingBox(currentDoc)
+
+        // Center selection on new canvas
+
+        const delta = [
+          localBounds.minX - currentBounds.minX,
+          localBounds.maxX + 200 - currentBounds.minY,
+        ]
+
+        const { selectedNodes, nodes, selectedGlobs, globs } = currentDoc
+
+        for (const nodeId of selectedNodes) {
+          nodes[nodeId].point = vec.round(
+            vec.add(currentDoc.nodes[nodeId].point, delta)
+          )
+        }
+
+        for (const globId of selectedGlobs) {
+          globs[globId].D = vec.round(
+            vec.add(currentDoc.globs[globId].D, delta)
+          )
+          globs[globId].Dp = vec.round(
+            vec.add(currentDoc.globs[globId].Dp, delta)
+          )
+        }
+
+        // Merge data into local document
+
         let id: string
-        for (let nodeId in d.nodes) {
+        for (const nodeId in currentDoc.nodes) {
           id = nodeId
-          if (toSave.nodes[id]) id = uuid()
-          toSave.nodes[id] = d.nodes[nodeId]
+          const node = currentDoc.nodes[nodeId]
+          if (localDoc.nodes[id]) {
+            id = uuid()
+            node.id = id
+          }
+          localDoc.nodes[id] = node
         }
-        for (let globId in d.globs) {
+        for (const globId in currentDoc.globs) {
           id = globId
-          if (toSave.globs[id]) id = uuid()
-          toSave.globs[id] = d.globs[globId]
+          const glob = currentDoc.globs[globId]
+          if (localDoc.globs[id]) {
+            id = uuid()
+            glob.id = id
+          }
+          localDoc.globs[id] = glob
         }
-        for (let groupId in d.groups) {
+        for (const groupId in currentDoc.groups) {
           id = groupId
-          if (toSave.groups[id]) id = uuid()
-          toSave.groups[id] = d.groups[groupId]
+          const group = currentDoc.groups[groupId]
+          if (localDoc.groups[id]) {
+            id = uuid()
+            group.id = id
+          }
+          localDoc.groups[id] = group
         }
-        toSave.nodeIds = Object.keys(toSave.nodes)
-        toSave.globIds = Object.keys(toSave.globs)
-        localStorage.setItem("glob_aldata_v6", JSON.stringify(toSave))
+        localDoc.nodeIds = Object.keys(localDoc.nodes)
+        localDoc.globIds = Object.keys(localDoc.globs)
+
+        localStorage.setItem("glob_aldata_v6", JSON.stringify(localDoc))
       } else {
-        localStorage.setItem("glob_aldata_v6", JSON.stringify(d))
+        localStorage.setItem("glob_aldata_v6", JSON.stringify(currentDoc))
       }
 
       router.push("/")
@@ -1061,7 +1104,7 @@ const state = createState({
       data.snaps.active = []
       data.selectedHandle = undefined
       data.bounds = undefined
-      data.shareUrl = ""
+      data.shareUrls = []
       window.alert("Hard Reset!")
     },
   },

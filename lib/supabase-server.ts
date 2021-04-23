@@ -1,8 +1,8 @@
 import { createClient } from "@supabase/supabase-js"
 
 const supabase = createClient(
-  process.env.SUPABASE_URL,
-  process.env.SUPABASE_KEY
+  process.env.NEXT_PUBLIC_SUPABASE_URL,
+  process.env.NEXT_PUBLIC_SUPABASE_KEY
 )
 
 /**
@@ -23,10 +23,7 @@ export async function createSharedProject(name: string, document: string) {
  * @returns
  */
 export async function fetchSharedProjectById(id: string) {
-  return supabase
-    .from("projects")
-    .select("*")
-    .eq("document->>id", id)
+  return supabase.from("projects").select("*").eq("document->>id", id)
 }
 
 /**
@@ -35,10 +32,7 @@ export async function fetchSharedProjectById(id: string) {
  * @returns
  */
 export async function fetchSharedProjectByUuid(uuid: string) {
-  return supabase
-    .from("projects")
-    .select("*")
-    .eq("uuid", uuid)
+  return supabase.from("projects").select("*").eq("uuid", uuid)
 }
 
 /**
@@ -65,8 +59,5 @@ export async function updateSharedProject(
  * @returns
  */
 export async function deleteSharedProject(uuid: string) {
-  return supabase
-    .from("projects")
-    .delete()
-    .eq("uuid", uuid)
+  return supabase.from("projects").delete().eq("uuid", uuid)
 }

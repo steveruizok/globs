@@ -14,7 +14,7 @@ import {
 } from "react-feather"
 import { styled } from "stitches.config"
 import useTheme from "hooks/useTheme"
-import ShareModel from "./share-modal"
+import ShareModel from "../share-modal"
 import IconButton from "../icon-button"
 
 export default function Toolbar() {

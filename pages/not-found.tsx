@@ -1,3 +1,9 @@
-export default function Oops() {
-  return <div>Not found</div>
+import Link from "next/link"
+
+export default function NotFound() {
+  return (
+    <div>
+      Not found. <Link href="/">Back to home!</Link>
+    </div>
+  )
 }

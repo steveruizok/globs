@@ -14,12 +14,18 @@ const Button = styled("button", {
   color: "$text",
   userSelect: "none",
   display: "flex",
+  justifyContent: "center",
   alignItems: "center",
 
   "& svg": {
     marginLeft: 8,
     marginBottom: 2,
     strokeWidth: 3,
+  },
+
+  "&:disabled": {
+    color: "$muted",
+    borderColor: "$muted",
   },
 
   "&:hover:not(:disabled)": {

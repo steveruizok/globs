@@ -817,7 +817,13 @@ export function det(
   return a * e * i + b * f * g + c * d * h - a * f * h - b * d * i - c * e * g
 }
 
-// Get a circle from three points.
+/**
+ * Get a circle from three points.
+ * @param p0
+ * @param p1
+ * @param center
+ * @returns
+ */
 export function circleFromThreePoints(A: number[], B: number[], C: number[]) {
   const a = det(A[0], A[1], 1, B[0], B[1], 1, C[0], C[1], 1)
 
@@ -869,7 +875,7 @@ export function throttle<P extends any[], T extends (...args: P) => any>(
 ) {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let inThrottle: boolean, lastFn: any, lastTime: number
-  return function(...args: P) {
+  return function (...args: P) {
     if (preventDefault) args[0].preventDefault()
     // eslint-disable-next-line @typescript-eslint/no-this-alias
     const context = this
@@ -879,7 +885,7 @@ export function throttle<P extends any[], T extends (...args: P) => any>(
       inThrottle = true
     } else {
       clearTimeout(lastFn)
-      lastFn = setTimeout(function() {
+      lastFn = setTimeout(function () {
         if (Date.now() - lastTime >= wait) {
           fn.apply(context, args)
           lastTime = Date.now()
@@ -1558,6 +1564,19 @@ export function getNodeClone(node: INode) {
 
 export function screenToWorld(point: number[], camera: IData["camera"]) {
   return vec.add(vec.div(point, camera.zoom), camera.point)
+}
+
+export function getAllSelectedBoundingBox(data: IData) {
+  const { nodes, globs } = data
+
+  return getCommonBounds(
+    ...Object.values(globs)
+      .filter((glob) => glob.points !== null)
+      .map((glob) =>
+        getGlobBounds(glob, nodes[glob.nodes[0]], nodes[glob.nodes[1]])
+      ),
+    ...Object.values(nodes).map(getNodeBounds)
+  )
 }
 
 export function getSelectedBoundingBox(data: IData) {

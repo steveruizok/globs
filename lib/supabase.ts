@@ -38,10 +38,7 @@ export async function createSharedProject(data: IData) {
  * @returns
  */
 export async function fetchSharedProject(data: IData) {
-  return supabase
-    .from("projects")
-    .select("*")
-    .eq("document->>id", data.id)
+  return supabase.from("projects").select("*").eq("document->>id", data.id)
 }
 
 /**
@@ -51,13 +48,10 @@ export async function fetchSharedProject(data: IData) {
  * @param json
  * @returns
  */
-export async function updateSharedProject(data: IData) {
-  const { shareUrl, name } = data
+export async function updateSharedProject(data: IData, uuid: string) {
+  const { name } = data
   const document = getDocumentFromData(data)
-  return supabase
-    .from("projects")
-    .update({ name, document })
-    .eq("uuid", shareUrl)
+  return supabase.from("projects").update({ name, document }).eq("uuid", uuid)
 }
 
 /**
@@ -65,12 +59,8 @@ export async function updateSharedProject(data: IData) {
  * @param url
  * @returns
  */
-export async function deleteSharedProject(data: IData) {
-  const { shareUrl } = data
-  return supabase
-    .from("projects")
-    .delete()
-    .eq("uuid", shareUrl)
+export async function deleteSharedProject(data: IData, uuid: string) {
+  return supabase.from("projects").delete().eq("uuid", uuid)
 }
 
 /**
@@ -79,8 +69,5 @@ export async function deleteSharedProject(data: IData) {
  * @returns
  */
 export async function fetchSharedProjectByUuid(uuid: string) {
-  return supabase
-    .from("projects")
-    .select("*")
-    .eq("uuid", uuid)
+  return supabase.from("projects").select("*").eq("uuid", uuid)
 }
