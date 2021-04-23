@@ -977,12 +977,17 @@ const state = createState({
         // Merge data into local document
 
         let id: string
+
+        const nodeMap: Record<string, string>
+
         for (const nodeId in currentDoc.nodes) {
           id = nodeId
+          nodeMap[id] = nodeId
           const node = currentDoc.nodes[nodeId]
           if (localDoc.nodes[id]) {
             id = uuid()
             node.id = id
+            nodeMap[nodeId] = id
           }
           localDoc.nodes[id] = node
         }
@@ -992,6 +997,7 @@ const state = createState({
           if (localDoc.globs[id]) {
             id = uuid()
             glob.id = id
+            glob.nodes = glob.nodes.map((nodeId) => nodeMap[nodeId])
           }
           localDoc.globs[id] = glob
         }
