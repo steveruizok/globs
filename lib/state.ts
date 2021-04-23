@@ -80,10 +80,10 @@ const state = createState({
         MOUNTED: [
           {
             if: "isShareLink",
-            do: ["setReadonly", "disableHistory", "loadProject"],
+            do: ["setReadonly", "disableHistory", "loadSharedProject"],
             else: ["clearReadonly", "enableHistory", "loadLocalProject"],
           },
-          { do: ["setViewport", "setup"], to: "ready" },
+          { do: ["setViewport", "centerCamera", "setup"], to: "ready" },
         ],
       },
     },
@@ -638,6 +638,27 @@ const state = createState({
       document.point = vec.sub(document.point, vec.sub(c1, c0))
       camera.point = document.point
     },
+    centerCamera(data) {
+      const { camera, document, viewport } = data
+
+      const bounds = getAllSelectedBoundingBox(data)
+
+      const s0 =
+        (viewport.size[0] > 400 ? viewport.size[0] - 528 : viewport.size[0]) /
+        bounds.width
+      const s1 = (viewport.size[1] - 128) / bounds.height
+
+      camera.zoom = Math.min(s0, s1)
+
+      document.size = vec.round(vec.div(viewport.size, camera.zoom))
+
+      camera.point = vec.sub(
+        [bounds.minX + bounds.width / 2, bounds.minY + bounds.height / 2],
+        vec.div(document.size, 2)
+      )
+
+      document.point = camera.point
+    },
 
     // Selection
     deleteSelection(data) {
@@ -957,25 +978,28 @@ const state = createState({
           localBounds.maxX + 200 - currentBounds.minY,
         ]
 
+        // Move the incoming items out of the way.
+
         const { selectedNodes, nodes, selectedGlobs, globs } = currentDoc
+
         for (const nodeId of selectedNodes) {
-          nodes[nodeId].point = vec.round(
-            vec.add(currentDoc.nodes[nodeId].point, delta)
-          )
+          nodes[nodeId].point = vec.round(vec.add(nodes[nodeId].point, delta))
         }
 
         for (const globId of selectedGlobs) {
-          globs[globId].D = vec.round(
-            vec.add(currentDoc.globs[globId].D, delta)
-          )
-          globs[globId].Dp = vec.round(
-            vec.add(currentDoc.globs[globId].Dp, delta)
-          )
+          globs[globId].D = vec.round(vec.add(globs[globId].D, delta))
+          globs[globId].Dp = vec.round(vec.add(globs[globId].Dp, delta))
         }
 
-        // // Merge data into local document
+        // Merge data into the local document. If items with the same
+        // id exist in the local document, we create new ids for the
+        // incoming items. Make sure to update references, too (e.g the
+        // glob.nodes array).
+
         let id: string
+
         const nodeMap: Record<string, string> = {}
+
         for (const nodeId in currentDoc.nodes) {
           id = nodeId
           nodeMap[nodeId] = nodeId
@@ -1008,8 +1032,10 @@ const state = createState({
           }
           localDoc.groups[id] = group
         }
+
         localDoc.nodeIds = Object.keys(localDoc.nodes)
         localDoc.globIds = Object.keys(localDoc.globs)
+
         localStorage.setItem("glob_aldata_v6", JSON.stringify(localDoc))
       } else {
         localStorage.setItem("glob_aldata_v6", JSON.stringify(currentDoc))
@@ -1020,28 +1046,22 @@ const state = createState({
 
     // EVENTS
     loadLocalProject(data) {
+      data.readOnly = false
+
       if (typeof window === "undefined") return
       if (typeof localStorage === "undefined") return
       const saved = localStorage.getItem("glob_aldata_v6")
-      if (saved) {
-        Object.assign(data, migrate(JSON.parse(saved)))
-      } else {
-        Object.assign(data, defaultData)
-      }
-      data.nodeIds = Object.keys(data.nodes)
-      data.globIds = Object.keys(data.globs)
-      data.readOnly = false
+      Object.assign(data, saved ? migrate(JSON.parse(saved)) : defaultData)
     },
-    loadProject(
+    loadSharedProject(
       data,
       payload: { project: { name: string; document: IProject } }
     ) {
       data.name = payload.project.name
       Object.assign(data, payload.project.document)
-      data.nodeIds = Object.keys(data.nodes)
-      data.globIds = Object.keys(data.globs)
     },
     setup(data) {
+      data.fill = false
       data.selectedNodes = []
       data.selectedGlobs = []
       data.highlightGlobs = []
@@ -1049,7 +1069,8 @@ const state = createState({
       data.hoveredNodes = []
       data.hoveredGlobs = []
       data.snaps.active = []
-      data.fill = false
+      data.nodeIds = Object.keys(data.nodes)
+      data.globIds = Object.keys(data.globs)
 
       if (typeof window !== "undefined") {
         window.addEventListener("keydown", handleKeyDown)
