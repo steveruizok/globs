@@ -57,17 +57,17 @@ export default function Glob({ id, fill, isSelected }: Props) {
   }, [])
 
   if (!glob) {
-    console.warn(`No glob with id ${id}`)
+    // console.warn(`No glob with id ${id}`)
     return null
   }
 
   if (!start) {
-    console.warn(`No node with id ${glob.nodes[0]} in glob ${id}`)
+    // console.warn(`No node with id ${glob.nodes[0]} in glob ${id}`)
     return null
   }
 
   if (!end) {
-    console.warn(`No glob with id  ${glob.nodes[1]} in glob ${id}`)
+    // console.warn(`No glob with id  ${glob.nodes[1]} in glob ${id}`)
     return null
   }
 
