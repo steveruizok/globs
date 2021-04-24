@@ -64,7 +64,7 @@ const state = createState({
       to: "draggingWithThumbstick",
       else: { to: "panningWithThumbstick" },
     },
-    ZOOMED_TO_FIT: "zoomToFit",
+    ZOOMED_TO_FIT: "zoomCameraToFitContent",
     COPIED: "copyToClipboard",
     CUT: ["copyToClipboard", "deleteSelection"],
     OPENED_READ_ONLY_PROJECT: ["setReadonly", "disableHistory"],
@@ -72,6 +72,7 @@ const state = createState({
     OPENED_SHARE_LINK: { to: "viewingShareLink" },
     OPENED_SHARE_LINK_MODAL: { to: "shareLinkModal" },
     DOWNLOADED_SHARE_LINK: { do: "mergeSharedLinkToLocal" },
+    TOGGLED_THEME: "toggleTheme",
   },
   initial: "loading",
   states: {
@@ -83,7 +84,10 @@ const state = createState({
             do: ["setReadonly", "disableHistory", "loadSharedProject"],
             else: ["clearReadonly", "enableHistory", "loadLocalProject"],
           },
-          { do: ["setViewport", "centerCamera", "setup"], to: "ready" },
+          "setViewport",
+          { if: "isShareLink", do: "zoomCameraToFitContent" },
+          "setup",
+          { to: "ready" },
         ],
       },
     },
@@ -92,6 +96,10 @@ const state = createState({
         PASTED: { unless: "isReadOnly", do: "startPasteFromClipboard" },
         FINISHED_PASTE: "finishPasteFromClipboard",
         CHANGED_CODE: "setCode",
+        OPENED_CODE_PANEL: "openCodePanel",
+        CLOSED_CODE_PANEL: "closeCodePanel",
+        INCREASED_CODE_FONT_SIZE: "increaseCodeFontSize",
+        DECREASED_CODE_FONT_SIZE: "decreaseCodeFontSize",
       },
       initial: "selecting",
       states: {
@@ -236,7 +244,7 @@ const state = createState({
                 CHANGED_BOUNDS_WIDTH: "changeBoundsWidth",
                 CHANGED_BOUNDS_HEIGHT: "changeBoundsHeight",
                 LOCKED_NODES: "toggleSelectedNodesLocked",
-                GENERATED_ITEMS: "refreshGeneratedItems",
+                GENERATED_ITEMS: "setCanvasItems",
                 // Navigator
                 MOVED_NODE_ORDER: "moveNodeOrder",
                 MOVED_GLOB_ORDER: "moveGlobOrder",
@@ -520,11 +528,11 @@ const state = createState({
   },
   actions: {
     // Code panel
-    refreshGeneratedItems(
+    setCanvasItems(
       data,
       payload: { nodes: Record<string, INode>; globs: Record<string, IGlob> }
     ) {
-      commands.refreshGeneratedItems(data, payload)
+      commands.setCanvasItems(data, payload)
     },
 
     // Clipboard
@@ -575,6 +583,9 @@ const state = createState({
     },
 
     // Display
+    toggleTheme(data) {
+      data.theme = data.theme === "dark" ? "light" : "dark"
+    },
     toggleFill(data) {
       data.fill = !data.fill
     },
@@ -615,14 +626,6 @@ const state = createState({
       document.size = vec.round(vec.div(viewport.size, camera.zoom))
       document.point = camera.point
     },
-    zoomToFit(data) {
-      const { camera, viewport, document } = data
-
-      camera.point = [-viewport.size[0] / 2, -viewport.size[1] / 2]
-      camera.zoom = 1
-      document.size = vec.round(vec.div(viewport.size, camera.zoom))
-      document.point = camera.point
-    },
     setViewport(data, payload: { size: number[] }) {
       const { viewport, camera, document } = data
       const c0 = screenToWorld(
@@ -638,18 +641,30 @@ const state = createState({
       document.point = vec.sub(document.point, vec.sub(c1, c0))
       camera.point = document.point
     },
-    centerCamera(data) {
+    zoomCameraToFitContent(data) {
       const { camera, document, viewport } = data
 
       const bounds = getAllSelectedBoundingBox(data)
 
+      if (!bounds) {
+        // Canvas is empty
+        data.camera.zoom = 1
+        data.camera.point = vec.neg(vec.div(viewport.size, 2))
+        return
+      }
+
+      // Find the new camera scale
       const s0 =
         (viewport.size[0] > 720 ? viewport.size[0] - 528 : viewport.size[0]) /
         bounds.width
+
       const s1 = (viewport.size[1] - 128) / bounds.height
 
-      camera.zoom = Math.min(s0, s1)
+      const smallerZoom = Math.min(s0, s1)
 
+      camera.zoom = smallerZoom ? Math.max(0.1, Math.min(smallerZoom, 3)) : 1
+
+      // Center on the bounds
       document.size = vec.round(vec.div(viewport.size, camera.zoom))
 
       camera.point = vec.sub(
@@ -950,9 +965,27 @@ const state = createState({
       rotateSession = undefined
     },
 
-    // CODE
+    // Code Panel
     setCode(data, payload: { fileId: string; code: string }) {
       data.code[payload.fileId].code = payload.code
+      console.log(current(data).code)
+      history.save(data)
+    },
+    openCodePanel(data) {
+      data.codePanel.isOpen = true
+      history.save(data)
+    },
+    closeCodePanel(data) {
+      data.codePanel.isOpen = false
+      history.save(data)
+    },
+    increaseCodeFontSize(data) {
+      data.codePanel.fontSize++
+      history.save(data)
+    },
+    decreaseCodeFontSize(data) {
+      data.codePanel.fontSize--
+      history.save(data)
     },
 
     // SHARE LINKS
@@ -1051,6 +1084,7 @@ const state = createState({
       if (typeof window === "undefined") return
       if (typeof localStorage === "undefined") return
       const saved = localStorage.getItem("glob_aldata_v6")
+
       Object.assign(data, saved ? migrate(JSON.parse(saved)) : defaultData)
     },
     loadSharedProject(
@@ -1082,7 +1116,11 @@ const state = createState({
         window.addEventListener("gestureend", handleGestureEvent)
       }
     },
-    teardown() {
+    teardown(data) {
+      if (!data.readOnly) {
+        history.save(data)
+      }
+
       if (typeof window !== "undefined") {
         window.removeEventListener("keydown", handleKeyDown)
         window.removeEventListener("keyup", handleKeyUp)
@@ -1158,8 +1196,9 @@ let brushSession: BrushSession
 
 /* --------------------- INPUTS --------------------- */
 
-export const isDarwin = /Mac|iPod|iPhone|iPad/.test(window.navigator.platform)
-export const isWindows = /^Win/.test(window.navigator.platform)
+export const isDarwin = () =>
+  /Mac|iPod|iPhone|iPad/.test(window.navigator.platform)
+export const isWindows = () => /^Win/.test(window.navigator.platform)
 
 export const mvPointer = {
   screen: motionValue([0, 0]),
@@ -1213,7 +1252,7 @@ function handleKeyDown(e: KeyboardEvent) {
 
   state.send("PRESSED_KEY", { key: e.key })
 
-  if (e.key === "s" && (isDarwin ? e.metaKey : e.ctrlKey)) {
+  if (e.key === "s" && (isDarwin() ? e.metaKey : e.ctrlKey)) {
     e.preventDefault()
   }
 }

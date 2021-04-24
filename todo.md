@@ -21,24 +21,45 @@
 - [x] Handle snap lines
 - [x] Undo / Redo
 - [x] Translate Session
+
+- [ ] Canvas Improvements
+
+  - [ ] Bounds snapping
+  - [ ] Multitouch dragging, zooming
+  - [ ] Locked globs
+  - [ ] Select two nodes and glob them
+  - [ ] Lock mirrored adjacent handles
+  - [ ] Lock handle position relative to some other position?
+  - [ ] Lock node position relative to some other position?
+
+- [x] Add share links
+
+  - [x] Create endpoints for share links
+  - [x] Create readonly mode
+  - [x] Fetch share link status for a project
+  - [x] Create share link
+  - [x] View share link
+  - [x] Update share link
+  - [x] Delete share link
+
+- [x] Readonly state for viewing share links
+
+  - [x] Create readonly state
+  - [x] Allow selection, copying
+  - [x] Show message about readonly mode
+  - [x] Create button to import to local storage
+
 - [-] Zoom menu
-- [ ] Zoom to content
-- [ ] Drag-glob nodes
-- [ ] Bounds snapping
-- [ ] Multitouch dragging, zooming
-- [ ] Locked globs
-- [ ] Select two nodes and glob them
-- [ ] Lock mirrored adjacent handles
-- [ ] Lock handle position relative to some other position?
-- [ ] Lock node position relative to some other position?
 
-## V2
+  - [x] Zoom to content
+  - [ ] Context menu
+  - [ ] Zoom keyboard shortcuts
 
-- [ ] Make state based on document
+- [-] Make state based on document
 
-  - [ ] Write migrations
+  - [x] Write migrations
   - [ ] Point code editor to state object for code / styles
-  - [ ] Point theme to state object for theme
+  - [x] Point theme to state object for theme
   - [ ] Remove other saves to local storage
 
 - [-] Create pages UI and tree
@@ -52,19 +73,28 @@
   - [ ] Remove layers panel
   - [ ] Add pages, current page when creating nodes / globs
 
-- [x] Add share links
+- [ ] Improved API
 
-  - [x] Create endpoints for share links
-  - [x] Create readonly mode
-  - [x] Fetch share link status for a project
-  - [x] Create share link
-  - [x] View share link
-  - [x] Update share link
-  - [x] Delete share link
+  - [ ] Node class that manages node mutations via static methods
+  - [ ] Glob class that manages glob mutations via static methods
+  - [ ] Update commands / sessions to run changes through classes
 
-- [-] Readonly state for viewing share links
+- [ ] Toolbar
 
-  - [x] Create readonly state
-  - [ ] Allow selection, copying
-  - [ ] Show message about readonly mode
-  - [ ] Create button to import to local storage
+  - [ ] Project name
+  - [ ] Project settings
+  - [ ] Private key for shared links?
+
+- [ ] Collaboration
+
+  - [ ] Add user, current users to data model in state
+  - [ ] Add public flag to data model in database
+  - [ ] Add public / private control to collaboration menu
+  - [ ] Push changes to document
+  - [ ] Subscribe to document changes
+
+- [ ] Open Source
+
+  - [ ] Code of conduct
+  - [ ] Readme w/ contribution guide
+  - [ ] Create tickets

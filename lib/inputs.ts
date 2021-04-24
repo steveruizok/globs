@@ -3,8 +3,10 @@ import { KeyCommand } from "types"
 import state from "lib/state"
 import * as vec from "lib/vec"
 
-export const isDarwin = /Mac|iPod|iPhone|iPad/.test(window.navigator.platform)
-export const isWindows = /^Win/.test(window.navigator.platform)
+export const isDarwin = () =>
+  /Mac|iPod|iPhone|iPad/.test(window.navigator.platform)
+
+export const isWindows = () => /^Win/.test(window.navigator.platform)
 
 class Inputs {
   keys: Record<string, boolean> = {}
@@ -189,7 +191,7 @@ class Inputs {
     ctrlKey = false,
     metaKey = false
   ) => {
-    if (key === "Control" && !isDarwin) key = "Meta"
+    if (key === "Control" && !isDarwin()) key = "Meta"
 
     if (this.keys[key] && !["z", "c", "x", "v"].includes(key)) return
 
@@ -225,7 +227,7 @@ class Inputs {
     ctrlKey = false,
     metaKey = false
   ) => {
-    if (key === "Control" && !isDarwin) key = "Meta"
+    if (key === "Control" && !isDarwin()) key = "Meta"
 
     this.keys[key] = false
 

@@ -1,12 +1,11 @@
-import { createState } from "@state-designer/core"
-import { useStateDesigner } from "@state-designer/react"
-import { motion } from "framer-motion"
 import React, { useEffect, useRef } from "react"
+import { motion } from "framer-motion"
+import { useStateDesigner } from "@state-designer/react"
 import evalCode from "lib/code"
 import CodeDocs from "./code-docs"
 import CodeEditor from "./code-editor"
-import state from "lib/state"
-import { IMonaco, IMonacoEditor } from "types"
+import state, { useSelector } from "lib/state"
+// import { IMonaco, IMonacoEditor } from "types"
 
 import {
   X,
@@ -17,125 +16,72 @@ import {
   ChevronDown,
 } from "react-feather"
 import { styled } from "stitches.config"
-import exampleCode from "./example-code"
-
-const style = {
-  fontSize: 14,
-  isOpen: false,
-}
-
-let code = exampleCode
-
-const saved = localStorage.getItem("__globs_code")
-if (saved !== null) {
-  try {
-    const data = JSON.parse(saved)
-    code = data.code
-    Object.assign(style, data.style)
-  } catch (e) {
-    if (typeof saved === "string") {
-      code = saved
-    }
-  }
-}
-
-const panelState = createState({
-  data: {
-    code: {
-      clean: code,
-      dirty: code,
-    },
-    style,
-  },
-  on: {
-    UNMOUNTED: "saveData",
-    CHANGED_CODE: { secretlyDo: ["setCode", "saveData"] },
-  },
-  initial: style.isOpen ? "expanded" : "collapsed",
-  states: {
-    collapsed: {
-      onEnter: { secretlyDo: ["setIsCollapsed", "saveData"] },
-      on: {
-        TOGGLED_COLLAPSED: { to: "expanded" },
-      },
-    },
-    expanded: {
-      onEnter: { secretlyDo: ["setIsExpanded", "saveData"] },
-      on: {
-        TOGGLED_COLLAPSED: { to: "collapsed" },
-      },
-      initial: "editingCode",
-      states: {
-        editingCode: {
-          on: {
-            SAVED_CODE: ["setCode", "saveData", "saveDirtyToClean", "evalCode"],
-            RAN_CODE: ["saveDirtyToClean", "evalCode"],
-            TOGGLED_DOCS: { to: "viewingDocs" },
-            INCREASED_FONT_SIZE: ["increaseFontSize", "saveData"],
-            DECREASED_FONT_SIZE: ["decreaseFontSize", "saveData"],
-          },
-        },
-        viewingDocs: {
-          on: {
-            TOGGLED_DOCS: { to: "editingCode" },
-          },
-        },
-      },
-    },
-  },
-  conditions: {},
-  actions: {
-    setIsExpanded(data) {
-      data.style.isOpen = true
-    },
-    setIsCollapsed(data) {
-      data.style.isOpen = false
-    },
-    setCode(data, payload: { code: string }) {
-      data.code.dirty = payload.code
-    },
-    saveData(data) {
-      state.send("CHANGED_CODE", { fileId: "0", code: data.code.dirty })
-
-      localStorage.setItem(
-        "__globs_code",
-        JSON.stringify({
-          code: data.code.dirty,
-          style: data.style,
-        })
-      )
-    },
-    saveDirtyToClean(data) {
-      data.code.clean = data.code.dirty
-    },
-    evalCode(data) {
-      try {
-        const { nodes, globs } = evalCode(data.code.clean)
-        state.send("GENERATED_ITEMS", { nodes, globs })
-      } catch (e) {
-        console.error(e)
-      }
-    },
-    increaseFontSize(data) {
-      data.style.fontSize++
-    },
-    decreaseFontSize(data) {
-      data.style.fontSize--
-    },
-  },
-})
+import { ICode } from "lib/types"
 
 export default function LearnPanel() {
+  // const rEditor = useRef<IMonacoEditor>(null)
+  // const rMonaco = useRef<IMonaco>(null)
   const rContainer = useRef<HTMLDivElement>(null)
-  const rEditor = useRef<IMonacoEditor>(null)
-  const rMonaco = useRef<IMonaco>(null)
-  const local = useStateDesigner(panelState)
-  const isCollapsed = local.isIn("collapsed")
+
+  const fileId = "0"
+  const isReadOnly = useSelector((s) => s.data.readOnly)
+  const file = useSelector((s) => s.data.code[fileId])
+  const isOpen = useSelector((s) => s.data.codePanel.isOpen)
+  const fontSize = useSelector((s) => s.data.codePanel.fontSize)
+
+  const local = useStateDesigner({
+    data: {
+      code: file.code,
+    },
+    on: {
+      MOUNTED: "setCode",
+      CHANGED_FILE: "loadFile",
+    },
+    initial: "editingCode",
+    states: {
+      editingCode: {
+        on: {
+          RAN_CODE: "runCode",
+          SAVED_CODE: ["runCode", "saveCode"],
+          CHANGED_CODE: { secretlyDo: "setCode" },
+          TOGGLED_DOCS: { to: "viewingDocs" },
+        },
+      },
+      viewingDocs: {
+        on: {
+          TOGGLED_DOCS: { to: "editingCode" },
+        },
+      },
+    },
+    actions: {
+      loadFile(data, payload: { file: ICode }) {
+        data.code = payload.file.code
+      },
+      setCode(data, payload: { code: string }) {
+        data.code = payload.code
+      },
+      runCode(data) {
+        try {
+          const { nodes, globs } = evalCode(data.code)
+          state.send("GENERATED_ITEMS", { nodes, globs })
+        } catch (e) {
+          console.error(e)
+        }
+      },
+      saveCode(data) {
+        state.send("CHANGED_CODE", { fileId, code: data.code })
+      },
+    },
+  })
 
   useEffect(() => {
-    panelState.send("MOUNTED")
+    local.send("CHANGED_FILE", { file })
+  }, [file])
+
+  useEffect(() => {
+    local.send("MOUNTED", { code: state.data.code[fileId].code })
     return () => {
-      panelState.send("UNMOUNTED")
+      state.send("CHANGED_CODE", { fileId, code: local.data.code })
     }
   }, [])
 
@@ -146,60 +92,60 @@ export default function LearnPanel() {
       dragMomentum={false}
       onKeyDown={(e: React.KeyboardEvent<HTMLDivElement>) => {
         if ((e.key === "s" && e.metaKey) || e.ctrlKey) {
-          panelState.send("RAN_CODE")
+          local.send("SAVED_CODE")
         }
       }}
       onKeyUp={(e: React.KeyboardEvent<HTMLDivElement>) => e.stopPropagation()}
-      isCollapsed={isCollapsed}
+      isCollapsed={!isOpen}
     >
-      {local.isIn("collapsed") ? (
-        <IconButton onClick={() => panelState.send("TOGGLED_COLLAPSED")}>
-          <Code />
-        </IconButton>
-      ) : (
+      {isOpen ? (
         <Content>
           <Header>
-            <IconButton onClick={() => panelState.send("TOGGLED_COLLAPSED")}>
+            <IconButton onClick={() => state.send("CLOSED_CODE_PANEL")}>
               <X />
             </IconButton>
             <h3>Code</h3>
             <ButtonsGroup>
               <FontSizeButtons>
                 <IconButton
-                  disabled={!local.can("INCREASED_FONT_SIZE")}
-                  onClick={() => panelState.send("INCREASED_FONT_SIZE")}
+                  disabled={!local.isIn("editingCode")}
+                  onClick={() => state.send("INCREASED_CODE_FONT_SIZE")}
                 >
                   <ChevronUp />
                 </IconButton>
                 <IconButton
-                  disabled={!local.can("DECREASED_FONT_SIZE")}
-                  onClick={() => panelState.send("DECREASED_FONT_SIZE")}
+                  disabled={!local.isIn("editingCode")}
+                  onClick={() => state.send("DECREASED_CODE_FONT_SIZE")}
                 >
                   <ChevronDown />
                 </IconButton>
               </FontSizeButtons>
-              <IconButton onClick={() => panelState.send("TOGGLED_DOCS")}>
-                <Info size={18} />
+              <IconButton onClick={() => local.send("TOGGLED_DOCS")}>
+                <Info />
               </IconButton>
               <IconButton
-                disabled={!local.can("RAN_CODE")}
-                onClick={() => panelState.send("RAN_CODE")}
+                disabled={!local.isIn("editingCode")}
+                onClick={() => local.send("SAVED_CODE")}
               >
-                <PlayCircle size={18} />
+                <PlayCircle />
               </IconButton>
             </ButtonsGroup>
           </Header>
           <EditorContainer>
             <CodeEditor
-              fontSize={local.data.style.fontSize}
-              readOnly={state.data.readOnly}
-              value={local.data.code.clean}
-              onChange={(code) => panelState.send("CHANGED_CODE", { code })}
-              onSave={(code) => panelState.send("SAVED_CODE", { code })}
+              fontSize={fontSize}
+              readOnly={isReadOnly}
+              value={file.code}
+              onChange={(code) => local.send("CHANGED_CODE", { code })}
+              onSave={() => local.send("SAVED_CODE")}
             />
             <CodeDocs isHidden={!local.isIn("viewingDocs")} />
           </EditorContainer>
         </Content>
+      ) : (
+        <IconButton onClick={() => state.send("OPENED_CODE_PANEL")}>
+          <Code />
+        </IconButton>
       )}
     </PanelContainer>
   )

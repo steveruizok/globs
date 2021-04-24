@@ -7,7 +7,7 @@ import { ICanvasItems, IData } from "types"
  * Move the properties from "Glob.options" onto the glob object itself.
  * @param data
  */
-function migrateToV1(data: IData) {
+function moveGlobOptionsOntoGlob(data: IData) {
   const { globIds, globs } = data
   for (const globId of globIds) {
     const glob: any = globs[globId]
@@ -22,7 +22,8 @@ function migrateToV1(data: IData) {
  * Create the document structure with page, parentIds, groups, and so on.
  * @param data
  */
-function migrateToV2(data: Partial<IData>) {
+function createDocument(data: Partial<IData>) {
+  data.version = "2"
   data.pageId = "0"
 
   data.pages = {
@@ -104,25 +105,30 @@ function migrateToV2(data: Partial<IData>) {
 }
 
 function supportShareUrls(data: IData) {
-  // @ts-ignore
-  data.shareUrls = [data.shareUrl]
-  // @ts-ignore
-  delete data.shareUrl
+  if ("shareUrl" in data) {
+    // @ts-ignore
+    data.shareUrls = [data.shareUrl]
+    // @ts-ignore
+    delete data.shareUrl
+  }
 }
 
 export default function migrate(data: IData) {
   if (!("version" in data) || Number(data.version) < 1) {
     if (data.globIds.length > 0 && "options" in data.globs[data.globIds[0]]) {
-      migrateToV1(data)
+      moveGlobOptionsOntoGlob(data)
     }
+    data.version = "1"
+  }
 
-    if (!("pageId" in data)) {
-      migrateToV2(data)
-    }
+  if (Number(data.version) < 2) {
+    createDocument(data)
+    data.version = "2"
+  }
 
-    if ("shareUrl" in data) {
-      supportShareUrls(data)
-    }
+  if (Number(data.version) < 3) {
+    supportShareUrls(data)
+    data.version = "3"
   }
 
   return data

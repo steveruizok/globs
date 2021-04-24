@@ -118,6 +118,7 @@ class BaseHistory<T> {
   save = (data: T) => {
     if (typeof window === "undefined") return
     if (typeof localStorage === "undefined") return
+
     localStorage.setItem("glob_aldata_v6", JSON.stringify(data))
   }
 

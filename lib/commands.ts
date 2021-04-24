@@ -1048,7 +1048,7 @@ export function setPropertyOnSelectedNodes(
   )
 }
 
-export function refreshGeneratedItems(
+export function setCanvasItems(
   data: IData,
   items: { nodes: Record<string, INode>; globs: Record<string, IGlob> }
 ) {

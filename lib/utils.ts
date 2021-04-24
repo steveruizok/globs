@@ -1569,13 +1569,18 @@ export function screenToWorld(point: number[], camera: IData["camera"]) {
 export function getAllSelectedBoundingBox(data: IData) {
   const { nodes, globs } = data
 
+  const allGlobs = Object.values(globs)
+  const allNodes = Object.values(nodes)
+
+  if (allNodes.length + allGlobs.length === 0) return
+
   return getCommonBounds(
-    ...Object.values(globs)
+    ...allGlobs
       .filter((glob) => glob.points !== null)
       .map((glob) =>
         getGlobBounds(glob, nodes[glob.nodes[0]], nodes[glob.nodes[1]])
       ),
-    ...Object.values(nodes).map(getNodeBounds)
+    ...allNodes.map(getNodeBounds)
   )
 }
 

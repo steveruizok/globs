@@ -52,6 +52,7 @@ export interface IData extends IProject {
     globIds: string[]
   }
   codePanel: {
+    isOpen: boolean
     fontSize: number
   }
   shareUrls: string[]
