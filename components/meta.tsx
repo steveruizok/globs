@@ -3,7 +3,7 @@ import Head from "next/head"
 export default function Meta({ uuid }: { uuid?: string }) {
   const title = "Globs Designer"
   const DESCRIPTION =
-    "Design with globs, a stetchy new design primitive. Tired of the pen tool? Need smarter curves? Want to design from code? Try out globs."
+    "Design with globs, a stretchy new design primitive. Tired of the pen tool? Need smarter curves? Want to design from code? Stretching for your og:description optimal word count? Get started with globs."
   const IMAGE = uuid
     ? `https://globs.design/api/p/${uuid}/social-image`
     : "https://globs.design/globs-social.png"
