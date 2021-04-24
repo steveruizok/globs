@@ -10,7 +10,7 @@ export default async function sandbox(
     query: { uuid },
   } = req
 
-  const url = `${process.env.NEXT_PUBLIC_BASE_API_URL}/p/${uuid.toString()}`
+  const url = `https://globs.design/p/${uuid.toString()}`
 
   const browser = await playwright.launchChromium()
 
