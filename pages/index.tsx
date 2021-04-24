@@ -13,18 +13,5 @@ const Editor = dynamic(() => import("components/editor"), {
 export default function Home() {
   useTheme()
 
-  return (
-    <div>
-      <Head>
-        <title>Glob Editor</title>
-        <link rel="icon" href="/favicon.ico" />
-      </Head>
-
-      <main>
-        <Editor />
-      </main>
-
-      <footer></footer>
-    </div>
-  )
+  return <Editor />
 }

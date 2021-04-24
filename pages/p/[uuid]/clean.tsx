@@ -1,4 +1,3 @@
-import Head from "next/head"
 import dynamic from "next/dynamic"
 import useTheme from "hooks/useTheme"
 import { GetServerSidePropsContext, GetServerSidePropsResult } from "next"
@@ -21,16 +20,7 @@ export default function ProjectPage({ uuid, project }: PageProps) {
   useTheme()
 
   return (
-    <div>
-      <Head>
-        <title>Glob Editor</title>
-        <link rel="icon" href="/favicon.ico" />
-      </Head>
-
-      <main>
-        <Editor isShareLink={true} uuid={uuid} project={project} />
-      </main>
-    </div>
+    <Editor isShareLink={true} uuid={uuid} project={project} clean={true} />
   )
 }
 

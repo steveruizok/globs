@@ -35,9 +35,15 @@ interface Props {
   isShareLink?: boolean
   uuid?: string
   project?: IProject
+  clean?: boolean
 }
 
-export default function Editor({ isShareLink = false, uuid, project }: Props) {
+export default function Editor({
+  isShareLink = false,
+  uuid,
+  project,
+  clean,
+}: Props) {
   const rContainer = useRef<HTMLDivElement>(null)
   const rSvg = useRef<SVGSVGElement>(null)
   const rDot = useRef<SVGCircleElement>(null)
@@ -304,17 +310,21 @@ export default function Editor({ isShareLink = false, uuid, project }: Props) {
               </svg>
               <ContextMenu />
             </SVGWrapper>
-            <Toolbar />
-            <ContentPanel />
-            <InspectPanel />
-            <StatusBar />
-            <Main ref={rMain}>
-              <LearnPanel bounds={rMain} />
-              <CodePanel />
-              <ZoomPanel />
-              <Thumbstick />
-              {isReadOnly && <ReadOnlyPanel />}
-            </Main>
+            {!clean && (
+              <>
+                <Toolbar />
+                <ContentPanel />
+                <InspectPanel />
+                <StatusBar />
+                <Main ref={rMain}>
+                  <LearnPanel bounds={rMain} />
+                  <CodePanel />
+                  <ZoomPanel />
+                  <Thumbstick />
+                  {isReadOnly && <ReadOnlyPanel />}
+                </Main>
+              </>
+            )}
           </Layout>
         </EditorContainer>
       </ContextMenuRoot>
