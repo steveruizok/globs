@@ -20,8 +20,6 @@ export default function Glob({ id, fill, isSelected }: Props) {
   const start = useSelector((s) => s.data.nodes[glob?.nodes[0]])
   const end = useSelector((s) => s.data.nodes[glob?.nodes[1]])
 
-  // console.log(glob.nodes)
-
   const ref = useRegisteredElement<SVGPathElement>(id)
 
   const isDraggingD = useSelector(
@@ -56,7 +54,20 @@ export default function Glob({ id, fill, isSelected }: Props) {
     })
   }, [])
 
-  if (!glob) return null
+  if (!glob) {
+    console.warn(`No glob with id ${id}`)
+    return null
+  }
+
+  if (!start) {
+    console.warn(`No node with id ${glob.nodes[0]} in glob ${id}`)
+    return null
+  }
+
+  if (!end) {
+    console.warn(`No glob with id  ${glob.nodes[1]} in glob ${id}`)
+    return null
+  }
 
   const safe = !!glob.points
   const globPts = glob.points || rPrevPts.current

@@ -1082,6 +1082,15 @@ export function setCanvasItems(
           data.globs[globId] = glob
         }
 
+        for (const globId in data.globs) {
+          if (
+            !data.nodes[data.globs[globId].nodes[0]] ||
+            !data.nodes[data.globs[globId].nodes[1]]
+          ) {
+            delete data.globs[globId]
+          }
+        }
+
         data.generated.nodeIds = Object.keys(items.nodes)
         data.generated.globIds = Object.keys(items.globs)
 

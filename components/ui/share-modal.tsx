@@ -229,7 +229,6 @@ export default function ShareModal() {
         if (result.error === null) {
           const { uuid } = result.data[0]
           data.shareUrls.push(uuid)
-          console.log(data.shareUrls)
           state.send("CHANGED_SHARE_LINKS", { uuids: data.shareUrls })
         } else {
           throw result.error

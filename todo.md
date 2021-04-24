@@ -22,6 +22,11 @@
 - [x] Undo / Redo
 - [x] Translate Session
 
+- [ ] Code Editor
+
+  - [ ] Show errors in glyphs
+  - [ ] Show error text
+
 - [ ] Canvas Improvements
 
   - [ ] Bounds snapping

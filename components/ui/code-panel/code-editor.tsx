@@ -66,7 +66,7 @@ export default function CodeEditor({
     monaco.languages.typescript.javascriptDefaults.addExtraLib(codeAsString)
 
     monaco.languages.registerDocumentFormattingEditProvider("javascript", {
-      async provideDocumentFormattingEdits(model, options, token) {
+      async provideDocumentFormattingEdits(model) {
         const text = prettier.format(model.getValue(), {
           parser: "typescript",
           plugins: [parserTypeScript],

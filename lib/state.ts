@@ -73,7 +73,7 @@ const state = createState({
     OPENED_SHARE_LINK: { to: "viewingShareLink" },
     OPENED_SHARE_LINK_MODAL: { to: "shareLinkModal" },
     DOWNLOADED_SHARE_LINK: { do: "mergeSharedLinkToLocal" },
-    TOGGLED_THEME: "toggleTheme",
+    TOGGLED_THEME: ["toggleTheme", "loadTheme"],
   },
   initial: "loading",
   states: {
@@ -87,7 +87,8 @@ const state = createState({
           },
           "setViewport",
           { if: "isShareLink", do: "zoomCameraToFitContent" },
-          "setup",
+          "loadTheme",
+          "setEvents",
           { to: "ready" },
         ],
       },
@@ -140,7 +141,7 @@ const state = createState({
                       else: {
                         unless: "isReadOnly",
                         if: "hasMeta",
-                        to: "resizingSelectedNodes",
+                        to: "resizingNodes",
                         else: { to: "pointingSelectedNode" },
                       },
                     },
@@ -155,7 +156,7 @@ const state = createState({
                         {
                           unless: "isReadOnly",
                           if: "hasMeta",
-                          to: "resizingSelectedNodes",
+                          to: "resizingNodes",
                           else: { to: "pointingSelectedNode" },
                         },
                       ],
@@ -173,7 +174,9 @@ const state = createState({
                         to: "notPointing",
                       },
                       else: {
-                        to: "pointingSelectedGlob",
+                        if: "hasMeta",
+                        to: "splittingGlob",
+                        else: { to: "pointingSelectedGlob" },
                       },
                     },
                     else: {
@@ -275,7 +278,7 @@ const state = createState({
             pointingSelectedNode: {
               on: {
                 STOPPED_POINTING: { to: "notPointing" },
-                PRESSED_META: { to: "resizingSelectedNodes" },
+                PRESSED_META: { to: "resizingNodes" },
                 MOVED_POINTER: {
                   unless: "isReadOnly",
                   if: "distanceImpliesDrag",
@@ -298,8 +301,7 @@ const state = createState({
                 },
               },
             },
-            // Possibly combine
-            resizingSelectedNodes: {
+            resizingNodes: {
               onEnter: "beginRadiusMove",
               on: {
                 PRESSED_SHIFT: "updateRadiusMove",
@@ -317,7 +319,6 @@ const state = createState({
                 },
               },
             },
-
             pointingHandle: {
               onEnter: [
                 "beginHandleMove",
@@ -491,9 +492,6 @@ const state = createState({
     isReadOnly(data) {
       return data.readOnly
     },
-    isShareLink(data, payload: { isShareLink: boolean }) {
-      return payload.isShareLink
-    },
     distanceImpliesDrag() {
       return vec.dist(inputs.pointer.origin, inputs.pointer.point) > 3
     },
@@ -514,17 +512,20 @@ const state = createState({
     hasSelectedNodes(data) {
       return data.selectedNodes.length > 0
     },
-    isTrackpadZoom(_, payload: { ctrlKey: boolean }) {
-      return inputs.keys.Alt || payload.ctrlKey
+    isTrackpadZoom(_, payload: { optionKey: boolean; ctrlKey: boolean }) {
+      return payload.optionKey || payload.ctrlKey
     },
     hasMiddleButton(_, payload: { isPan: boolean }) {
       return payload.isPan
     },
-    hasMeta() {
-      return inputs.keys.Meta
+    hasMeta(_, payload: { metaKey: boolean }) {
+      return payload.metaKey
     },
-    hasShift() {
-      return inputs.keys.Shift
+    hasShift(_, payload: { shiftKey: boolean }) {
+      return payload.shiftKey
+    },
+    isShareLink(_, payload: { isShareLink: boolean }) {
+      return payload.isShareLink
     },
   },
   actions: {
@@ -586,10 +587,11 @@ const state = createState({
     // Display
     toggleTheme(data) {
       data.theme = data.theme === "dark" ? "light" : "dark"
-      if ("document" in window) {
-        document.body.classList.remove(data.theme === "dark" ? "light" : dark)
-        document.body.classList.add(data.theme === "dark" ? dark : "light")
-      }
+      history.save(data)
+    },
+    loadTheme(data) {
+      document.body.classList.remove(data.theme === "dark" ? "light" : dark)
+      document.body.classList.add(data.theme === "dark" ? dark : "light")
     },
     toggleFill(data) {
       data.fill = !data.fill
@@ -611,18 +613,18 @@ const state = createState({
       inputs.pointer.delta = vec.mul(vec.neg(delta), camera.zoom)
       document.point = camera.point
     },
-    zoomCamera(data, payload: { delta: number[] }) {
+    zoomCamera(data, payload: { shiftKey: boolean; delta: number[] }) {
       const { camera, viewport, document } = data
       const { point } = inputs.pointer
 
       const delta =
-        (vec.mul(vec.neg(payload.delta), 5)[1] / 500) *
+        (vec.mul(vec.neg(payload.delta), 5)[payload.shiftKey ? 0 : 1] / 500) *
         Math.max(0.1, camera.zoom)
 
       const pt0 = vec.add(vec.div(point, camera.zoom), camera.point)
 
-      camera.zoom = Math.max(Math.min(camera.zoom + delta, 10), 0.01)
-      camera.zoom = Math.round(camera.zoom * 100) / 100
+      camera.zoom =
+        Math.round(Math.max(Math.min(camera.zoom + delta, 10), 0.1) * 100) / 100
 
       const pt1 = vec.add(vec.div(point, camera.zoom), camera.point)
 
@@ -667,7 +669,7 @@ const state = createState({
 
       const smallerZoom = Math.min(s0, s1)
 
-      camera.zoom = smallerZoom ? Math.max(0.1, Math.min(smallerZoom, 3)) : 1
+      camera.zoom = smallerZoom ? Math.max(0.1, Math.min(smallerZoom, 1)) : 1
 
       // Center on the bounds
       document.size = vec.round(vec.div(viewport.size, camera.zoom))
@@ -973,7 +975,6 @@ const state = createState({
     // Code Panel
     setCode(data, payload: { fileId: string; code: string }) {
       data.code[payload.fileId].code = payload.code
-      console.log(current(data).code)
       history.save(data)
     },
     openCodePanel(data) {
@@ -1099,7 +1100,7 @@ const state = createState({
       data.name = payload.project.name
       Object.assign(data, payload.project.document)
     },
-    setup(data) {
+    setEvents(data) {
       data.fill = false
       data.selectedNodes = []
       data.selectedGlobs = []

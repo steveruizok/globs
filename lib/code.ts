@@ -168,10 +168,18 @@ class Vector {
   x = 0
   y = 0
 
-  constructor(options = {} as VectorOptions | Vector) {
-    const { x = 0, y = 0 } = options
-    this.x = x
-    this.y = y
+  constructor(x: number, y: number)
+  constructor(vector: Vector, b?: undefined)
+  constructor(options: Point, b?: undefined)
+  constructor(a: VectorOptions | Vector | number, b?: number) {
+    if (typeof a === "number") {
+      this.x = a
+      this.y = b
+    } else {
+      const { x = 0, y = 0 } = a
+      this.x = x
+      this.y = y
+    }
   }
 
   set(v: Vector | Point) {
@@ -422,16 +430,12 @@ class Vector {
 
   lrp(b: Vector, t: number) {
     const n = new Vector(this)
-    this.vec(b)
-      .mul(t)
-      .add(n)
+    this.vec(b).mul(t).add(n)
   }
 
   static lrp(a: Vector, b: Vector, t: number) {
     const n = new Vector(a)
-    n.vec(b)
-      .mul(t)
-      .add(a)
+    n.vec(b).mul(t).add(a)
     return n
   }
 
