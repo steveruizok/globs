@@ -12,7 +12,6 @@ import {
   updateGlobPoints,
   getSelectionSnapshot,
   getGlobPoints,
-  getGlob,
 } from "lib/utils"
 import { getClosestPointOnCurve, getNormalOnCurve } from "lib/bez"
 import history, { Command, CommandType } from "lib/history"
