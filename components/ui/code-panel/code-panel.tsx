@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/ban-ts-comment */
 import React, { useEffect, useRef } from "react"
 import { motion } from "framer-motion"
 import { useStateDesigner } from "@state-designer/react"
@@ -8,9 +9,15 @@ import state, { useSelector } from "lib/state"
 // import { IMonaco, IMonacoEditor } from "types"
 
 const getErrorLineAndColumn = (e: Error) => {
+  // @ts-ignore
+  if ("line" in e) {
+    // @ts-ignore
+    return { line: Number(e.line), column: e.column }
+  }
+
   const result = e.stack.match(/:([0-9]+):([0-9]+)/)
   if (result) {
-    return { line: result[1], column: result[2] }
+    return { line: Number(result[1]) - 1, column: result[2] }
   }
 }
 

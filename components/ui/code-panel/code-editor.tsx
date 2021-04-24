@@ -160,9 +160,9 @@ export default function CodeEditor({
     rDecorations.current = editor.deltaDecorations(rDecorations.current, [
       {
         range: new monaco.Range(
-          Number(error.line) - 2,
+          Number(error.line) - 1,
           0,
-          Number(error.line) - 2,
+          Number(error.line) - 1,
           0
         ),
         options: {
