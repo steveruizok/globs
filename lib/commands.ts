@@ -1099,6 +1099,8 @@ export function setCanvasItems(
 
         data.selectedGlobs = []
         data.selectedNodes = []
+        data.highlightGlobs = []
+        data.highlightNodes = []
         data.hoveredGlobs = []
         data.hoveredNodes = []
       },
@@ -1133,6 +1135,8 @@ export function setCanvasItems(
 
         data.selectedGlobs = []
         data.selectedNodes = []
+        data.highlightGlobs = []
+        data.highlightNodes = []
         data.hoveredGlobs = []
         data.hoveredNodes = []
       },

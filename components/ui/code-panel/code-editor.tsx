@@ -118,8 +118,13 @@ export default function CodeEditor({
       if (e.key === "s" && metaKey) {
         const editor = rEditor.current
         if (!editor) return
-        editor.getAction("editor.action.formatDocument").run()
-        onSave(editor.getModel().getValue(), editor)
+        editor
+          .getAction("editor.action.formatDocument")
+          .run()
+          .then(() =>
+            onSave(rEditor.current?.getModel().getValue(), rEditor.current)
+          )
+
         e.preventDefault()
       }
       if (e.key === "p" && metaKey) {
@@ -137,6 +142,35 @@ export default function CodeEditor({
     []
   )
 
+  const rDecorations = useRef<any>([])
+
+  useEffect(() => {
+    const monaco = rMonaco.current
+    if (!monaco) return
+    const editor = rEditor.current
+    if (!editor) return
+
+    rDecorations.current = editor.deltaDecorations(
+      rDecorations.current,
+      error
+        ? [
+            {
+              range: new monaco.Range(
+                Number(error.line) - 2,
+                0,
+                Number(error.line) - 2,
+                0
+              ),
+              options: {
+                isWholeLine: true,
+                className: "editorLineError",
+              },
+            },
+          ]
+        : []
+    )
+  }, [error])
+
   useEffect(() => {
     const monaco = rMonaco.current
     if (!monaco) return
@@ -151,15 +185,6 @@ export default function CodeEditor({
       fontSize,
     })
   }, [fontSize])
-
-  useEffect(() => {
-    const editor = rEditor.current
-    if (!editor) return
-
-    editor.updateOptions({
-      fontSize,
-    })
-  }, [error])
 
   return (
     <EditorContainer onKeyDown={handleKeydown} onKeyUp={handleKeyUp}>
@@ -178,4 +203,8 @@ export default function CodeEditor({
 
 const EditorContainer = styled("div", {
   height: "100%",
+
+  ".editorLineError": {
+    backgroundColor: "$lineError",
+  },
 })

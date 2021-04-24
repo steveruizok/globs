@@ -34,6 +34,7 @@ export const { styled, global, theme, getCssString } = createCss({
       muted: "rgba(0, 0, 0, 0.16)",
       outline: "rgba(0, 0, 0, 1)",
       fill: "rgba(0, 0, 0, 1)",
+      lineError: "rgba(255, 0,0,.1)",
     },
   },
 })

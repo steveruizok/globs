@@ -7,6 +7,13 @@ import CodeEditor from "./code-editor"
 import state, { useSelector } from "lib/state"
 // import { IMonaco, IMonacoEditor } from "types"
 
+const getErrorLineAndColumn = (e: Error) => {
+  const result = e.stack.match(/:([0-9]+):([0-9]+)/)
+  if (result) {
+    return { line: result[1], column: result[2] }
+  }
+}
+
 import {
   X,
   Code,
@@ -74,7 +81,7 @@ export default function LearnPanel() {
           const { nodes, globs } = evalCode(data.code)
           state.send("GENERATED_ITEMS", { nodes, globs })
         } catch (e) {
-          error = { message: e.message, line: 0, column: 0 }
+          error = { message: e.message, ...getErrorLineAndColumn(e) }
         }
 
         data.error = error
@@ -98,6 +105,8 @@ export default function LearnPanel() {
       state.send("CHANGED_CODE", { fileId, code: local.data.code })
     }
   }, [])
+
+  const { error } = local.data
 
   return (
     <PanelContainer
@@ -144,14 +153,17 @@ export default function LearnPanel() {
               fontSize={fontSize}
               readOnly={isReadOnly}
               value={file.code}
-              error={local.data.error}
+              error={error}
               onChange={(code) => local.send("CHANGED_CODE", { code })}
               onSave={() => local.send("SAVED_CODE")}
               onKey={() => local.send("CLEARED_ERROR")}
             />
             <CodeDocs isHidden={!local.isIn("viewingDocs")} />
           </EditorContainer>
-          <ErrorContainer>{local.data.error?.message}</ErrorContainer>
+          <ErrorContainer>
+            {error &&
+              `(${Number(error.line) - 2}:${error.column}) ${error.message}`}
+          </ErrorContainer>
         </Content>
       ) : (
         <IconButton onClick={() => state.send("OPENED_CODE_PANEL")}>
