@@ -7212,10 +7212,10 @@ playwright-aws-lambda@^0.6.0:
   dependencies:
     lambdafs "^1.3.0"
 
-playwright-core@^1.10.0:
-  version "1.10.0"
-  resolved "https://registry.yarnpkg.com/playwright-core/-/playwright-core-1.10.0.tgz#0ed3590ddf97ec4a5fd4baef40346e2d8e2f19ba"
-  integrity sha512-SDA5KPwnJJSfnNX/b7h8y0ChwBmcbbcCofYXkZGMVuzXZsmHPGLOBRhgkwN2nzJ10Ezf4cd1OcVOeOLKPxjeRg==
+playwright-core@^1.11.0-next-alpha-apr-24-2021:
+  version "1.11.0-next-alpha-apr-24-2021"
+  resolved "https://registry.yarnpkg.com/playwright-core/-/playwright-core-1.11.0-next-alpha-apr-24-2021.tgz#7f042fe3e0c19695fa69ec2fd92b0c5df9bb6b4a"
+  integrity sha512-zBMePr2m+dXGjoDyZk4FoTb7jgOawx2wbhCJhvu6uYGAhiTLv57CvT7Z5sNZ9ldqEeyRaC9H+tM7eV6Nt4Tk3A==
   dependencies:
     commander "^6.1.0"
     debug "^4.1.1"
