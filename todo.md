@@ -27,8 +27,9 @@
   - [ ] Show errors in glyphs
   - [ ] Show error text
 
-- [ ] Canvas Improvements
+- [-] Canvas Improvements
 
+  - [x] Select on right click
   - [ ] Bounds snapping
   - [ ] Multitouch dragging, zooming
   - [ ] Locked globs

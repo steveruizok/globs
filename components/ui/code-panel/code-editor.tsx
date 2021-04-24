@@ -9,6 +9,7 @@ import { IMonaco, IMonacoEditor } from "types"
 
 interface Props {
   value: string
+  error: { line: number }
   fontSize: number
   monacoRef?: React.MutableRefObject<IMonaco>
   editorRef?: React.MutableRefObject<IMonacoEditor>
@@ -18,6 +19,7 @@ interface Props {
   onChange?: (value: string, editor: IMonacoEditor) => void
   onSave?: (value: string, editor: IMonacoEditor) => void
   onError?: (error: Error, line: number, col: number) => void
+  onKey?: () => void
 }
 
 export default function CodeEditor({
@@ -25,9 +27,11 @@ export default function CodeEditor({
   monacoRef,
   fontSize,
   value,
+  error,
   readOnly,
   onChange,
   onSave,
+  onKey,
 }: Props) {
   const { theme } = useTheme()
   const rEditor = useRef<IMonacoEditor>(null)
@@ -102,12 +106,13 @@ export default function CodeEditor({
     })
   }, [])
 
-  const handleChange = useCallback((value: string | undefined) => {
-    onChange(value, rEditor.current)
+  const handleChange = useCallback((code: string | undefined) => {
+    onChange(code, rEditor.current)
   }, [])
 
   const handleKeydown = useCallback(
     (e: React.KeyboardEvent<HTMLDivElement>) => {
+      onKey && onKey()
       e.stopPropagation()
       const metaKey = navigator.platform.match("Mac") ? e.metaKey : e.ctrlKey
       if (e.key === "s" && metaKey) {
@@ -140,13 +145,21 @@ export default function CodeEditor({
 
   useEffect(() => {
     const editor = rEditor.current
-
     if (!editor) return
 
     editor.updateOptions({
       fontSize,
     })
   }, [fontSize])
+
+  useEffect(() => {
+    const editor = rEditor.current
+    if (!editor) return
+
+    editor.updateOptions({
+      fontSize,
+    })
+  }, [error])
 
   return (
     <EditorContainer onKeyDown={handleKeydown} onKeyUp={handleKeyUp}>

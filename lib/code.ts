@@ -1042,7 +1042,13 @@ export default function evalCode(
 ): { nodes: Record<string, INode>; globs: Record<string, IGlob> } {
   nodes.clear()
   globs.clear()
-  Function("Glob", "Node", "Vector", "Utils", code)(Glob, Node, Vector, Utils)
+  Function(
+    "Glob",
+    "Node",
+    "Vector",
+    "Utils",
+    `const fn = () => { ${code} }; fn();`
+  )(Glob, Node, Vector, Utils)
   return {
     nodes: Object.fromEntries(
       Array.from(nodes.values()).map((node) => {

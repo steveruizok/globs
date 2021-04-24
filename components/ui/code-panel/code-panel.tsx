@@ -32,6 +32,7 @@ export default function LearnPanel() {
   const local = useStateDesigner({
     data: {
       code: file.code,
+      error: null as { message: string; line: number; column: number } | null,
     },
     on: {
       MOUNTED: "setCode",
@@ -43,7 +44,8 @@ export default function LearnPanel() {
         on: {
           RAN_CODE: "runCode",
           SAVED_CODE: ["runCode", "saveCode"],
-          CHANGED_CODE: { secretlyDo: "setCode" },
+          CHANGED_CODE: [{ secretlyDo: "setCode" }],
+          CLEARED_ERROR: { if: "hasError", do: "clearError" },
           TOGGLED_DOCS: { to: "viewingDocs" },
         },
       },
@@ -51,6 +53,11 @@ export default function LearnPanel() {
         on: {
           TOGGLED_DOCS: { to: "editingCode" },
         },
+      },
+    },
+    conditions: {
+      hasError(data) {
+        return !!data.error
       },
     },
     actions: {
@@ -61,15 +68,22 @@ export default function LearnPanel() {
         data.code = payload.code
       },
       runCode(data) {
+        let error = null
+
         try {
           const { nodes, globs } = evalCode(data.code)
           state.send("GENERATED_ITEMS", { nodes, globs })
         } catch (e) {
-          console.error(e)
+          error = { message: e.message, line: 0, column: 0 }
         }
+
+        data.error = error
       },
       saveCode(data) {
         state.send("CHANGED_CODE", { fileId, code: data.code })
+      },
+      clearError(data) {
+        data.error = null
       },
     },
   })
@@ -90,12 +104,6 @@ export default function LearnPanel() {
       data-bp-desktop
       ref={rContainer}
       dragMomentum={false}
-      onKeyDown={(e: React.KeyboardEvent<HTMLDivElement>) => {
-        if ((e.key === "s" && e.metaKey) || e.ctrlKey) {
-          local.send("SAVED_CODE")
-        }
-      }}
-      onKeyUp={(e: React.KeyboardEvent<HTMLDivElement>) => e.stopPropagation()}
       isCollapsed={!isOpen}
     >
       {isOpen ? (
@@ -136,11 +144,14 @@ export default function LearnPanel() {
               fontSize={fontSize}
               readOnly={isReadOnly}
               value={file.code}
+              error={local.data.error}
               onChange={(code) => local.send("CHANGED_CODE", { code })}
               onSave={() => local.send("SAVED_CODE")}
+              onKey={() => local.send("CLEARED_ERROR")}
             />
             <CodeDocs isHidden={!local.isIn("viewingDocs")} />
           </EditorContainer>
+          <ErrorContainer>{local.data.error?.message}</ErrorContainer>
         </Content>
       ) : (
         <IconButton onClick={() => state.send("OPENED_CODE_PANEL")}>
@@ -210,7 +221,7 @@ const IconButton = styled("button", {
 const Content = styled("div", {
   display: "grid",
   gridTemplateColumns: "1fr",
-  gridTemplateRows: "auto 1fr",
+  gridTemplateRows: "auto 1fr 28px",
   minWidth: "100%",
   width: 560,
   maxWidth: 560,
@@ -257,6 +268,11 @@ const EditorContainer = styled("div", {
 
 const ErrorContainer = styled("div", {
   overflowX: "scroll",
+  color: "$text",
+  font: "$debug",
+  padding: "0 12px",
+  display: "flex",
+  alignItems: "center",
 })
 
 const FontSizeButtons = styled("div", {
