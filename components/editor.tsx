@@ -9,6 +9,7 @@ import ContextMenu, {
   ContextMenuRoot,
   ContextMenuTrigger,
 } from "./ui/context-menu"
+import { IProject } from "lib/types"
 
 import Canvas from "./canvas/canvas"
 import Cursor from "./ui/cursor"
@@ -20,7 +21,7 @@ import LearnPanel from "./ui/learn-panel"
 import CodePanel from "./ui/code-panel/code-panel"
 import ZoomPanel from "./ui/zoom-panel"
 import Thumbstick from "./ui/thumbstick"
-import { IProject } from "lib/types"
+import Meta from "./meta"
 import ReadOnlyPanel from "./ui/read-only"
 
 const DOT_RADIUS = 2,
@@ -32,10 +33,11 @@ const DOT_RADIUS = 2,
 
 interface Props {
   isShareLink?: boolean
+  uuid?: string
   project?: IProject
 }
 
-export default function Editor({ isShareLink = false, project }: Props) {
+export default function Editor({ isShareLink = false, uuid, project }: Props) {
   const rContainer = useRef<HTMLDivElement>(null)
   const rSvg = useRef<SVGSVGElement>(null)
   const rDot = useRef<SVGCircleElement>(null)
@@ -241,6 +243,7 @@ export default function Editor({ isShareLink = false, project }: Props) {
       onPointerMove={handlePointerMove}
       onTap={handlePointerUp}
     >
+      <Meta uuid={uuid} />
       <ContextMenuRoot>
         <EditorContainer ref={rContainer}>
           <Layout>

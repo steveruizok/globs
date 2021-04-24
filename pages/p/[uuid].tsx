@@ -4,14 +4,20 @@ import useTheme from "hooks/useTheme"
 import { GetServerSidePropsContext, GetServerSidePropsResult } from "next"
 import { IProject } from "lib/types"
 import { fetchSharedProjectByUuid } from "lib/supabase"
-
-const Editor = dynamic(() => import("components/editor"), { ssr: false })
+import Loading from "components/loading"
+const Editor = dynamic(() => import("components/editor"), {
+  ssr: false,
+  loading: function WhileLoading() {
+    return <Loading />
+  },
+})
 
 interface PageProps {
+  uuid?: string
   project?: IProject
 }
 
-export default function ProjectPage({ project }: PageProps) {
+export default function ProjectPage({ uuid, project }: PageProps) {
   useTheme()
 
   return (
@@ -22,7 +28,7 @@ export default function ProjectPage({ project }: PageProps) {
       </Head>
 
       <main>
-        <Editor isShareLink={true} project={project} />
+        <Editor isShareLink={true} uuid={uuid} project={project} />
       </main>
     </div>
   )
@@ -45,6 +51,7 @@ export async function getServerSideProps(
 
   return {
     props: {
+      uuid: uuid.toString(),
       project: data[0],
     },
   }

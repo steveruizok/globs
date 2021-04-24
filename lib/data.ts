@@ -31,6 +31,7 @@ export const initialData: IData = {
   globIds: [],
   theme: "dark",
   codePanel: {
+    isOpen: false,
     fontSize: 13,
   },
   viewport: {
