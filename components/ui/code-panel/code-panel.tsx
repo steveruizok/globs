@@ -162,7 +162,9 @@ export default function LearnPanel() {
           </EditorContainer>
           <ErrorContainer>
             {error &&
-              `(${Number(error.line) - 2}:${error.column}) ${error.message}`}
+              (error.line
+                ? `(${Number(error.line) - 2}:${error.column}) ${error.message}`
+                : error.message)}
           </ErrorContainer>
         </Content>
       ) : (

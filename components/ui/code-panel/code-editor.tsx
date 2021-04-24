@@ -150,25 +150,27 @@ export default function CodeEditor({
     const editor = rEditor.current
     if (!editor) return
 
-    rDecorations.current = editor.deltaDecorations(
-      rDecorations.current,
-      error
-        ? [
-            {
-              range: new monaco.Range(
-                Number(error.line) - 2,
-                0,
-                Number(error.line) - 2,
-                0
-              ),
-              options: {
-                isWholeLine: true,
-                className: "editorLineError",
-              },
-            },
-          ]
-        : []
-    )
+    if (!error) {
+      rDecorations.current = editor.deltaDecorations(rDecorations.current, [])
+      return
+    }
+
+    if (!error.line) return
+
+    rDecorations.current = editor.deltaDecorations(rDecorations.current, [
+      {
+        range: new monaco.Range(
+          Number(error.line) - 2,
+          0,
+          Number(error.line) - 2,
+          0
+        ),
+        options: {
+          isWholeLine: true,
+          className: "editorLineError",
+        },
+      },
+    ])
   }, [error])
 
   useEffect(() => {
@@ -203,6 +205,8 @@ export default function CodeEditor({
 
 const EditorContainer = styled("div", {
   height: "100%",
+  pointerEvents: "all",
+  userSelect: "all",
 
   ".editorLineError": {
     backgroundColor: "$lineError",
