@@ -40,7 +40,7 @@ class Inputs {
       { eventName: "EXPORTED", modifiers: ["Shift", "Meta"] },
       { eventName: "COPIED", modifiers: ["Meta"] },
     ],
-    h: [{ eventName: "HARD_RESET", modifiers: ["Shift", "Meta"] }],
+    o: [{ eventName: "HARD_RESET", modifiers: ["Shift", "Meta"] }],
     x: [{ eventName: "CUT", modifiers: ["Meta"] }],
     v: [{ eventName: "PASTED", modifiers: ["Meta"] }],
     g: [{ eventName: "STARTED_GLOBBING_NODES", modifiers: [] }],

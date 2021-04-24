@@ -1088,6 +1088,9 @@ export function setCanvasItems(
             !data.nodes[data.globs[globId].nodes[1]]
           ) {
             delete data.globs[globId]
+            sGenerated.globIds = sGenerated.globIds.filter(
+              (id) => id !== globId
+            )
           }
         }
 
