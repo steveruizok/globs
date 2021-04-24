@@ -58,9 +58,9 @@
 - [-] Make state based on document
 
   - [x] Write migrations
-  - [ ] Point code editor to state object for code / styles
+  - [x] Point code editor to state object for code / styles
   - [x] Point theme to state object for theme
-  - [ ] Remove other saves to local storage
+  - [x] Remove other saves to local storage
 
 - [-] Create pages UI and tree
 

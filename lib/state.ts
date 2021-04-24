@@ -1,4 +1,5 @@
 import router from "next/router"
+import { dark } from "stitches.config"
 import { v4 as uuid } from "uuid"
 import { MutableRefObject } from "react"
 import { motionValue } from "framer-motion"
@@ -585,6 +586,10 @@ const state = createState({
     // Display
     toggleTheme(data) {
       data.theme = data.theme === "dark" ? "light" : "dark"
+      if ("document" in window) {
+        document.body.classList.remove(data.theme === "dark" ? "light" : dark)
+        document.body.classList.add(data.theme === "dark" ? dark : "light")
+      }
     },
     toggleFill(data) {
       data.fill = !data.fill
