@@ -645,28 +645,40 @@ class Node {
   point: Vector
   radius: number
 
-  constructor(options = {} as NodeOptions) {
-    if ("x" in options) {
-      const { x = 0, y = 0 } = options
-      this.point = new Vector({ x, y })
+  constructor(x: number, y: number)
+  constructor(options: NodeOptions)
+  constructor(options = {} as number | NodeOptions, b?: number) {
+    if (typeof options === "number") {
+      this.point = new Vector(options, b)
+
+      this.name = "Node"
+      this.cap = "round"
+      this.locked = false
+      this.parentId = "0"
+      this.radius = 25
     } else {
-      const { point = { x: 0, y: 0 } } = options
-      this.point = new Vector(point)
+      if ("x" in options) {
+        const { x = 0, y = 0 } = options
+        this.point = new Vector({ x, y })
+      } else {
+        const { point = { x: 0, y: 0 } } = options
+        this.point = new Vector(point)
+      }
+
+      const {
+        name = "Node",
+        cap = "round",
+        locked = false,
+        parentId = "0",
+        radius = 25,
+      } = options
+
+      this.name = name
+      this.cap = cap
+      this.radius = radius
+      this.locked = locked
+      this.parentId = parentId
     }
-
-    const {
-      name = "Node",
-      cap = "round",
-      locked = false,
-      parentId = "0",
-      radius = 25,
-    } = options
-
-    this.name = name
-    this.cap = cap
-    this.radius = radius
-    this.locked = locked
-    this.parentId = parentId
 
     nodes.add(this)
   }
@@ -763,34 +775,58 @@ class Glob {
   ap: number
   bp: number
 
-  constructor(options = {} as Partial<GlobOptions>) {
-    const {
-      name = "Glob",
-      parentId = "0",
-      locked = false,
-      a = 0.5,
-      b = 0.5,
-      ap = 0.5,
-      bp = 0.5,
-    } = options
+  constructor(start: Node | Vector | Point, end: Node | Vector | Point)
+  constructor(options: Partial<GlobOptions>)
+  constructor(
+    options = {} as Partial<GlobOptions> | Node | Vector | Point,
+    end?: Node | Vector | Point
+  ) {
+    if (
+      options instanceof Node ||
+      options instanceof Vector ||
+      "x" in options
+    ) {
+      this.start = Node.cast(options)
+      this.end = Node.cast(end)
+      this.name = "Glob"
+      this.parentId = "0"
+      this.locked = false
+      this.a = 0.5
+      this.b = 0.5
+      this.ap = 0.5
+      this.bp = 0.5
 
-    this.name = name
-    this.start = Node.cast(options.start || { x: 0, y: 0 })
-    this.end = Node.cast(options.end || { x: 0, y: 0 })
-    this.D =
-      options.D === undefined
-        ? Vector.med(this.start.point, this.end.point)
-        : Vector.cast(options.D)
-    this.Dp =
-      options.Dp === undefined
-        ? Vector.med(this.start.point, this.end.point)
-        : Vector.cast(options.Dp)
-    this.a = clamp(a, 0, 1)
-    this.b = clamp(b, 0, 1)
-    this.ap = clamp(ap, 0, 1)
-    this.bp = clamp(bp, 0, 1)
-    this.parentId = parentId
-    this.locked = locked
+      this.D = Vector.med(this.start.point, this.end.point)
+      this.Dp = Vector.med(this.start.point, this.end.point)
+    } else {
+      const {
+        name = "Glob",
+        parentId = "0",
+        locked = false,
+        a = 0.5,
+        b = 0.5,
+        ap = 0.5,
+        bp = 0.5,
+      } = options
+
+      this.name = name
+      this.start = Node.cast(options.start || { x: 0, y: 0 })
+      this.end = Node.cast(options.end || { x: 0, y: 0 })
+      this.D =
+        options.D === undefined
+          ? Vector.med(this.start.point, this.end.point)
+          : Vector.cast(options.D)
+      this.Dp =
+        options.Dp === undefined
+          ? Vector.med(this.start.point, this.end.point)
+          : Vector.cast(options.Dp)
+      this.a = clamp(a, 0, 1)
+      this.b = clamp(b, 0, 1)
+      this.ap = clamp(ap, 0, 1)
+      this.bp = clamp(bp, 0, 1)
+      this.parentId = parentId
+      this.locked = locked
+    }
 
     globs.add(this)
   }
