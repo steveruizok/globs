@@ -128,6 +128,13 @@ const state = createState({
                 UNHOVERED_GLOB: "pullHoveredGlob",
                 HOVERED_NODE: "pushHoveredNode",
                 UNHOVERED_NODE: "pullHoveredNode",
+                RIGHT_CLICKED_NODE: [
+                  "setPointingId",
+                  {
+                    unless: "pointingSelectedNode",
+                    do: "setPointingToSelectedNodes",
+                  },
+                ],
                 POINTED_NODE: [
                   "setPointingId",
                   {
@@ -161,6 +168,13 @@ const state = createState({
                         },
                       ],
                     },
+                  },
+                ],
+                RIGHT_CLICKED_GLOB: [
+                  "setPointingId",
+                  {
+                    unless: "pointingSelectedGlob",
+                    do: "setPointingToSelectedGlobs",
                   },
                 ],
                 POINTED_GLOB: [

@@ -25,6 +25,7 @@ export default function BoundsBg() {
           optionKey: e.altKey,
           metaKey: e.metaKey || e.ctrlKey,
           ctrlKey: e.ctrlKey,
+          buttons: e.buttons,
         })
       }}
       fill="transparent"

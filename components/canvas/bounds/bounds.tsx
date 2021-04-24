@@ -66,6 +66,7 @@ export default function Bounds() {
             optionKey: e.altKey,
             metaKey: e.metaKey || e.ctrlKey,
             ctrlKey: e.ctrlKey,
+            buttons: e.buttons,
           })
           document.body.style.cursor = "ns-resize"
         }}
@@ -84,6 +85,7 @@ export default function Bounds() {
             optionKey: e.altKey,
             metaKey: e.metaKey || e.ctrlKey,
             ctrlKey: e.ctrlKey,
+            buttons: e.buttons,
           })
           document.body.style.cursor = "ew-resize"
         }}
@@ -102,6 +104,7 @@ export default function Bounds() {
             optionKey: e.altKey,
             metaKey: e.metaKey || e.ctrlKey,
             ctrlKey: e.ctrlKey,
+            buttons: e.buttons,
           })
           document.body.style.cursor = "ns-resize"
         }}
@@ -120,6 +123,7 @@ export default function Bounds() {
             optionKey: e.altKey,
             metaKey: e.metaKey || e.ctrlKey,
             ctrlKey: e.ctrlKey,
+            buttons: e.buttons,
           })
           document.body.style.cursor = "ew-resize"
         }}
@@ -165,6 +169,7 @@ function Corner({
             optionKey: e.altKey,
             metaKey: e.metaKey || e.ctrlKey,
             ctrlKey: e.ctrlKey,
+            buttons: e.buttons,
           })
           document.body.style.cursor = "grabbing"
         }}
@@ -186,6 +191,7 @@ function Corner({
             optionKey: e.altKey,
             metaKey: e.metaKey || e.ctrlKey,
             ctrlKey: e.ctrlKey,
+            buttons: e.buttons,
           })
           document.body.style.cursor = "nesw-resize"
         }}

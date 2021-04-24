@@ -41,6 +41,7 @@ export default function Glob({ id, fill, isSelected }: Props) {
       optionKey: e.altKey,
       metaKey: e.metaKey || e.ctrlKey,
       ctrlKey: e.ctrlKey,
+      buttons: e.buttons,
     })
   }, [])
 
@@ -51,6 +52,7 @@ export default function Glob({ id, fill, isSelected }: Props) {
       optionKey: e.altKey,
       metaKey: e.metaKey || e.ctrlKey,
       ctrlKey: e.ctrlKey,
+      buttons: e.buttons,
     })
   }, [])
 

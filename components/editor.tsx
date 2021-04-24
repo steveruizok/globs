@@ -126,6 +126,7 @@ export default function Editor({ isShareLink = false, project }: Props) {
         shiftKey: e.shiftKey,
         optionKey: e.altKey,
         ctrlKey: e.ctrlKey,
+        buttons: e.buttons,
         metaKey: e.metaKey || e.ctrlKey,
       })
     },
@@ -150,6 +151,7 @@ export default function Editor({ isShareLink = false, project }: Props) {
       shiftKey: e.shiftKey,
       optionKey: e.altKey,
       ctrlKey: e.ctrlKey,
+      buttons: e.buttons,
       metaKey: e.metaKey || e.ctrlKey,
     })
   }, [])
@@ -172,6 +174,7 @@ export default function Editor({ isShareLink = false, project }: Props) {
       shiftKey: e.shiftKey,
       optionKey: e.altKey,
       ctrlKey: e.ctrlKey,
+      buttons: e.buttons,
       metaKey: e.metaKey || e.ctrlKey,
     })
   }, [])
@@ -197,6 +200,7 @@ export default function Editor({ isShareLink = false, project }: Props) {
       optionKey: e.altKey,
       metaKey: e.metaKey || e.ctrlKey,
       ctrlKey: e.ctrlKey,
+      buttons: e.buttons,
     })
   }, [])
 
@@ -207,6 +211,7 @@ export default function Editor({ isShareLink = false, project }: Props) {
       optionKey: e.altKey,
       metaKey: e.metaKey || e.ctrlKey,
       ctrlKey: e.ctrlKey,
+      buttons: e.buttons,
     })
   }, [])
 
@@ -220,6 +225,7 @@ export default function Editor({ isShareLink = false, project }: Props) {
         optionKey: e.altKey,
         metaKey: e.metaKey || e.ctrlKey,
         ctrlKey: e.ctrlKey,
+        buttons: e.buttons,
       })
     },
     []

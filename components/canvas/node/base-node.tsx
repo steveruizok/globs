@@ -44,6 +44,17 @@ const BaseNode = forwardRef<SVGCircleElement, Props>(function BaseNode(
         fill="transparent"
         stroke="transparent"
         onPointerDown={(e) => {
+          if (e.buttons === 2) {
+            state.send("RIGHT_CLICKED_NODE", {
+              id,
+              shiftKey: e.shiftKey,
+              optionKey: e.altKey,
+              metaKey: e.metaKey || e.ctrlKey,
+              ctrlKey: e.ctrlKey,
+              buttons: e.buttons,
+            })
+          }
+
           if (e.buttons !== 1) return
           state.send("POINTED_NODE", {
             id,
@@ -51,6 +62,7 @@ const BaseNode = forwardRef<SVGCircleElement, Props>(function BaseNode(
             optionKey: e.altKey,
             metaKey: e.metaKey || e.ctrlKey,
             ctrlKey: e.ctrlKey,
+            buttons: e.buttons,
           })
         }}
         onDoubleClick={(e) => {
@@ -61,6 +73,7 @@ const BaseNode = forwardRef<SVGCircleElement, Props>(function BaseNode(
             optionKey: e.altKey,
             metaKey: e.metaKey || e.ctrlKey,
             ctrlKey: e.ctrlKey,
+            buttons: e.buttons,
           })
         }}
         onPointerEnter={(e) => {
@@ -72,6 +85,7 @@ const BaseNode = forwardRef<SVGCircleElement, Props>(function BaseNode(
             optionKey: e.altKey,
             metaKey: e.metaKey || e.ctrlKey,
             ctrlKey: e.ctrlKey,
+            buttons: e.buttons,
           })
         }}
         onPointerOut={(e) => {
@@ -82,6 +96,7 @@ const BaseNode = forwardRef<SVGCircleElement, Props>(function BaseNode(
             optionKey: e.altKey,
             metaKey: e.metaKey || e.ctrlKey,
             ctrlKey: e.ctrlKey,
+            buttons: e.buttons,
           })
         }}
       />

@@ -24,13 +24,26 @@ const BaseGlob = forwardRef<SVGPathElement, Props>(function BaseGlob(
       ref={ref}
       d={outline}
       onPointerDown={(e) => {
+        if (e.buttons === 2) {
+          state.send("RIGHT_CLICKED_GLOB", {
+            id,
+            shiftKey: e.shiftKey,
+            optionKey: e.altKey,
+            metaKey: e.metaKey || e.ctrlKey,
+            ctrlKey: e.ctrlKey,
+            buttons: e.buttons,
+          })
+        }
+
         if (e.buttons !== 1) return
+
         state.send("POINTED_GLOB", {
           id,
           shiftKey: e.shiftKey,
           optionKey: e.altKey,
           metaKey: e.metaKey || e.ctrlKey,
           ctrlKey: e.ctrlKey,
+          buttons: e.buttons,
         })
       }}
       className={classNames([
