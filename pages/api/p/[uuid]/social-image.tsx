@@ -36,7 +36,7 @@ export default async function sandbox(
 
   res.setHeader(
     "Cache-Control",
-    `s-maxage=${0 * 60 * 1000}, stale-while-revalidate`
+    `s-maxage=${30 * 60 * 1000}, stale-while-revalidate`
   )
 
   res.status(200).send(imageBuffer)
