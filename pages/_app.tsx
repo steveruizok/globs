@@ -27,7 +27,6 @@ function MyApp({ Component, pageProps }: AppProps) {
 
   return (
     <>
-      <Meta />
       <Component {...pageProps} />
     </>
   )
