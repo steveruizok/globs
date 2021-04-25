@@ -138,10 +138,14 @@ function NumberInput({
 
   return (
     <PropContainer>
-      <label style={{
-        pointerEvents: isHovered ? "none" : "all"
+      <label
+        style={{
+          pointerEvents: isHovered ? "none" : "all",
         }}
-        htmlFor={label}>{label}</label>
+        htmlFor={label}
+      >
+        {label}
+      </label>
       <motion.div
         className="dragWrapper"
         onPointerEnter={() => setIsHovered(true)}
@@ -154,6 +158,7 @@ function NumberInput({
         <input
           ref={rInput}
           id={label}
+          readOnly={readOnly}
           type="number"
           value={val}
           min={min}
