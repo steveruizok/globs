@@ -14,7 +14,10 @@ export default function Node({ id, fill, isSelected }: Props) {
 
   const rOutline = useRegisteredElement<SVGCircleElement>(id)
 
-  if (!node) return null
+  if (!node) {
+    // console.warn(`No node with id  ${id}`)
+    return null
+  }
 
   return (
     <BaseNode

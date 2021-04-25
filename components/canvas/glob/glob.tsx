@@ -41,6 +41,7 @@ export default function Glob({ id, fill, isSelected }: Props) {
       optionKey: e.altKey,
       metaKey: e.metaKey || e.ctrlKey,
       ctrlKey: e.ctrlKey,
+      buttons: e.buttons,
     })
   }, [])
 
@@ -51,10 +52,24 @@ export default function Glob({ id, fill, isSelected }: Props) {
       optionKey: e.altKey,
       metaKey: e.metaKey || e.ctrlKey,
       ctrlKey: e.ctrlKey,
+      buttons: e.buttons,
     })
   }, [])
 
-  if (!glob) return null
+  if (!glob) {
+    // console.warn(`No glob with id ${id}`)
+    return null
+  }
+
+  if (!start) {
+    // console.warn(`No node with id ${glob.nodes[0]} in glob ${id}`)
+    return null
+  }
+
+  if (!end) {
+    // console.warn(`No glob with id  ${glob.nodes[1]} in glob ${id}`)
+    return null
+  }
 
   const safe = !!glob.points
   const globPts = glob.points || rPrevPts.current

@@ -1,187 +1,183 @@
-import { createState } from "@state-designer/core"
-import { useStateDesigner } from "@state-designer/react"
+/* eslint-disable @typescript-eslint/ban-ts-comment */
+import React, { useEffect, useRef } from "react"
 import { motion } from "framer-motion"
-import { useEffect, useRef } from "react"
+import { useStateDesigner } from "@state-designer/react"
 import evalCode from "lib/code"
 import CodeDocs from "./code-docs"
-import Editor from "./code-editor"
-import state from "lib/state"
+import CodeEditor from "./code-editor"
+import state, { useSelector } from "lib/state"
+// import { IMonaco, IMonacoEditor } from "types"
 
-import { X, Code, Info, PlayCircle } from "react-feather"
-import { styled } from "stitches.config"
+const getErrorLineAndColumn = (e: Error) => {
+  // @ts-ignore
+  if ("line" in e) {
+    // @ts-ignore
+    return { line: Number(e.line), column: e.column }
+  }
 
-let code = `// Basic nodes and globs
-
-const nodeA = new Node({
-  x: -100,
-  y: 0
-})
-
-const nodeB = new Node({
-  x: 100,
-  y: 0
-})
-
-const glob = new Glob({
-  start: nodeA,
-  end: nodeB,
-  D: { x: 0, y: 60},
-  Dp: { x: 0, y: 90}
-})
-
-// Something more interesting...
-
-
-const PI2 = Math.PI * 2, 
-  center = { x: 0, y: 0 }, 
-  radius = 400
-
-let prev
-
-for (let i = 0; i < 21; i++) {
-  const t = i * (PI2 / 20)
-
-  const node = new Node({
-    x: center.x + radius * Math.sin(t),
-    y: center.y + radius * Math.cos(t)
-  })	
-
-  if (prev !== undefined) {
-    new Glob({
-      start: prev, 
-      end: node,
-      D: center,
-      Dp: center
-    })
-  } 
-
-  prev = node
+  const result = e.stack.match(/:([0-9]+):([0-9]+)/)
+  if (result) {
+    return { line: Number(result[1]) - 1, column: result[2] }
+  }
 }
-`
 
-const saved = localStorage.getItem("__globs_code")
-if (saved !== null) code = saved
-
-const panelState = createState({
-  data: {
-    code: {
-      clean: code,
-      dirty: code,
-    },
-  },
-  on: {
-    UNMOUNTED: "saveCode",
-    CHANGED_CODE: { secretlyDo: "setCode" },
-  },
-  initial: "collapsed",
-  states: {
-    collapsed: {
-      on: {
-        TOGGLED_COLLAPSED: { to: "expanded" },
-      },
-    },
-    expanded: {
-      on: {
-        TOGGLED_COLLAPSED: { to: "collapsed" },
-      },
-      initial: "code",
-      states: {
-        code: {
-          on: {
-            RAN_CODE: ["saveDirtyToClean", "evalCode"],
-            TOGGLED_DOCS: { to: "docs" },
-          },
-        },
-        docs: {
-          on: {
-            TOGGLED_DOCS: { to: "code" },
-          },
-        },
-      },
-    },
-  },
-  conditions: {},
-  actions: {
-    setCode(data, payload: { code: string }) {
-      data.code.dirty = payload.code
-      localStorage.setItem("__globs_code", data.code.dirty)
-    },
-    saveCode(data) {
-      localStorage.setItem("__globs_code", data.code.dirty)
-    },
-    saveDirtyToClean(data) {
-      data.code.clean = data.code.dirty
-    },
-    evalCode(data) {
-      try {
-        const { nodes, globs } = evalCode(data.code.clean)
-        state.send("GENERATED_ITEMS", { nodes, globs })
-      } catch (e) {
-        console.error(e)
-      }
-    },
-  },
-})
+import {
+  X,
+  Code,
+  Info,
+  PlayCircle,
+  ChevronUp,
+  ChevronDown,
+} from "react-feather"
+import { styled } from "stitches.config"
+import { ICode } from "lib/types"
 
 export default function LearnPanel() {
+  // const rEditor = useRef<IMonacoEditor>(null)
+  // const rMonaco = useRef<IMonaco>(null)
   const rContainer = useRef<HTMLDivElement>(null)
-  const local = useStateDesigner(panelState)
-  const isCollapsed = local.isIn("collapsed")
+
+  const fileId = "0"
+  const isReadOnly = useSelector((s) => s.data.readOnly)
+  const file = useSelector((s) => s.data.code[fileId])
+  const isOpen = useSelector((s) => s.data.codePanel.isOpen)
+  const fontSize = useSelector((s) => s.data.codePanel.fontSize)
+
+  const local = useStateDesigner({
+    data: {
+      code: file.code,
+      error: null as { message: string; line: number; column: number } | null,
+    },
+    on: {
+      MOUNTED: "setCode",
+      CHANGED_FILE: "loadFile",
+    },
+    initial: "editingCode",
+    states: {
+      editingCode: {
+        on: {
+          RAN_CODE: "runCode",
+          SAVED_CODE: ["runCode", "saveCode"],
+          CHANGED_CODE: [{ secretlyDo: "setCode" }],
+          CLEARED_ERROR: { if: "hasError", do: "clearError" },
+          TOGGLED_DOCS: { to: "viewingDocs" },
+        },
+      },
+      viewingDocs: {
+        on: {
+          TOGGLED_DOCS: { to: "editingCode" },
+        },
+      },
+    },
+    conditions: {
+      hasError(data) {
+        return !!data.error
+      },
+    },
+    actions: {
+      loadFile(data, payload: { file: ICode }) {
+        data.code = payload.file.code
+      },
+      setCode(data, payload: { code: string }) {
+        data.code = payload.code
+      },
+      runCode(data) {
+        let error = null
+
+        try {
+          const { nodes, globs } = evalCode(data.code)
+          state.send("GENERATED_ITEMS", { nodes, globs })
+        } catch (e) {
+          error = { message: e.message, ...getErrorLineAndColumn(e) }
+        }
+
+        data.error = error
+      },
+      saveCode(data) {
+        state.send("CHANGED_CODE", { fileId, code: data.code })
+      },
+      clearError(data) {
+        data.error = null
+      },
+    },
+  })
 
   useEffect(() => {
-    panelState.send("MOUNTED")
+    local.send("CHANGED_FILE", { file })
+  }, [file])
+
+  useEffect(() => {
+    local.send("MOUNTED", { code: state.data.code[fileId].code })
     return () => {
-      panelState.send("UNMOUNTED")
+      state.send("CHANGED_CODE", { fileId, code: local.data.code })
     }
   }, [])
 
+  const { error } = local.data
+
   return (
     <PanelContainer
+      data-bp-desktop
       ref={rContainer}
       dragMomentum={false}
-      onKeyDown={(e) => {
-        if ((e.key === "s" && e.metaKey) || e.ctrlKey) {
-          panelState.send("RAN_CODE")
-          e.preventDefault()
-        }
-        e.stopPropagation()
-      }}
-      onKeyUp={(e) => e.stopPropagation()}
-      isCollapsed={isCollapsed}
+      isCollapsed={!isOpen}
     >
-      {local.isIn("collapsed") ? (
-        <IconButton onClick={() => panelState.send("TOGGLED_COLLAPSED")}>
-          <Code />
-        </IconButton>
-      ) : (
+      {isOpen ? (
         <Content>
           <Header>
-            <IconButton onClick={() => panelState.send("TOGGLED_COLLAPSED")}>
+            <IconButton onClick={() => state.send("CLOSED_CODE_PANEL")}>
               <X />
             </IconButton>
             <h3>Code</h3>
             <ButtonsGroup>
-              <IconButton onClick={() => panelState.send("TOGGLED_DOCS")}>
-                <Info size={18} />
+              <FontSizeButtons>
+                <IconButton
+                  disabled={!local.isIn("editingCode")}
+                  onClick={() => state.send("INCREASED_CODE_FONT_SIZE")}
+                >
+                  <ChevronUp />
+                </IconButton>
+                <IconButton
+                  disabled={!local.isIn("editingCode")}
+                  onClick={() => state.send("DECREASED_CODE_FONT_SIZE")}
+                >
+                  <ChevronDown />
+                </IconButton>
+              </FontSizeButtons>
+              <IconButton onClick={() => local.send("TOGGLED_DOCS")}>
+                <Info />
               </IconButton>
               <IconButton
-                disabled={!local.can("RAN_CODE")}
-                onClick={() => panelState.send("RAN_CODE")}
+                disabled={!local.isIn("editingCode")}
+                onClick={() => local.send("SAVED_CODE")}
               >
-                <PlayCircle size={18} />
+                <PlayCircle />
               </IconButton>
             </ButtonsGroup>
           </Header>
           <EditorContainer>
-            <Editor
-              code={local.data.code.clean}
-              onChange={(code: string) => {
-                panelState.send("CHANGED_CODE", { code })
-              }}
+            <CodeEditor
+              fontSize={fontSize}
+              readOnly={isReadOnly}
+              value={file.code}
+              error={error}
+              onChange={(code) => local.send("CHANGED_CODE", { code })}
+              onSave={() => local.send("SAVED_CODE")}
+              onKey={() => local.send("CLEARED_ERROR")}
             />
-            <CodeDocs isHidden={!local.isIn("docs")} />
+            <CodeDocs isHidden={!local.isIn("viewingDocs")} />
           </EditorContainer>
+          <ErrorContainer>
+            {error &&
+              (error.line
+                ? `(${Number(error.line) - 2}:${error.column}) ${error.message}`
+                : error.message)}
+          </ErrorContainer>
         </Content>
+      ) : (
+        <IconButton onClick={() => state.send("OPENED_CODE_PANEL")}>
+          <Code />
+        </IconButton>
       )}
     </PanelContainer>
   )
@@ -246,7 +242,7 @@ const IconButton = styled("button", {
 const Content = styled("div", {
   display: "grid",
   gridTemplateColumns: "1fr",
-  gridTemplateRows: "auto 1fr",
+  gridTemplateRows: "auto 1fr 28px",
   minWidth: "100%",
   width: 560,
   maxWidth: 560,
@@ -289,4 +285,34 @@ const EditorContainer = styled("div", {
   position: "relative",
   pointerEvents: "all",
   overflowY: "scroll",
+})
+
+const ErrorContainer = styled("div", {
+  overflowX: "scroll",
+  color: "$text",
+  font: "$debug",
+  padding: "0 12px",
+  display: "flex",
+  alignItems: "center",
+})
+
+const FontSizeButtons = styled("div", {
+  paddingRight: 4,
+
+  "& > button": {
+    height: "50%",
+    width: "100%",
+
+    "&:nth-of-type(1)": {
+      paddingTop: 4,
+    },
+
+    "&:nth-of-type(2)": {
+      paddingBottom: 4,
+    },
+
+    "& svg": {
+      height: 12,
+    },
+  },
 })

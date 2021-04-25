@@ -12,8 +12,8 @@ export default function StatusBar() {
 
   return (
     <StatusBarContainer>
-      <States>{active.join(" | ")} | </States>
-      <Section>{log}</Section>
+      <States>{active.join(" | ")}</States>
+      <Section>| {log}</Section>
       <Section title="Renders | Time">
         {count} | {time.toString().padStart(3, "0")}
       </Section>
@@ -41,7 +41,7 @@ const StatusBarContainer = styled("div", {
   alignItems: "center",
   backgroundColor: "$panel",
   font: "$debug",
-  gridGap: 8,
+  gap: 8,
   padding: "0 16px",
 
   "@media (max-width: 768px)": {

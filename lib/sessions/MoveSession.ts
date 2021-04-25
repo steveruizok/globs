@@ -14,7 +14,7 @@ import {
   screenToWorld,
   updateGlobPoints,
   getGlobPoints,
-  getRayRayIntesection,
+  getRayRayIntersection,
 } from "lib/utils"
 import inputs from "lib/inputs"
 import getNodeSnapper, { NodeSnapper } from "lib/snaps"
@@ -172,8 +172,8 @@ export default class MoveSession extends BaseSession {
 
         switch (type) {
           case "start": {
-            glob.D = getRayRayIntesection(vec.add(E0, this.delta), n0, E1, n1)
-            glob.Dp = getRayRayIntesection(
+            glob.D = getRayRayIntersection(vec.add(E0, this.delta), n0, E1, n1)
+            glob.Dp = getRayRayIntersection(
               vec.add(E0p, this.delta),
               n0p,
               E1p,
@@ -182,8 +182,8 @@ export default class MoveSession extends BaseSession {
             break
           }
           case "end": {
-            glob.D = getRayRayIntesection(vec.add(E1, this.delta), n1, E0, n0)
-            glob.Dp = getRayRayIntesection(
+            glob.D = getRayRayIntersection(vec.add(E1, this.delta), n1, E0, n0)
+            glob.Dp = getRayRayIntersection(
               vec.add(E1p, this.delta),
               n1p,
               E0p,
@@ -192,13 +192,13 @@ export default class MoveSession extends BaseSession {
             break
           }
           case "both": {
-            glob.D = getRayRayIntesection(
+            glob.D = getRayRayIntersection(
               vec.add(E1, this.delta),
               n1,
               vec.add(E0, this.delta),
               n0
             )
-            glob.Dp = getRayRayIntesection(
+            glob.Dp = getRayRayIntersection(
               vec.add(E1p, this.delta),
               n1p,
               vec.add(E0p, this.delta),

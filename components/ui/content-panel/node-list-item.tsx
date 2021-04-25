@@ -21,12 +21,19 @@ export default function NodeListItem({
     [id]
   )
 
-  const handleSelect = useCallback(() => state.send("POINTED_NODE", { id }), [
-    id,
-  ])
+  const handleSelect = useCallback(
+    (e) => {
+      if (e.buttons !== 1) return
+      state.send("POINTED_NODE", { id })
+    },
+    [id]
+  )
 
   const handleLock = useCallback(
-    () => state.send("TOGGLED_NODE_LOCKED", { id }),
+    (e) => {
+      if (e.buttons !== 1) return
+      state.send("TOGGLED_NODE_LOCKED", { id })
+    },
     [id]
   )
 

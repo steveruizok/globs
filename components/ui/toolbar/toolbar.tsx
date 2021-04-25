@@ -14,6 +14,8 @@ import {
 } from "react-feather"
 import { styled } from "stitches.config"
 import useTheme from "hooks/useTheme"
+import ShareModel from "../share-modal"
+import IconButton from "../icon-button"
 
 export default function Toolbar() {
   const hasSelectedNodes = useSelector((s) => s.data.selectedNodes.length > 0)
@@ -26,24 +28,24 @@ export default function Toolbar() {
   return (
     <StyledContainer>
       <section>
-        {/* <button
+        {/* <IconButton
           disabled={true}
           title="Menu"
           onClick={() => state.send("OPENED_MENU")}
         >
           <Menu />
-        </button> */}
-        <button title="Undo" onClick={() => state.send("UNDO")}>
+        </IconButton> */}
+        <IconButton title="Undo" onClick={() => state.send("UNDO")}>
           <RotateCcw />
-        </button>
-        <button title="Redo" onClick={() => state.send("REDO")}>
+        </IconButton>
+        <IconButton title="Redo" onClick={() => state.send("REDO")}>
           <RotateCw />
-        </button>
+        </IconButton>
       </section>
       <Spacer />
 
       <section>
-        <button
+        <IconButton
           title="Create Node (N)"
           data-active={isCreating}
           onClick={() => {
@@ -51,37 +53,41 @@ export default function Toolbar() {
           }}
         >
           <Disc />
-        </button>
-        <button
-          title="Create Globs (L)"
+        </IconButton>
+        <IconButton
+          title="Create Globs (G)"
           disabled={!hasSelectedNodes}
           data-active={isGlobbing}
-          onClick={() => state.send("PRESSED_TOOLBAR_BUTTON_GLOBBING_NODES")}
+          onClick={() => state.send("STARTED_GLOBBING_NODES")}
         >
           <ArrowRight />
-        </button>
-        <button
+        </IconButton>
+        <IconButton
           title="Delete Selected Items (Backspace)"
           disabled={!(hasSelectedNodes || hasSelectedGlobs)}
           onClick={() => state.send("DELETED")}
         >
           <X />
-        </button>
+        </IconButton>
       </section>
       <Spacer />
       <section>
-        <button title="Toggle Fill" onClick={() => state.send("TOGGLED_FILL")}>
+        <IconButton
+          title="Toggle Fill"
+          onClick={() => state.send("TOGGLED_FILL")}
+        >
           <Circle className="fill-flat" />
-        </button>
-        <button
+        </IconButton>
+        <IconButton
           title="Copy SVG to Clipboard"
           onClick={() => state.send("EXPORTED")}
         >
-          <Share />
-        </button>
-        <button onClick={toggle}>
+          <Copy />
+        </IconButton>
+        <ShareModel />
+        <IconButton onClick={toggle}>
           <Sun />
-        </button>
+        </IconButton>
       </section>
     </StyledContainer>
   )
@@ -104,36 +110,6 @@ const StyledContainer = styled("div", {
 
   "& > section": {
     display: "flex",
-  },
-
-  "& section > button": {
-    background: "none",
-    border: "none",
-    width: "40px",
-    height: "40px",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    cursor: "pointer",
-    outline: "none",
-
-    "@media (min-width: 768px)": {
-      "&:hover:enabled": {
-        "& > svg": {
-          stroke: "$selected",
-        },
-      },
-    },
-
-    "&:disabled": {
-      opacity: "0.3",
-    },
-
-    '&[data-active="true"]': {
-      "& > svg": {
-        stroke: "$selected",
-      },
-    },
   },
 })
 

@@ -12,7 +12,6 @@ import {
   updateGlobPoints,
   getSelectionSnapshot,
   getGlobPoints,
-  getGlob,
 } from "lib/utils"
 import { getClosestPointOnCurve, getNormalOnCurve } from "lib/bez"
 import history, { Command, CommandType } from "lib/history"
@@ -162,6 +161,8 @@ export function pasteSelection(
         data.selectedGlobs = Object.keys(pasted.globs)
 
         const bounds = getSelectedBoundingBox(data)
+
+        if (!bounds) return
 
         const point = screenToWorld(vec.div(data.viewport.size, 2), data.camera)
 
@@ -508,7 +509,7 @@ export function splitGlob(data: IData, id: string) {
     D1p = getLineLineIntersection(PLp[0], PLp[1], E1p, Dp)
 
     if (!(D0 && D1 && D0p && D1p)) {
-      console.log("Could not split glob there.")
+      console.warn("Could not split glob there.")
       return
     }
 
@@ -970,7 +971,7 @@ export function resizeNode(
   )
 }
 
-export function toggleNodeCap(data: IData, id: string) {
+export function toggleSelectedNodesCap(data: IData, id: string) {
   const cap = data.nodes[id].cap
   history.execute(
     data,
@@ -1046,7 +1047,7 @@ export function setPropertyOnSelectedNodes(
   )
 }
 
-export function refreshGeneratedItems(
+export function setCanvasItems(
   data: IData,
   items: { nodes: Record<string, INode>; globs: Record<string, IGlob> }
 ) {
@@ -1080,6 +1081,18 @@ export function refreshGeneratedItems(
           data.globs[globId] = glob
         }
 
+        for (const globId in data.globs) {
+          if (
+            !data.nodes[data.globs[globId].nodes[0]] ||
+            !data.nodes[data.globs[globId].nodes[1]]
+          ) {
+            delete data.globs[globId]
+            sGenerated.globIds = sGenerated.globIds.filter(
+              (id) => id !== globId
+            )
+          }
+        }
+
         data.generated.nodeIds = Object.keys(items.nodes)
         data.generated.globIds = Object.keys(items.globs)
 
@@ -1088,6 +1101,8 @@ export function refreshGeneratedItems(
 
         data.selectedGlobs = []
         data.selectedNodes = []
+        data.highlightGlobs = []
+        data.highlightNodes = []
         data.hoveredGlobs = []
         data.hoveredNodes = []
       },
@@ -1122,6 +1137,8 @@ export function refreshGeneratedItems(
 
         data.selectedGlobs = []
         data.selectedNodes = []
+        data.highlightGlobs = []
+        data.highlightNodes = []
         data.hoveredGlobs = []
         data.hoveredNodes = []
       },

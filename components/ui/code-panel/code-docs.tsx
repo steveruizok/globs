@@ -6,10 +6,38 @@ export default function CodeDocs({ isHidden }: { isHidden: boolean }) {
     <StyledDocs isHidden={isHidden}>
       <h2>Code Globs</h2>
       <p>
-        You can use JavaScript in the Code Panel to create globs and nodes with
-        code.
+        This is the <b>Code Panel</b>. You can use{" "}
+        <a
+          href="https://developer.mozilla.org/en-US/docs/Learn/Getting_started_with_the_web/JavaScript_basics"
+          target="_blank"
+          rel="nofollow noreferrer"
+        >
+          JavaScript
+        </a>{" "}
+        here to create globs and nodes with code. This page contains
+        documentation for the different classes available in the editor:
       </p>
-      <p>Here&apos;s how it works:</p>
+      <ul>
+        <li>
+          <a href="#docs_node">Node</a>
+        </li>
+        <li>
+          <a href="#docs_glob">Glob</a>
+        </li>
+        <li>
+          <a href="#docs_vector">Vector</a>
+        </li>
+        <li>
+          <a href="#docs_utils">Utils</a>
+        </li>
+      </ul>
+      <hr />
+      <h3 id="docs_introduction">Using the Code Panel</h3>
+      <p>
+        In the panel&apos;s code editor <b>Code Panel</b>, create instances of
+        the classes above. When your code is run, the editor will create nodes
+        and globs for each of the Node and Glob instances.
+      </p>
       <ul>
         <li>Write your code using the API described below.</li>
         <li>
@@ -28,9 +56,13 @@ export default function CodeDocs({ isHidden }: { isHidden: boolean }) {
         class described below.
       </p>
       <hr />
-      <h3>
+      <h3 id="docs_node">
         <code>Node</code>
       </h3>
+      <p>
+        A node is a point with a radius. A node can exist on its own, or can be
+        the start or end of a glob.
+      </p>
       <pre>
         <code>{`const node = new Node({
   x: 0,
@@ -54,6 +86,18 @@ const node = new Node({
       </p>
       <h4>
         <code>
+          <i>node.</i>x
+        </code>
+      </h4>
+      <p>The x coordinate of the node&apos;s point.</p>
+      <h4>
+        <code>
+          <i>node.</i>y
+        </code>
+      </h4>{" "}
+      <p>The y coordinate of the node&apos;s point.</p>
+      <h4>
+        <code>
           <i>node.</i>radius
         </code>
       </h4>
@@ -67,7 +111,33 @@ const node = new Node({
         The appearance of the node when part of a glob, either{" "}
         <code>&quot;round&quot;</code> or <code>&quot;flat&quot;</code>.
       </p>
+      <h4>
+        <code>
+          <i>node.</i>bounds
+        </code>
+      </h4>
+      <p>
+        <i>Read only</i>. The node&apos;s bounding box.
+      </p>
       <h3>Methods</h3>
+      <h4>
+        <code>
+          <i>node.</i>clone()
+        </code>
+      </h4>
+      <p>Return a new node with the same properties.</p>
+      <h4>
+        <code>
+          <i>node.</i>moveTo(v: Vector | Point)
+        </code>
+      </h4>
+      <p>Move the node&apos;s point to the given point or vector.</p>
+      <h4>
+        <code>
+          <i>node.</i>moveBy(v: Vector | Point)
+        </code>
+      </h4>
+      <p>Move the node&apos;s point by the given point or vector.</p>
       <h4>
         <code>
           <i>node.</i>getBounds()
@@ -81,7 +151,7 @@ const node = new Node({
       </h4>
       <p>Remove the node. Destroyed nodes will not be added to the canvas.</p>
       <hr />
-      <h3>
+      <h3 id="docs_globs">
         <code>Glob</code>
       </h3>
       <p>
@@ -173,7 +243,151 @@ const node = new Node({
         will be touching the <code>end</code> node; at 1, the anchor will be
         touching the <code>Dp</code> handle.
       </p>
+      <h4>
+        <code>
+          <i>glob.</i>center
+        </code>
+      </h4>
+      <p>The point between the glob&apos;s nodes.</p>
+      <h4>
+        <code>
+          <i>glob.</i>vector
+        </code>
+      </h4>
+      <p>
+        <i>Read only.</i> The unit vector between the glob&apos;s nodes.
+      </p>
+      <h4>
+        <code>
+          <i>glob.</i>handleAngle
+        </code>
+      </h4>
+      <p>
+        <i>Read only.</i> The angle between the glob&apos;s <code>D</code> and{" "}
+        <code>Dp</code> handles.
+      </p>
+      <h4>
+        <code>
+          <i>glob.</i>handleDistance
+        </code>
+      </h4>
+      <p>
+        <i>Read only.</i> The distance between the glob&apos;s <code>D</code>{" "}
+        and <code>Dp</code> handles.
+      </p>
+      <h4>
+        <code>
+          <i>glob.</i>handleVector
+        </code>
+      </h4>
+      <p>
+        <i>Read only.</i> The unit vector of the glob&apos;s <code>D</code> and{" "}
+        <code>Dp</code> handles.
+      </p>
+      <h4>
+        <code>
+          <i>glob.</i>handleMidpoint
+        </code>
+      </h4>
+      <p>
+        <i>Read only.</i> The point between the glob&apos;s <code>D</code> and{" "}
+        <code>Dp</code> handles.
+      </p>
       <h3>Methods</h3>
+      <h4>
+        <code>
+          <i>glob.</i>getCenter()
+        </code>
+      </h4>
+      <p>Returns the point between the glob&apos;s nodes.</p>
+      <h4>
+        <code>
+          <i>glob.</i>getVector()
+        </code>
+      </h4>
+      <p>Returns the vector between the glob&apos;s nodes.</p>
+      <h4>
+        <code>
+          <i>glob.</i>straighten()
+        </code>
+      </h4>
+      <p>
+        Places the glob&apos;s handles so that both of the glob&apos;s curves
+        form straight lines between the start and end nodes.
+      </p>
+      <h4>
+        <code>
+          <i>glob.</i>pinch()
+        </code>
+      </h4>
+      <p>Moves the glob&apos;s handles to its center point.</p>
+      <h4>
+        <code>
+          <i>glob.</i>pinchBy(distance: number)
+        </code>
+      </h4>
+      <p>
+        Moves the glob&apos;s handles toward the center point by the provided
+        distance. A negative distance will move the handles away from the center
+        point.
+      </p>
+      <h4>
+        <code>
+          <i>glob.</i>rotateHandles(radians: number)
+        </code>
+      </h4>
+      <p>
+        Rotates the glob&apos;s handles around its center point by the provided
+        angle in radians.
+      </p>
+      <h4>
+        <code>
+          <i>glob.</i>moveTo(v: Vector | Point)
+        </code>
+      </h4>
+      <p>Move the glob&apos;s center point to the given point or vector.</p>
+      <h4>
+        <code>
+          <i>glob.</i>moveBy(v: Vector | Point)
+        </code>
+      </h4>
+      <p>Move the glob&apos;s center point by the given point or vector.</p>
+      <h4>
+        <code>
+          <i>glob.</i>getHandleAngle()
+        </code>
+      </h4>
+      <p>
+        Returns the angle between the glob&apos;s <code>D</code> and{" "}
+        <code>Dp</code> handles.
+      </p>
+      <h4>
+        <code>
+          <i>glob.</i>getHandleDistance()
+        </code>
+      </h4>
+      <p>
+        Returns the distance between the glob&apos;s <code>D</code> and{" "}
+        <code>Dp</code> handles.
+      </p>
+      <h4>
+        <code>
+          <i>glob.</i>getHandleVector()
+        </code>
+      </h4>
+      <p>
+        Returns the unit vector of the glob&apos;s <code>D</code> and{" "}
+        <code>Dp</code> handles.
+      </p>
+      <h4>
+        <code>
+          <i>glob.</i>getHandleMidpoint()
+        </code>
+      </h4>
+      <p>
+        Returns the point between the glob&apos;s <code>D</code> and{" "}
+        <code>Dp</code> handles.
+      </p>
       <h4>
         <code>
           <i>glob.</i>getPoints()
@@ -200,8 +414,41 @@ const node = new Node({
         </code>
       </h4>
       <p>Remove the glob. Destroyed globs will not be added to the canvas.</p>
+      <h3>Static Methods</h3>
+      <h4>
+        <code>
+          <i>Glob.</i>from(a: (Node | Point | Vector), b: (Node | Point |
+          Vector))
+        </code>
+      </h4>
+      <p>
+        Create a glob from the given start and end. If the <code>a</code> or{" "}
+        <code>b</code> parameters are not <code>Node</code> instances, the
+        method will create new nodes at the given point or vector.
+      </p>
+      <h4>
+        <code>
+          <i>Glob.</i>chain(...a: (Node | Point | Vector)[])
+        </code>
+      </h4>
+      <p>
+        Create a chain of globs between a set of nodes, vectors or points. If
+        the <code>a</code> parameters are not <code>Node</code> instances, the
+        method will create new nodes at the given point or vector.
+      </p>
+      <h4>
+        <code>
+          <i>Glob.</i>branch(a: (Node | Point | Vector), ...b: (Node | Point |
+          Vector)[])
+        </code>
+      </h4>
+      <p>
+        Create globs between <code>a</code> and one or more nodes, vectors or
+        points. If any parameter is not a <code>Node</code> instance, the method
+        will create a new nodes at the given point or vector.
+      </p>
       <hr />
-      <h3>
+      <h3 id="docs_vector">
         <code>Vector</code>
       </h3>
       <p>
@@ -268,7 +515,7 @@ const vectorC = Vector.from(vectorA)
       </p>
       <h4>
         <code>
-          <i>vector.</i>mul(b: Vector)
+          <i>vector.</i>mul(b: Vector | number)
         </code>
       </h4>
       <p>
@@ -276,27 +523,11 @@ const vectorC = Vector.from(vectorA)
       </p>
       <h4>
         <code>
-          <i>vector.</i>mulScalar(s: number)
-        </code>
-      </h4>
-      <p>
-        Multiply the vector by the scalar <code>s</code>.
-      </p>
-      <h4>
-        <code>
-          <i>vector.</i>div(b: Vector)
+          <i>vector.</i>div(b: Vector | number)
         </code>
       </h4>
       <p>
         Divide the vector by <code>b</code>.
-      </p>
-      <h4>
-        <code>
-          <i>vector.</i>divScalar(s: number)
-        </code>
-      </h4>
-      <p>
-        Divide the vector by the scalar <code>s</code>.
       </p>
       <h4>
         <code>
@@ -393,8 +624,17 @@ const vectorC = Vector.from(vectorA)
         </code>
       </h4>
       <p>
-        Move this in the direction <code>b</code> by the distance <code>d</code>
-        .<code>t</code>.
+        Move this vector by the distance <code>d</code> along the unit vector{" "}
+        <code>b</code>.
+      </p>
+      <h4>
+        <code>
+          <i>vector.</i>nudgeToward(b: Vector, d: number)
+        </code>
+      </h4>
+      <p>
+        Move this vector by the distance <code>d</code> toward the point vector{" "}
+        <code>b</code>.
       </p>
       <h4>
         <code>
@@ -459,8 +699,66 @@ const vectorC = Vector.from(vectorA)
         Get whether this vector is to the left of <code>b</code> relative to{" "}
         <code>center</code>.
       </p>
+      <h4>
+        <code>
+          <i>vector.</i>nearestPointOnLineThroughPoint(b: Vector, u: Vector)
+        </code>
+      </h4>
+      <p>
+        Get the nearest point on a line with a direction vector <code>u</code>{" "}
+        that passes through the point <code>b</code>.
+      </p>
+      <h4>
+        <code>
+          <i>vector.</i>distanceToLineThroughPoint(b: Vector, u: Vector)
+        </code>
+      </h4>
+      <p>
+        Get the distance to the nearest point on a line with a direction vector{" "}
+        <code>u</code> that passes through the point <code>b</code>.
+      </p>
+      <h4>
+        <code>
+          <i>vector.</i>nearestPointOnLineSegment(p0: Vector, p1: Vector, clamp
+          = true)
+        </code>
+      </h4>
+      <p>
+        Get the nearest point on a line segment that starts at <code>p0</code>{" "}
+        and ends at <code>p1</code>. If <code>clamp</code> is true, then the
+        resulting vector will be a point on the segment; otherwise, the result
+        will be a point on an infinite line that passes through both{" "}
+        <code>p0</code> and <code>p1</code>.
+      </p>
+      <h4>
+        <code>
+          <i>vector.</i>distanceToLineSegment(p0: Vector, p1: Vector, clamp =
+          true)
+        </code>
+      </h4>
+      <p>
+        Get the distance to the nearest point on a line segment that starts at{" "}
+        <code>p0</code> and ends at <code>p1</code>. If <code>clamp</code> is
+        true, then the resulting distance vector will be to a point on the
+        segment; otherwise, the result will be the distance to teh nearest point
+        on an infinite line that passes through both <code>p0</code> and{" "}
+        <code>p1</code>.
+      </p>
       <h3>Static Methods</h3>
-      <p>All of the above methods are implemented as static methods.</p>
+      <p>
+        All of the above methods are implemented as static methods with an
+        additional first argument as an input <code>Vector</code>. Static
+        methods will always create new vectors without mutating their inputs.
+      </p>
+      <pre>
+        <code>{`// The non-static method
+const v0 = vectorA.add(vectorB)`}</code>
+      </pre>
+      <pre>
+        <code>{`// The static method
+const v0 = Vector.add(vectorA, vectorB)
+`}</code>
+      </pre>
       <h4>
         <code>
           <i>Vector.</i>ang3(center: Vector, a: Vector, b: Vector)
@@ -478,13 +776,51 @@ const vectorC = Vector.from(vectorA)
       </p>
       <h4>
         <code>
-          <i>Vector.</i>cast(a: Vector | {`{ x: number, y: number }`})
+          <i>Vector.</i>cast(a: Vector | Point)
         </code>
       </h4>
       <p>
         Create a <code>Vector</code> from <code>a</code> unless it already is
         one.
       </p>
+      <hr />
+      <h3 id="docs_utils">
+        <code>Utils</code>
+      </h3>
+      <p>
+        The <code>Utils</code> class contains useful static methods.
+      </p>
+      <h4>
+        <code>
+          <i>Utils.</i>getRayRayIntersection(p0: Vector, n0: Vector, p1: Vector,
+          n1: Vector)
+        </code>
+      </h4>
+      <p>
+        Returns the intersection of a line with unit direction vector{" "}
+        <code>n0</code>, on whch is located point vector <code>p0</code>, and a
+        second line with unit direction vector <code>n1</code>, on whch is
+        located point vector <code>p1</code>.
+      </p>
+      <h4>
+        <code>
+          <i>Utils.</i>getRayRayIntersection(p0: Vector, n0: Vector, p1: Vector,
+          n1: Vector)
+        </code>
+      </h4>
+      <p>
+        Returns the intersection of a line with unit direction vector{" "}
+        <code>n0</code>, on whch is located point vector <code>p0</code>, and a
+        second line with unit direction vector <code>n1</code>, on whch is
+        located point vector <code>p1</code>.
+      </p>
+      <h4>
+        <code>
+          <i>Utils.</i>bez1d(a: number, b: number, c: number, d: number, t:
+          number)
+        </code>
+      </h4>
+      <p>A basis function for a bezier curve.</p>
     </StyledDocs>
   )
 }
@@ -534,11 +870,11 @@ const StyledDocs = styled("div", {
   },
 
   "& h3": {
-    margin: "48px 0px",
+    fontSize: 20,
+    margin: "48px 0px 32px 0px",
   },
 
   "& h3 > code": {
-    fontSize: 20,
     fontWeight: 600,
     font: "$monoheading",
   },

@@ -30,6 +30,6 @@ export default function PropsList() {
   )
 }
 
-export const PropsTable = styled('div', {
-  padding: '8px',
+export const PropsTable = styled("div", {
+  padding: "8px",
 })

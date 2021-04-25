@@ -215,32 +215,36 @@ export function copyToClipboard(string: string) {
   let result: boolean
 
   try {
-    textarea = document.createElement("textarea")
-    textarea.setAttribute("position", "fixed")
-    textarea.setAttribute("top", "0")
-    textarea.setAttribute("readonly", "true")
-    textarea.setAttribute("contenteditable", "true")
-    textarea.style.position = "fixed" // prevent scroll from jumping to the bottom when focus is set.
-    textarea.value = string
+    navigator.clipboard.writeText(string)
+  } catch (e) {
+    try {
+      textarea = document.createElement("textarea")
+      textarea.setAttribute("position", "fixed")
+      textarea.setAttribute("top", "0")
+      textarea.setAttribute("readonly", "true")
+      textarea.setAttribute("contenteditable", "true")
+      textarea.style.position = "fixed" // prevent scroll from jumping to the bottom when focus is set.
+      textarea.value = string
 
-    document.body.appendChild(textarea)
+      document.body.appendChild(textarea)
 
-    textarea.focus()
-    textarea.select()
+      textarea.focus()
+      textarea.select()
 
-    const range = document.createRange()
-    range.selectNodeContents(textarea)
+      const range = document.createRange()
+      range.selectNodeContents(textarea)
 
-    const sel = window.getSelection()
-    sel.removeAllRanges()
-    sel.addRange(range)
+      const sel = window.getSelection()
+      sel.removeAllRanges()
+      sel.addRange(range)
 
-    textarea.setSelectionRange(0, textarea.value.length)
-    result = document.execCommand("copy")
-  } catch (err) {
-    result = null
-  } finally {
-    document.body.removeChild(textarea)
+      textarea.setSelectionRange(0, textarea.value.length)
+      result = document.execCommand("copy")
+    } catch (err) {
+      result = null
+    } finally {
+      document.body.removeChild(textarea)
+    }
   }
 
   return !!result
@@ -813,7 +817,13 @@ export function det(
   return a * e * i + b * f * g + c * d * h - a * f * h - b * d * i - c * e * g
 }
 
-// Get a circle from three points.
+/**
+ * Get a circle from three points.
+ * @param p0
+ * @param p1
+ * @param center
+ * @returns
+ */
 export function circleFromThreePoints(A: number[], B: number[], C: number[]) {
   const a = det(A[0], A[1], 1, B[0], B[1], 1, C[0], C[1], 1)
 
@@ -865,7 +875,7 @@ export function throttle<P extends any[], T extends (...args: P) => any>(
 ) {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let inThrottle: boolean, lastFn: any, lastTime: number
-  return function(...args: P) {
+  return function (...args: P) {
     if (preventDefault) args[0].preventDefault()
     // eslint-disable-next-line @typescript-eslint/no-this-alias
     const context = this
@@ -875,7 +885,7 @@ export function throttle<P extends any[], T extends (...args: P) => any>(
       inThrottle = true
     } else {
       clearTimeout(lastFn)
-      lastFn = setTimeout(function() {
+      lastFn = setTimeout(function () {
         if (Date.now() - lastTime >= wait) {
           fn.apply(context, args)
           lastTime = Date.now()
@@ -1496,6 +1506,7 @@ export function getNewGlob(A: INode, B: INode): IGlob {
   return {
     id,
     name: "Glob",
+    type: ICanvasItems.Glob,
     nodes: [A.id, B.id],
     D,
     Dp,
@@ -1504,7 +1515,9 @@ export function getNewGlob(A: INode, B: INode): IGlob {
     ap,
     bp,
     points: getGlob(C0, r0, C1, r1, D, Dp, a, b, ap, bp),
-    zIndex: 1,
+    parentId: "0",
+    childIndex: 1,
+    locked: false,
   }
 }
 
@@ -1518,7 +1531,7 @@ export function getGlobClone(glob: IGlob) {
     nodes: [...nodes],
     D: [...D],
     Dp: [...Dp],
-    zIndex: glob.zIndex + 1,
+    childIndex: glob.childIndex + 1,
   }
 }
 
@@ -1532,7 +1545,8 @@ export function getNewNode(point: number[], radius = 25): INode {
     type: ICanvasItems.Node,
     radius,
     cap: "round",
-    zIndex: 1,
+    childIndex: 1,
+    parentId: "0",
     locked: false,
   }
 }
@@ -1544,12 +1558,30 @@ export function getNodeClone(node: INode) {
     ...node,
     id,
     point: [...node.point],
-    zIndex: node.zIndex + 1,
+    childIndex: node.childIndex + 1,
   }
 }
 
 export function screenToWorld(point: number[], camera: IData["camera"]) {
   return vec.add(vec.div(point, camera.zoom), camera.point)
+}
+
+export function getAllSelectedBoundingBox(data: IData) {
+  const { nodes, globs } = data
+
+  const allGlobs = Object.values(globs)
+  const allNodes = Object.values(nodes)
+
+  if (allNodes.length + allGlobs.length === 0) return
+
+  return getCommonBounds(
+    ...allGlobs
+      .filter((glob) => glob.points !== null)
+      .map((glob) =>
+        getGlobBounds(glob, nodes[glob.nodes[0]], nodes[glob.nodes[1]])
+      ),
+    ...allNodes.map(getNodeBounds)
+  )
 }
 
 export function getSelectedBoundingBox(data: IData) {
@@ -1785,7 +1817,7 @@ export function getNodeAdjacentHandleSnapshot(data: IData) {
  * @param n1 The direction vector of the second ray
  * @returns
  */
-export function getRayRayIntesection(
+export function getRayRayIntersection(
   p0: number[],
   n0: number[],
   p1: number[],
@@ -1801,4 +1833,20 @@ export function getRayRayIntesection(
     y = m0 * x + b0
 
   return [x, y]
+}
+
+export async function postJsonToEndpoint(
+  endpoint: string,
+  data: { [key: string]: unknown }
+) {
+  const d = await fetch(
+    `${process.env.NEXT_PUBLIC_BASE_API_URL}/api/${endpoint}`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+    }
+  )
+
+  return await d.json()
 }

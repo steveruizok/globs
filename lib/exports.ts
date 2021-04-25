@@ -35,7 +35,7 @@ class Exports {
         const copy = elements[globId].current.cloneNode(true)
         svg.appendChild(copy)
       } catch (e) {
-        console.log("Could not copy id", globId)
+        console.warn("Could not copy id", globId)
       }
     }
 
@@ -51,7 +51,7 @@ class Exports {
         const copy = elements[nodeId].current.cloneNode(true)
         svg.appendChild(copy)
       } catch (e) {
-        console.log("Could not copy id: " + e)
+        console.warn("Could not copy id: " + e)
       }
     }
 
@@ -69,6 +69,9 @@ class Exports {
         ),
       ...nodeIdsToCopy.map((id) => getNodeBounds(nodes[id], data.camera.zoom))
     )
+
+    // No content
+    if (!bounds) return
 
     const padding = 16
 

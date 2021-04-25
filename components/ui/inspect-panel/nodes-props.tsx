@@ -14,6 +14,8 @@ export default function NodesProps() {
     deepCompareArrays
   )
 
+  const isReadOnly = useSelector((s) => s.data.readOnly)
+
   const handleXChange = useCallback(
     (value: number) => state.send("SET_NODES_X", { value }),
     []
@@ -72,6 +74,7 @@ export default function NodesProps() {
         value={x}
         label="x"
         onChange={handleXChange}
+        readOnly={isReadOnly}
         onPanStart={() =>
           state.send("STARTED_TRANSLATING", { type: "point", axis: "x" })
         }
@@ -80,6 +83,7 @@ export default function NodesProps() {
         value={y}
         label="y"
         onChange={handleYChange}
+        readOnly={isReadOnly}
         onPanStart={() =>
           state.send("STARTED_TRANSLATING", { type: "point", axis: "y" })
         }
@@ -89,14 +93,25 @@ export default function NodesProps() {
         label="radius"
         min={0}
         onChange={handleRadiusChange}
+        readOnly={isReadOnly}
         onPanStart={() => state.send("STARTED_TRANSLATING", { type: "radius" })}
       />
-      <EnumInput value={cap} label="cap" onChange={handleCapChange}>
+      <EnumInput
+        value={cap}
+        label="cap"
+        onChange={handleCapChange}
+        readOnly={isReadOnly}
+      >
         {cap === "mixed" && <option value="mixed">Mixed</option>}
         <option value="round">Round</option>
         <option value="flat">Flat</option>
       </EnumInput>
-      <BoolInput label="locked" value={locked} onChange={handleLockedChange} />
+      <BoolInput
+        label="locked"
+        value={locked}
+        onChange={handleLockedChange}
+        readOnly={isReadOnly}
+      />
     </>
   )
 }

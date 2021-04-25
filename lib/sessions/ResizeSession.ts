@@ -7,7 +7,7 @@ import {
   getSelectionSnapshot,
   round,
   screenToWorld,
-  getRayRayIntesection,
+  getRayRayIntersection,
   updateGlobPoints,
 } from "lib/utils"
 import { resizeNode } from "lib/commands"
@@ -104,18 +104,18 @@ export default class ResizeSession extends BaseSession {
 
         switch (type) {
           case "start": {
-            glob.D = getRayRayIntesection(d0, n0, E1, n1)
-            glob.Dp = getRayRayIntesection(d0p, n0p, E1p, n1p)
+            glob.D = getRayRayIntersection(d0, n0, E1, n1)
+            glob.Dp = getRayRayIntersection(d0p, n0p, E1p, n1p)
             break
           }
           case "end": {
-            glob.D = getRayRayIntesection(d1, n1, E0, n0)
-            glob.Dp = getRayRayIntesection(d1p, n1p, E0p, n0p)
+            glob.D = getRayRayIntersection(d1, n1, E0, n0)
+            glob.Dp = getRayRayIntersection(d1p, n1p, E0p, n0p)
             break
           }
           case "both": {
-            glob.D = getRayRayIntesection(d1, n1, d0, n0)
-            glob.Dp = getRayRayIntesection(d1p, n1p, d0p, n0p)
+            glob.D = getRayRayIntersection(d1, n1, d0, n0)
+            glob.Dp = getRayRayIntersection(d1p, n1p, d0p, n0p)
 
             break
           }

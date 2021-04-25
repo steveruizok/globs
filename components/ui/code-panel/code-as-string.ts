@@ -1,9 +1,7 @@
-import { IBounds, ICanvasItems, IGlob, INode } from "./types"
-import { v4 as uuid } from "uuid"
-import { clamp } from "./utils"
+// A copy and paste from the lib/code.ts file, for TypeScript types
+// TODO: Automate this, add JSDoc annotations.
 
-const nodes = new Set<Node>([])
-const globs = new Set<Glob>([])
+export default `
 
 interface Point {
   x: number
@@ -168,18 +166,10 @@ class Vector {
   x = 0
   y = 0
 
-  constructor(x: number, y: number)
-  constructor(vector: Vector, b?: undefined)
-  constructor(options: Point, b?: undefined)
-  constructor(a: VectorOptions | Vector | number, b?: number) {
-    if (typeof a === "number") {
-      this.x = a
-      this.y = b
-    } else {
-      const { x = 0, y = 0 } = a
-      this.x = x
-      this.y = y
-    }
+  constructor(options = {} as VectorOptions | Vector) {
+    const { x = 0, y = 0 } = options
+    this.x = x
+    this.y = y
   }
 
   set(v: Vector | Point) {
@@ -430,12 +420,16 @@ class Vector {
 
   lrp(b: Vector, t: number) {
     const n = new Vector(this)
-    this.vec(b).mul(t).add(n)
+    this.vec(b)
+      .mul(t)
+      .add(n)
   }
 
   static lrp(a: Vector, b: Vector, t: number) {
     const n = new Vector(a)
-    n.vec(b).mul(t).add(a)
+    n.vec(b)
+      .mul(t)
+      .add(a)
     return n
   }
 
@@ -507,7 +501,7 @@ class Vector {
   }
 
   per() {
-    const t = this.x
+    let t = this.x
     this.x = this.y
     this.y = -t
     return this
@@ -631,55 +625,30 @@ type NodeOptions = {
   name?: string
   cap?: "flat" | "round"
   radius?: number
-  parentId?: string
-  locked?: boolean
 } & ({ x: number; y: number } | { point: Vector })
 
 class Node {
   readonly id = uuid()
-  name = "Node"
+  name: string
   childIndex = 1
-  locked = false
-  parentId = "0"
-  cap: "round" | "flat" = "round"
   point: Vector
   radius: number
+  locked = false
+  cap: "round" | "flat" = "round"
 
-  constructor(x: number, y: number)
-  constructor(options: NodeOptions)
-  constructor(options = {} as number | NodeOptions, b?: number) {
-    if (typeof options === "number") {
-      this.point = new Vector(options, b)
-
-      this.name = "Node"
-      this.cap = "round"
-      this.locked = false
-      this.parentId = "0"
-      this.radius = 25
+  constructor(options = {} as NodeOptions) {
+    if ("x" in options) {
+      const { x = 0, y = 0 } = options
+      this.point = new Vector({ x, y })
     } else {
-      if ("x" in options) {
-        const { x = 0, y = 0 } = options
-        this.point = new Vector({ x, y })
-      } else {
-        const { point = { x: 0, y: 0 } } = options
-        this.point = new Vector(point)
-      }
-
-      const {
-        name = "Node",
-        cap = "round",
-        locked = false,
-        parentId = "0",
-        radius = 25,
-      } = options
-
-      this.name = name
-      this.cap = cap
-      this.radius = radius
-      this.locked = locked
-      this.parentId = parentId
+      const { point = { x: 0, y: 0 } } = options
+      this.point = new Vector(point)
     }
 
+    const { name = "Node", cap = "round", radius = 25 } = options
+    this.name = name
+    this.cap = cap
+    this.radius = radius
     nodes.add(this)
   }
 
@@ -756,15 +725,11 @@ interface GlobOptions {
   b: number
   ap: number
   bp: number
-  parentId: string
-  locked: boolean
 }
 
 class Glob {
   readonly id = uuid()
   childIndex = 1
-  locked = false
-  parentId = "0"
   name: string
   start: Node
   end: Node
@@ -775,58 +740,25 @@ class Glob {
   ap: number
   bp: number
 
-  constructor(start: Node | Vector | Point, end: Node | Vector | Point)
-  constructor(options: Partial<GlobOptions>)
-  constructor(
-    options = {} as Partial<GlobOptions> | Node | Vector | Point,
-    end?: Node | Vector | Point
-  ) {
-    if (
-      options instanceof Node ||
-      options instanceof Vector ||
-      "x" in options
-    ) {
-      this.start = Node.cast(options)
-      this.end = Node.cast(end)
-      this.name = "Glob"
-      this.parentId = "0"
-      this.locked = false
-      this.a = 0.5
-      this.b = 0.5
-      this.ap = 0.5
-      this.bp = 0.5
+  constructor(options = {} as Partial<GlobOptions>) {
+    const { name = "Glob", a = 0.5, b = 0.5, ap = 0.5, bp = 0.5 } = options
 
-      this.D = Vector.med(this.start.point, this.end.point)
-      this.Dp = Vector.med(this.start.point, this.end.point)
-    } else {
-      const {
-        name = "Glob",
-        parentId = "0",
-        locked = false,
-        a = 0.5,
-        b = 0.5,
-        ap = 0.5,
-        bp = 0.5,
-      } = options
+    this.name = name
+    this.start = Node.cast(options.start || { x: 0, y: 0 })
+    this.end = Node.cast(options.end || { x: 0, y: 0 })
+    this.D =
+      options.D === undefined
+        ? Vector.med(this.start.point, this.end.point)
+        : Vector.cast(options.D)
 
-      this.name = name
-      this.start = Node.cast(options.start || { x: 0, y: 0 })
-      this.end = Node.cast(options.end || { x: 0, y: 0 })
-      this.D =
-        options.D === undefined
-          ? Vector.med(this.start.point, this.end.point)
-          : Vector.cast(options.D)
-      this.Dp =
-        options.Dp === undefined
-          ? Vector.med(this.start.point, this.end.point)
-          : Vector.cast(options.Dp)
-      this.a = clamp(a, 0, 1)
-      this.b = clamp(b, 0, 1)
-      this.ap = clamp(ap, 0, 1)
-      this.bp = clamp(bp, 0, 1)
-      this.parentId = parentId
-      this.locked = locked
-    }
+    this.Dp =
+      options.Dp === undefined
+        ? Vector.med(this.start.point, this.end.point)
+        : Vector.cast(options.Dp)
+    this.a = a
+    this.b = b
+    this.ap = ap
+    this.bp = bp
 
     globs.add(this)
   }
@@ -981,9 +913,9 @@ class Glob {
 
     return {
       C0,
+      r0,
       C1,
-      D,
-      Dp,
+      r1,
       E0,
       E0p,
       E1,
@@ -996,8 +928,8 @@ class Glob {
       N0p,
       N1,
       N1p,
-      r0,
-      r1,
+      D,
+      Dp,
     }
   }
 
@@ -1071,78 +1003,4 @@ class Glob {
 
     return globs
   }
-}
-
-export default function evalCode(
-  code: string
-): { nodes: Record<string, INode>; globs: Record<string, IGlob> } {
-  nodes.clear()
-  globs.clear()
-
-  Function(
-    "Glob",
-    "Node",
-    "Vector",
-    "Utils",
-    code
-    // `const fn = () => { ${code} }; fn();`
-  )(Glob, Node, Vector, Utils)
-
-  return {
-    nodes: Object.fromEntries(
-      Array.from(nodes.values()).map((node) => {
-        const { id, name, radius, cap, locked, point, childIndex } = node
-        return [
-          id,
-          {
-            id,
-            type: ICanvasItems.Node,
-            name,
-            point: point.toArray(),
-            radius,
-            cap,
-            locked,
-            parentId: "0",
-            childIndex,
-          },
-        ]
-      })
-    ),
-    globs: Object.fromEntries(
-      Array.from(globs.values()).map((glob) => {
-        const {
-          id,
-          name,
-          start,
-          end,
-          D,
-          Dp,
-          a,
-          b,
-          ap,
-          bp,
-          childIndex,
-          locked,
-        } = glob
-        return [
-          glob.id,
-          {
-            id,
-            name,
-            type: ICanvasItems.Glob,
-            nodes: [start.id, end.id],
-            D: D.toArray(),
-            Dp: Dp.toArray(),
-            a,
-            b,
-            ap,
-            bp,
-            parentId: "0",
-            childIndex,
-            locked,
-          },
-        ]
-      })
-    ),
-  }
-}
+}`

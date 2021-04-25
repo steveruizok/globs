@@ -1,8 +1,8 @@
 import { useEffect } from "react"
 import router from "next/router"
-import Head from "next/head"
 import { AppProps } from "next/app"
 import * as gtag from "lib/gtag"
+import Meta from "components/meta"
 import { globalStyles } from "styles/globalStyles"
 import "styles/styles.css"
 
@@ -24,9 +24,7 @@ function MyApp({ Component, pageProps }: AppProps) {
 
   return (
     <>
-      <Head>
-        <title>Glob Editor</title>
-      </Head>
+      <Meta />
       <Component {...pageProps} />
     </>
   )
