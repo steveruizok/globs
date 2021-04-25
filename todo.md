@@ -37,6 +37,8 @@
   - [ ] Lock mirrored adjacent handles
   - [ ] Lock handle position relative to some other position?
   - [ ] Lock node position relative to some other position?
+  - [ ] Closed globs
+  - [ ] Colored globs
 
 - [x] Add share links
 
