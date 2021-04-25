@@ -8,7 +8,6 @@ export enum CommandType {
   ChangeBounds,
   CreateGlob,
   CreateNode,
-  ToggleLocked,
   Delete,
   Split,
   Move,
@@ -16,6 +15,11 @@ export enum CommandType {
   ReorderGlobs,
   ReorderNodes,
   Paste,
+  ToggleCap,
+  ToggleLocked,
+  SetProperty,
+  SetItems,
+  Transform,
 }
 
 /**

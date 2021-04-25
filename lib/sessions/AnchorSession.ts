@@ -74,7 +74,7 @@ export default class AnchorSession extends BaseSession {
     glob.bp = this.snapshot.bp
 
     if (inputs.keys.Meta) {
-      if (inputs.keys.Shift) {
+      if (inputs.modifiers.shiftKey) {
         glob.a = n
         glob.b = n
         glob.ap = n

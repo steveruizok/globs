@@ -1,4 +1,5 @@
 import { current } from "immer"
+import * as gtag from "lib/gtag"
 import * as vec from "lib/vec"
 import { IData, IGlob, INode, ISelectionSnapshot } from "lib/types"
 import inputs from "lib/inputs"
@@ -32,6 +33,13 @@ export function createNode(data: IData) {
   const point = vec.round(screenToWorld(inputs.pointer.point, data.camera))
 
   const node = getNewNode(point)
+
+  gtag.event({
+    action: "create_node",
+    category: "canvas_actions",
+    label: "",
+    value: 0,
+  })
 
   history.execute(
     data,
@@ -68,6 +76,13 @@ export function createGlobToNewNode(data: IData, point: number[]) {
   const newGlobs = sSelectedNodes.map((nodeId) =>
     getNewGlob(sNodes[nodeId], newNode)
   )
+
+  gtag.event({
+    action: "create_glob_to_new_node",
+    category: "canvas_actions",
+    label: "",
+    value: 0,
+  })
 
   history.execute(
     data,
@@ -119,6 +134,13 @@ export function createGlobBetweenNodes(data: IData, targetId: string) {
     )
     .map((nodeId) => getNewGlob(sNodes[nodeId], sNodes[targetId]))
 
+  gtag.event({
+    action: "create_glob_between_nodes",
+    category: "canvas_actions",
+    label: "",
+    value: 0,
+  })
+
   history.execute(
     data,
     new Command({
@@ -146,6 +168,13 @@ export function pasteSelection(
   data: IData,
   pasted: { nodes: Record<string, INode>; globs: Record<string, IGlob> }
 ) {
+  gtag.event({
+    action: "pasted_selection",
+    category: "canvas_actions",
+    label: "",
+    value: 0,
+  })
+
   history.execute(
     data,
     new Command({
@@ -225,6 +254,13 @@ export function cloneSelection(
   const sCloneNodes = clones.nodes.map((id) => sNodes[id])
   const sCloneGlobs = clones.globs.map((id) => sGlobs[id])
 
+  gtag.event({
+    action: "cloned_selection",
+    category: "canvas_actions",
+    label: "",
+    value: 0,
+  })
+
   history.execute(
     data,
     new Command({
@@ -286,6 +322,13 @@ export function moveSelection(
       )
     : {}
 
+  gtag.event({
+    action: "moved_selection",
+    category: "canvas_actions",
+    label: "",
+    value: 0,
+  })
+
   history.execute(
     data,
     new Command({
@@ -326,7 +369,13 @@ export function moveHandle(
   initial: { D: number[]; Dp: number[] },
   current: { D: number[]; Dp: number[] }
 ) {
-  // We need a way to restore the nodes from when the drag began and ended
+  gtag.event({
+    action: "moved_handle",
+    category: "canvas_actions",
+    label: "",
+    value: 0,
+  })
+
   history.execute(
     data,
     new Command({
@@ -368,6 +417,13 @@ export function moveAnchor(
   initial: AnchorSessionSnapshot
 ) {
   const current = AnchorSession.getSnapshot(data, globId)
+
+  gtag.event({
+    action: "moved_anchor",
+    category: "canvas_actions",
+    label: "",
+    value: 0,
+  })
 
   // We need a way to restore the nodes from when the drag began and ended
   history.execute(
@@ -553,6 +609,13 @@ export function splitGlob(data: IData, id: string) {
     data.nodes[glob.nodes[1]]
   )
 
+  gtag.event({
+    action: "split_glob",
+    category: "canvas_actions",
+    label: "",
+    value: 0,
+  })
+
   history.execute(
     data,
     new Command({
@@ -604,6 +667,13 @@ export function splitGlob(data: IData, id: string) {
 // Reordering
 export function reorderGlobs(data: IData, from: number, to: number) {
   const sGlobIds = [...data.globIds]
+
+  gtag.event({
+    action: "reordered_globs",
+    category: "canvas_actions",
+    label: "",
+    value: 0,
+  })
 
   history.execute(
     data,
@@ -662,6 +732,13 @@ export function deleteSelection(data: IData) {
     }
   }
 
+  gtag.event({
+    action: "deleted_selection",
+    category: "canvas_actions",
+    label: "",
+    value: 0,
+  })
+
   history.execute(
     data,
     new Command({
@@ -693,6 +770,13 @@ export function toggleSelectionLocked(data: IData) {
     Object.entries(data.nodes).map(([id, node]) => [id, node.locked])
   )
 
+  gtag.event({
+    action: "toggled_locked",
+    category: "canvas_actions",
+    label: "",
+    value: 0,
+  })
+
   history.execute(
     data,
     new Command({
@@ -715,6 +799,13 @@ export function toggleSelectionLocked(data: IData) {
 export function updateGlobOptions(data: IData, options: Partial<IGlob>) {
   const snapshot = getSelectionSnapshot(data)
   const sGlobIds = [...data.selectedGlobs]
+
+  gtag.event({
+    action: "updated_glob_options",
+    category: "panel_actions",
+    label: "",
+    value: 0,
+  })
 
   history.execute(
     data,
@@ -741,37 +832,53 @@ export function updateGlobOptions(data: IData, options: Partial<IGlob>) {
 }
 
 export function moveBounds(data: IData, delta: number[]) {
-  const sNodeIds = [...data.selectedNodes]
   const sGlobIds = [...data.selectedGlobs]
+
+  const nodeIdsToMove = new Set(data.selectedNodes)
+
+  for (const globId of sGlobIds) {
+    const glob = data.globs[globId]
+    nodeIdsToMove.add(glob.nodes[0])
+    nodeIdsToMove.add(glob.nodes[1])
+  }
+
+  gtag.event({
+    action: "moved_bounds",
+    category: "panel_actions",
+    label: "",
+    value: 0,
+  })
 
   history.execute(
     data,
     new Command({
       type: CommandType.ChangeBounds,
       do(data) {
-        for (const nodeId of sNodeIds) {
+        nodeIdsToMove.forEach((nodeId) => {
           const node = data.nodes[nodeId]
           node.point = vec.add(node.point, delta)
-        }
+        })
 
         for (const globId of sGlobIds) {
           const glob = data.globs[globId]
           glob.D = vec.add(glob.D, delta)
           glob.Dp = vec.add(glob.Dp, delta)
         }
+
         updateGlobPoints(data)
       },
       undo(data) {
-        for (const nodeId of sNodeIds) {
+        nodeIdsToMove.forEach((nodeId) => {
           const node = data.nodes[nodeId]
           node.point = vec.sub(node.point, delta)
-        }
+        })
 
         for (const globId of sGlobIds) {
           const glob = data.globs[globId]
           glob.D = vec.sub(glob.D, delta)
           glob.Dp = vec.sub(glob.Dp, delta)
         }
+
         updateGlobPoints(data)
       },
     })
@@ -784,6 +891,13 @@ export function rotateSelection(
   angle: number,
   snapshot: ReturnType<typeof getSelectionSnapshot>
 ) {
+  gtag.event({
+    action: "rotated_bounds",
+    category: "canvas_actions",
+    label: "",
+    value: 0,
+  })
+
   history.execute(
     data,
     new Command({
@@ -824,10 +938,17 @@ export function transformBounds(
 ) {
   const current = TransformSession.getSnapshot(data)
 
+  gtag.event({
+    action: "transformed_bounds",
+    category: "canvas_actions",
+    label: "",
+    value: 0,
+  })
+
   history.execute(
     data,
     new Command({
-      type: CommandType.CreateNode,
+      type: CommandType.ChangeBounds,
       do(data, initial) {
         if (initial) return
 
@@ -885,6 +1006,13 @@ export function resizeBounds(data: IData, size: number[]) {
     size[1] ? size[1] - bounds.height : 0,
   ]
 
+  gtag.event({
+    action: "resized_bounds",
+    category: "panel_actions",
+    label: "",
+    value: 0,
+  })
+
   history.execute(
     data,
     new Command({
@@ -932,6 +1060,13 @@ export function resizeNode(
     ])
   )
 
+  gtag.event({
+    action: "resized_node",
+    category: "canvas_actions",
+    label: "",
+    value: 0,
+  })
+
   history.execute(
     data,
     new Command({
@@ -973,10 +1108,18 @@ export function resizeNode(
 
 export function toggleSelectedNodesCap(data: IData, id: string) {
   const cap = data.nodes[id].cap
+
+  gtag.event({
+    action: "toggled_cap",
+    category: "canvas_actions",
+    label: "",
+    value: 0,
+  })
+
   history.execute(
     data,
     new Command({
-      type: CommandType.CreateNode,
+      type: CommandType.ToggleCap,
       do(data) {
         const node = data.nodes[id]
         node.cap = cap === "round" ? "flat" : "round"
@@ -1016,10 +1159,17 @@ export function setPropertyOnSelectedNodes(
     })
   )
 
+  gtag.event({
+    action: "set_property",
+    category: "panel_actions",
+    label: "",
+    value: 0,
+  })
+
   history.execute(
     data,
     new Command({
-      type: CommandType.CreateNode,
+      type: CommandType.SetProperty,
       do(data) {
         for (const key in sNodes) {
           const node = data.nodes[key]
@@ -1053,10 +1203,17 @@ export function setCanvasItems(
 ) {
   const { generated: sGenerated, nodes: sNodes, globs: sGlobs } = current(data)
 
+  gtag.event({
+    action: "set_items_from_code",
+    category: "code_actions",
+    label: "",
+    value: 0,
+  })
+
   history.execute(
     data,
     new Command({
-      type: CommandType.CreateNode,
+      type: CommandType.SetItems,
       manualSelection: true,
       do(data) {
         for (const nodeId of sGenerated.nodeIds) {

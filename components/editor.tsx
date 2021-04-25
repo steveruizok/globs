@@ -310,21 +310,17 @@ export default function Editor({
               </svg>
               <ContextMenu />
             </SVGWrapper>
-            {!clean && (
-              <>
-                <Toolbar />
-                <ContentPanel />
-                <InspectPanel />
-                <StatusBar />
-                <Main ref={rMain}>
-                  <LearnPanel bounds={rMain} />
-                  <CodePanel />
-                  <ZoomPanel />
-                  <Thumbstick />
-                  {isReadOnly && <ReadOnlyPanel />}
-                </Main>
-              </>
-            )}
+            <Toolbar />
+            <ContentPanel />
+            <InspectPanel />
+            <StatusBar />
+            <Main ref={rMain}>
+              <LearnPanel bounds={rMain} />
+              <CodePanel />
+              <ZoomPanel />
+              <Thumbstick />
+              {isReadOnly && <ReadOnlyPanel />}
+            </Main>
           </Layout>
         </EditorContainer>
       </ContextMenuRoot>
