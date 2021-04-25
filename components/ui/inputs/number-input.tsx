@@ -7,6 +7,7 @@ import { PropContainer } from "./shared"
 interface Props {
   value: number | "mixed"
   label: string
+  readOnly: boolean
   min?: number
   max?: number
   step?: number
@@ -21,6 +22,7 @@ function NumberInput({
   step = 1,
   value,
   label,
+  readOnly,
   onPanStart,
   onPanEnd,
   onChange,
@@ -29,8 +31,8 @@ function NumberInput({
   const rPoint = useRef([0, 0])
   const [val, setVal] = useState(value === "mixed" ? 0 : value)
   const [isHovered, setIsHovered] = useState(false)
-  const [isPressed, setIsPressed] = useState(false)
-  const [isPanning, setIsPanning] = useState(false)
+  // const [isPressed, setIsPressed] = useState(false)
+  // const [isPanning, setIsPanning] = useState(false)
   const [isFocused, setIsFocused] = useState(false)
 
   const rWillEdit = useRef(true)
@@ -48,40 +50,12 @@ function NumberInput({
 
   function handlePointerDown() {
     rPoint.current = inputs.pointer.point
-    setIsPressed(true)
-  }
-
-  function handleEnd() {
-    onPanEnd && onPanEnd()
-    setIsPressed(false)
-    setIsPanning(false)
-
-    window.removeEventListener("pointerup", handleEnd)
-  }
-
-  function handlePointerMove(e) {
-    if (
-      isPressed &&
-      !isPanning &&
-      Math.abs(inputs.pointer.point[0] - rPoint.current[0]) > 3
-    ) {
-      setIsPanning(true)
-      onPanStart && onPanStart()
-
-      window.addEventListener("pointerup", handleEnd)
-      e.preventDefault()
-      e.stopPropagation()
-    }
-
-    if (isPanning) {
-      e.preventDefault()
-      e.stopPropagation()
-    }
+    // setIsPressed(true)
   }
 
   function handlePointerUp() {
-    setIsPressed(false)
-    setIsPanning(false)
+    // setIsPressed(false)
+    // setIsPanning(false)
     rInput.current.focus()
   }
 
@@ -94,6 +68,34 @@ function NumberInput({
   //     setVal(next)
   //     onChange(min !== undefined ? clamp(next, min, max) : next)
   //   }
+  // }
+
+  // function handlePointerMove(e) {
+  //   if (
+  //     isPressed &&
+  //     !isPanning &&
+  //     Math.abs(inputs.pointer.point[0] - rPoint.current[0]) > 3
+  //   ) {
+  //     setIsPanning(true)
+  //     onPanStart && onPanStart()
+
+  //     window.addEventListener("pointerup", handleEnd)
+  //     e.preventDefault()
+  //     e.stopPropagation()
+  //   }
+
+  //   if (isPanning) {
+  //     e.preventDefault()
+  //     e.stopPropagation()
+  //   }
+  // }
+
+  // function handleEnd() {
+  //   onPanEnd && onPanEnd()
+  //   setIsPressed(false)
+  //   setIsPanning(false)
+
+  //   window.removeEventListener("pointerup", handleEnd)
   // }
 
   function handleChange({
