@@ -10,7 +10,12 @@ const ITEM_HEIGHT = 28
 
 export default function GlobList() {
   const globIds = useSelector((s) => s.data.globIds)
+  const pageId = useSelector((s) => s.data.pageId)
   const selectedGlobIds = useSelector((s) => s.data.selectedGlobs)
+
+  const globPageIds = globIds.filter(
+    (globId) => state.data.globs[globId].parentId === pageId
+  )
 
   const rContainer = useRef<HTMLDivElement>(null)
   const rList = useRef<HTMLOListElement>(null)
@@ -83,7 +88,7 @@ export default function GlobList() {
           (point[1] - listTop - offsetTop + scrollTop - HEADER_HEIGHT) /
           ITEM_HEIGHT
 
-        const nextIndex = clamp(Math.floor(y), 0, globIds.length - 1)
+        const nextIndex = clamp(Math.floor(y), 0, globPageIds.length - 1)
 
         const direction = nextIndex < draggingIndex ? "up" : "down"
 
@@ -136,7 +141,7 @@ export default function GlobList() {
         payload,
         result: { nextIndex: number; direction: "up" | "down" }
       ) {
-        data.nextIndex = clamp(result.nextIndex, 0, globIds.length)
+        data.nextIndex = clamp(result.nextIndex, 0, globPageIds.length)
         data.draggingDirection = result.direction
       },
       moveDraggingToNextPosition(data) {
@@ -167,9 +172,9 @@ export default function GlobList() {
     if (selectedGlobIds.length > 0) {
       const section = rContainer.current
       const sorted = selectedGlobIds.sort(
-        (a, b) => globIds.indexOf(a) - globIds.indexOf(b)
+        (a, b) => globPageIds.indexOf(a) - globIds.indexOf(b)
       )
-      const index = globIds.indexOf(sorted[0])
+      const index = globPageIds.indexOf(sorted[0])
       const y = ITEM_HEIGHT * index
       const minY = section.scrollTop
       const height = section.offsetHeight - ITEM_HEIGHT * 2
@@ -179,7 +184,7 @@ export default function GlobList() {
         section.scrollTo(0, y - height)
       }
     }
-  }, [selectedGlobIds, globIds])
+  }, [selectedGlobIds, globIds, globPageIds.length])
 
   const isDragging = local.isIn("dragging")
 
@@ -189,7 +194,7 @@ export default function GlobList() {
     <section ref={rContainer}>
       <h2>Globs</h2>
       <ol ref={rList}>
-        {globIds.map((id, index) => {
+        {globPageIds.map((id, index) => {
           return (
             <Draggable
               key={id}

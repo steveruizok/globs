@@ -42,36 +42,9 @@ export const elms: Record<string, MutableRefObject<SVGElement>> = {}
 const state = createState({
   data: initialData,
   on: {
+    RESIZED: "setViewport",
     MOUNTED_ELEMENT: { secretlyDo: "mountElement" },
     UNMOUNTED_ELEMENT: { secretlyDo: "deleteElement" },
-    UNMOUNTED: { do: "teardown", to: "loading" },
-    EXPORTED: "copySvgToClipboard",
-    RESIZED: "setViewport",
-    PRESSED_SPACE: "toggleFill",
-    RELEASED_SPACE: "toggleFill",
-    TOGGLED_FILL: "toggleFill",
-    MOVED_POINTER: [
-      { secretlyDo: "updateMvPointer" },
-      { if: "hasMiddleButton", do: "panCamera" },
-    ],
-    WHEELED: {
-      ifAny: ["hasShift", "isTrackpadZoom"],
-      do: ["zoomCamera", "updateMvPointer"],
-      else: ["wheelPanCamera", "updateMvPointer"],
-    },
-    STARTED_MOVING_THUMBSTICK: {
-      if: "hasSelection",
-      to: "draggingWithThumbstick",
-      else: { to: "panningWithThumbstick" },
-    },
-    ZOOMED_TO_FIT: "zoomToFit",
-    COPIED: "copyToClipboard",
-    CUT: ["copyToClipboard", "deleteSelection"],
-    OPENED_READ_ONLY_PROJECT: ["setReadonly", "disableHistory"],
-    OPENED_EDITABLE_PROJECT: ["clearReadonly", "enableHistory"],
-    OPENED_SHARE_LINK: { to: "viewingShareLink" },
-    OPENED_SHARE_LINK_MODAL: { to: "shareLinkModal" },
-    DOWNLOADED_SHARE_LINK: { do: "mergeSharedLinkToLocal" },
   },
   initial: "loading",
   states: {
@@ -92,6 +65,33 @@ const state = createState({
         PASTED: { unless: "isReadOnly", do: "startPasteFromClipboard" },
         FINISHED_PASTE: "finishPasteFromClipboard",
         CHANGED_CODE: "setCode",
+        UNMOUNTED: { do: "teardown", to: "loading" },
+        EXPORTED: "copySvgToClipboard",
+        PRESSED_SPACE: "toggleFill",
+        RELEASED_SPACE: "toggleFill",
+        TOGGLED_FILL: "toggleFill",
+        MOVED_POINTER: [
+          { secretlyDo: "updateMvPointer" },
+          { if: "hasMiddleButton", do: "panCamera" },
+        ],
+        WHEELED: {
+          ifAny: ["hasShift", "isTrackpadZoom"],
+          do: ["zoomCamera", "updateMvPointer"],
+          else: ["wheelPanCamera", "updateMvPointer"],
+        },
+        STARTED_MOVING_THUMBSTICK: {
+          if: "hasSelection",
+          to: "draggingWithThumbstick",
+          else: { to: "panningWithThumbstick" },
+        },
+        ZOOMED_TO_FIT: "zoomToFit",
+        COPIED: "copyToClipboard",
+        CUT: ["copyToClipboard", "deleteSelection"],
+        OPENED_READ_ONLY_PROJECT: ["setReadonly", "disableHistory"],
+        OPENED_EDITABLE_PROJECT: ["clearReadonly", "enableHistory"],
+        OPENED_SHARE_LINK: { to: "viewingShareLink" },
+        OPENED_SHARE_LINK_MODAL: { to: "shareLinkModal" },
+        DOWNLOADED_SHARE_LINK: { do: "mergeSharedLinkToLocal" },
       },
       initial: "selecting",
       states: {
@@ -118,6 +118,7 @@ const state = createState({
                 UNHOVERED_GLOB: "pullHoveredGlob",
                 HOVERED_NODE: "pushHoveredNode",
                 UNHOVERED_NODE: "pullHoveredNode",
+                POINTED_PAGE: "setCurrentPage",
                 POINTED_NODE: [
                   "setPointingId",
                   {
@@ -220,7 +221,10 @@ const state = createState({
                   to: "rotating",
                 },
                 // Panel
-                STARTED_translating: {
+                CREATED_PAGE: {
+                  do: "createAndGoToPage",
+                },
+                STARTED_TRANSLATING: {
                   unless: "isReadOnly",
                   to: "translating",
                 },
@@ -469,12 +473,12 @@ const state = createState({
             },
           },
         },
-      },
-    },
-    shareLinkModal: {
-      on: {
-        CHANGED_SHARE_LINKS: { do: "setShareLinks" },
-        CLOSED_SHARE_LINK_MODAL: { to: "ready" },
+        shareLinkModal: {
+          on: {
+            CHANGED_SHARE_LINKS: { do: "setShareLinks" },
+            CLOSED_SHARE_LINK_MODAL: { to: "ready" },
+          },
+        },
       },
     },
   },
@@ -519,6 +523,14 @@ const state = createState({
     },
   },
   actions: {
+    // Pages
+    createAndGoToPage(data) {
+      commands.createPage(data)
+    },
+    setCurrentPage(data, payload: { id: string }) {
+      data.pageId = payload.id
+    },
+
     // Code panel
     refreshGeneratedItems(
       data,

@@ -7,6 +7,7 @@ import {
   PanelContainer as _PanelContainer,
   ResizeHandle as _ResizeHandle,
 } from "../panels"
+import PageList from "./page-list"
 
 const MIN = 200,
   MAX = 320
@@ -27,6 +28,7 @@ export default function ContentPanel() {
   return (
     <PanelContainer data-bp-desktop style={{ width: mvWidth }}>
       <PanelInnerContainer>
+        <PageList />
         <NodeList />
         <GlobList />
       </PanelInnerContainer>
@@ -54,5 +56,5 @@ const ResizeHandle = styled(_ResizeHandle, {
 
 const PanelInnerContainer = styled(_PanelInnerContainer, {
   display: "grid",
-  gridTemplateRows: "1fr 1fr",
+  gridTemplateRows: "auto 1fr 1fr",
 })

@@ -1,6 +1,14 @@
 import { current } from "immer"
 import * as vec from "lib/vec"
-import { IData, IGlob, INode, ISelectionSnapshot } from "lib/types"
+import { v4 as uuid } from "uuid"
+import {
+  ICanvasItems,
+  IData,
+  IGlob,
+  INode,
+  IPage,
+  ISelectionSnapshot,
+} from "lib/types"
 import inputs from "lib/inputs"
 import {
   getLineLineIntersection,
@@ -12,7 +20,6 @@ import {
   updateGlobPoints,
   getSelectionSnapshot,
   getGlobPoints,
-  getGlob,
 } from "lib/utils"
 import { getClosestPointOnCurve, getNormalOnCurve } from "lib/bez"
 import history, { Command, CommandType } from "lib/history"
@@ -29,10 +36,42 @@ import MoveSession, {
 
 /* -------------------- Commands -------------------- */
 
+export function createPage(data: IData) {
+  const currentPageId = data.pageId
+
+  const pages = Object.values(data.pages).sort(
+    (a, b) => a.childIndex - b.childIndex
+  )
+
+  const page: IPage = {
+    name: `Page`,
+    id: "page-" + uuid(),
+    locked: false,
+    type: ICanvasItems.Page,
+    childIndex: pages[pages.length - 1].childIndex + 1,
+  }
+
+  history.execute(
+    data,
+    new Command({
+      type: CommandType.CreateNode,
+      do(data) {
+        data.pages[page.id] = page
+        data.pageId = page.id
+      },
+      undo(data) {
+        delete data.pages[page.id]
+        data.pageId = currentPageId
+      },
+    })
+  )
+}
+
 export function createNode(data: IData) {
   const point = vec.round(screenToWorld(inputs.pointer.point, data.camera))
-
+  const currentPageId = data.pageId
   const node = getNewNode(point)
+  node.parentId = currentPageId
 
   history.execute(
     data,
@@ -58,17 +97,20 @@ export function createGlobToNewNode(data: IData, point: number[]) {
     selectedNodes: sSelectedNodes,
     camera: sCamera,
   } = current(data)
-
+  const currentPageId = data.pageId
   const newNode = getNewNode(screenToWorld(point, sCamera))
+  newNode.parentId = currentPageId
 
   newNode.radius = sSelectedNodes.reduce(
     (a, c) => (sNodes[c].radius < a ? sNodes[c].radius : a),
     sNodes[sSelectedNodes[0]].radius
   )
 
-  const newGlobs = sSelectedNodes.map((nodeId) =>
-    getNewGlob(sNodes[nodeId], newNode)
-  )
+  const newGlobs = sSelectedNodes.map((nodeId) => {
+    const glob = getNewGlob(sNodes[nodeId], newNode)
+    glob.parentId = currentPageId
+    return glob
+  })
 
   history.execute(
     data,
@@ -108,9 +150,11 @@ export function createGlobBetweenNodes(data: IData, targetId: string) {
     selectedNodes: sSelectedNodes,
   } = current(data)
 
+  const currentPageId = data.pageId
+
   const globs = sGlobIds.map((id) => sGlobs[id])
 
-  // Don't create a second glob between nodes, if one already exists
+  // Don't create a second glob between nodes if one already exists
   const newGlobs = sSelectedNodes
     .filter(
       (nodeId) =>
@@ -118,7 +162,11 @@ export function createGlobBetweenNodes(data: IData, targetId: string) {
           ({ nodes }) => nodes.includes(nodeId) && nodes.includes(targetId)
         )
     )
-    .map((nodeId) => getNewGlob(sNodes[nodeId], sNodes[targetId]))
+    .map((nodeId) => {
+      const glob = getNewGlob(sNodes[nodeId], sNodes[targetId])
+      glob.parentId = currentPageId
+      return glob
+    })
 
   history.execute(
     data,
@@ -147,11 +195,20 @@ export function pasteSelection(
   data: IData,
   pasted: { nodes: Record<string, INode>; globs: Record<string, IGlob> }
 ) {
+  const currentPageId = data.pageId
+
   history.execute(
     data,
     new Command({
       type: CommandType.Paste,
       do(data) {
+        for (let nodeId in pasted.nodes) {
+          pasted.nodes[nodeId].parentId = currentPageId
+        }
+        for (let globId in pasted.globs) {
+          pasted.globs[globId].parentId = currentPageId
+        }
+
         Object.assign(data.nodes, pasted.nodes)
         Object.assign(data.globs, pasted.globs)
 
@@ -445,6 +502,7 @@ export function splitGlob(data: IData, id: string) {
     const point = vec.med(closestP.point, closestPp.point)
 
     newStartNode = getNewNode(point, (start.radius + end.radius) / 2)
+    newStartNode.parentId = data.pageId
 
     D0 = vec.med(E0, closestP.point)
     D1 = vec.med(closestP.point, E1)
@@ -536,10 +594,12 @@ export function splitGlob(data: IData, id: string) {
     b1p = t1p
 
     newStartNode = getNewNode(C, r)
+    newStartNode.parentId = data.pageId
   }
 
   const newGlob = {
     ...getNewGlob(newStartNode, data.nodes[glob.nodes[1]]),
+    parentId: data.pageId,
     D: D1,
     Dp: D1p,
     a: a1,
