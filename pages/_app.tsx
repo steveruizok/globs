@@ -5,6 +5,9 @@ import * as gtag from "lib/gtag"
 import Meta from "components/meta"
 import { globalStyles } from "styles/globalStyles"
 import "styles/styles.css"
+import { init } from "../utils/sentry"
+
+init()
 
 function MyApp({ Component, pageProps }: AppProps) {
   globalStyles()
