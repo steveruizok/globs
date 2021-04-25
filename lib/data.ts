@@ -29,7 +29,6 @@ export const initialData: IData = {
   // Client state
   nodeIds: [],
   globIds: [],
-  theme: "dark",
   codePanel: {
     isOpen: false,
     fontSize: 13,
@@ -67,6 +66,11 @@ export const initialData: IData = {
     globIds: [],
   },
   shareUrls: [],
+  preferences: {
+    theme: "dark",
+    nudgeDistanceSmall: 1,
+    nudgeDistanceLarge: 10,
+  },
 }
 
 export const defaultData: IData = {

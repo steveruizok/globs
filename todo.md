@@ -39,6 +39,7 @@
   - [ ] Lock node position relative to some other position?
   - [ ] Closed globs
   - [ ] Colored globs
+  - [x] Nudging
 
 - [x] Add share links
 

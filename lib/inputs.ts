@@ -30,21 +30,37 @@ class Inputs {
   }
 
   downCommands: Record<string, KeyCommand[]> = {
+    ArrowLeft: [
+      { eventName: "NUDGED_LEFT", modifiers: ["shiftKey"] },
+      { eventName: "NUDGED_LEFT", modifiers: [] },
+    ],
+    ArrowRight: [
+      { eventName: "NUDGED_RIGHT", modifiers: ["shiftKey"] },
+      { eventName: "NUDGED_RIGHT", modifiers: [] },
+    ],
+    ArrowDown: [
+      { eventName: "NUDGED_DOWN", modifiers: ["shiftKey"] },
+      { eventName: "NUDGED_DOWN", modifiers: [] },
+    ],
+    ArrowUp: [
+      { eventName: "NUDGED_UP", modifiers: ["shiftKey"] },
+      { eventName: "NUDGED_UP", modifiers: [] },
+    ],
     z: [
-      { eventName: "REDO", modifiers: ["Meta", "Shift"] },
-      { eventName: "UNDO", modifiers: ["Meta"] },
+      { eventName: "REDO", modifiers: ["metaKey", "shiftKey"] },
+      { eventName: "UNDO", modifiers: ["metaKey"] },
     ],
-    a: [{ eventName: "SELECTED_ALL", modifiers: ["Meta"] }],
-    s: [{ eventName: "SAVED", modifiers: ["Meta"] }],
+    a: [{ eventName: "SELECTED_ALL", modifiers: ["metaKey"] }],
+    s: [{ eventName: "SAVED", modifiers: ["metaKey"] }],
     c: [
-      { eventName: "EXPORTED", modifiers: ["Shift", "Meta"] },
-      { eventName: "COPIED", modifiers: ["Meta"] },
+      { eventName: "EXPORTED", modifiers: ["shiftKey", "metaKey"] },
+      { eventName: "COPIED", modifiers: ["metaKey"] },
     ],
-    o: [{ eventName: "HARD_RESET", modifiers: ["Shift", "Meta"] }],
-    x: [{ eventName: "CUT", modifiers: ["Meta"] }],
-    v: [{ eventName: "PASTED", modifiers: ["Meta"] }],
+    o: [{ eventName: "HARD_RESET", modifiers: ["shiftKey", "metaKey"] }],
+    x: [{ eventName: "CUT", modifiers: ["metaKey"] }],
+    v: [{ eventName: "PASTED", modifiers: ["metaKey"] }],
     g: [{ eventName: "STARTED_GLOBBING_NODES", modifiers: [] }],
-    l: [{ eventName: "LOCKED_NODES", modifiers: ["Meta"] }],
+    l: [{ eventName: "TOGGLED_LOCKED", modifiers: [] }],
     n: [{ eventName: "STARTED_CREATING_NODES", modifiers: [] }],
     Shift: [{ eventName: "PRESSED_SHIFT", modifiers: [] }],
     Option: [{ eventName: "PRESSED_OPTION", modifiers: [] }],
@@ -55,10 +71,10 @@ class Inputs {
     Delete: [{ eventName: "DELETED", modifiers: [] }],
     Backspace: [{ eventName: "DELETED", modifiers: [] }],
     " ": [{ eventName: "PRESSED_SPACE", modifiers: [] }],
-    "]": [{ eventName: "MOVED_FORWARD", modifiers: ["Meta"] }],
-    "[": [{ eventName: "MOVED_BACKWARD", modifiers: ["Meta"] }],
-    "‘": [{ eventName: "MOVED_TO_FRONT", modifiers: ["Meta", "Shift"] }],
-    "“": [{ eventName: "MOVED_TO_BACK", modifiers: ["Meta", "Shift"] }],
+    "]": [{ eventName: "MOVED_FORWARD", modifiers: ["metaKey"] }],
+    "[": [{ eventName: "MOVED_BACKWARD", modifiers: ["metaKey"] }],
+    "‘": [{ eventName: "MOVED_TO_FRONT", modifiers: ["metaKey", "shiftKey"] }],
+    "“": [{ eventName: "MOVED_TO_BACK", modifiers: ["metaKey", "shiftKey"] }],
   }
 
   upCommands: Record<string, KeyCommand[]> = {
@@ -90,12 +106,14 @@ class Inputs {
       delta: [0, 0],
     })
 
-    Object.assign(this.modifiers, {
+    const modifiers = {
       shiftKey: shiftKey,
       optionKey: altKey,
       ctrlKey: ctrlKey,
-      metaKey: metaKey || ctrlKey,
-    })
+      metaKey: isDarwin() ? metaKey : ctrlKey,
+    }
+
+    Object.assign(this.modifiers, modifiers)
   }
 
   handlePointerMove = (
@@ -122,12 +140,14 @@ class Inputs {
       delta: vec.sub([x, y], this.pointer.point),
     })
 
-    Object.assign(this.modifiers, {
+    const modifiers = {
       shiftKey: shiftKey,
       optionKey: altKey,
       ctrlKey: ctrlKey,
-      metaKey: metaKey || ctrlKey,
-    })
+      metaKey: isDarwin() ? metaKey : ctrlKey,
+    }
+
+    Object.assign(this.modifiers, modifiers)
   }
 
   handlePointerUp = (
@@ -149,12 +169,14 @@ class Inputs {
       delta: vec.sub([x, y], this.pointer.point),
     })
 
-    Object.assign(this.modifiers, {
+    const modifiers = {
       shiftKey: shiftKey,
       optionKey: altKey,
       ctrlKey: ctrlKey,
-      metaKey: metaKey || ctrlKey,
-    })
+      metaKey: isDarwin() ? metaKey : ctrlKey,
+    }
+
+    Object.assign(this.modifiers, modifiers)
   }
 
   handlePointerCancel = (
@@ -176,12 +198,14 @@ class Inputs {
       delta: vec.sub([x, y], this.pointer.point),
     })
 
-    Object.assign(this.modifiers, {
+    const modifiers = {
       shiftKey: shiftKey,
       optionKey: altKey,
       ctrlKey: ctrlKey,
-      metaKey: metaKey || ctrlKey,
-    })
+      metaKey: isDarwin() ? metaKey : ctrlKey,
+    }
+
+    Object.assign(this.modifiers, modifiers)
   }
 
   handleKeyDown = (
@@ -202,16 +226,18 @@ class Inputs {
     if (ctrlKey && !this.modifiers.ctrlKey) state.send("PRESSED_CONTROL")
     if (metaKey && !this.modifiers.metaKey) state.send("PRESSED_META")
 
-    Object.assign(this.modifiers, {
+    const modifiers = {
       shiftKey: shiftKey,
       optionKey: altKey,
       ctrlKey: ctrlKey,
-      metaKey: metaKey || ctrlKey,
-    })
+      metaKey: isDarwin() ? metaKey : ctrlKey,
+    }
+
+    Object.assign(this.modifiers, modifiers)
 
     if (key in this.downCommands) {
       for (const { modifiers, eventName } of this.downCommands[key]) {
-        if (modifiers.every((command) => this.keys[command])) {
+        if (modifiers.every((command) => this.modifiers[command])) {
           return eventName
         }
       }
@@ -236,16 +262,18 @@ class Inputs {
     if (ctrlKey && !this.modifiers.ctrlKey) state.send("RELEASED_CONTROL")
     if (metaKey && !this.modifiers.metaKey) state.send("RELEASED_META")
 
-    Object.assign(this.modifiers, {
+    const modifiers = {
       shiftKey: shiftKey,
       optionKey: altKey,
       ctrlKey: ctrlKey,
-      metaKey: metaKey || ctrlKey,
-    })
+      metaKey: isDarwin() ? metaKey : ctrlKey,
+    }
+
+    Object.assign(this.modifiers, modifiers)
 
     if (key in this.upCommands) {
       for (const { modifiers, eventName } of this.upCommands[key]) {
-        if (modifiers.every((command) => this.keys[command])) {
+        if (modifiers.every((command) => modifiers[command])) {
           return eventName
         }
       }

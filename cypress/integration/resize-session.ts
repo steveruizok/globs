@@ -30,7 +30,7 @@ describe("Resize Session.", () => {
       expect(node.radius).equal(25)
 
       inputs.pointer.point = [10, 0]
-      inputs.keys.Shift = true
+      inputs.modifiers.shiftKey = true
       const session = new ResizeSession(data, "a")
       inputs.pointer.point = [20, 0]
       session.update(data)

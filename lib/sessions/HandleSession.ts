@@ -81,7 +81,7 @@ export default class HandleSession extends BaseSession {
     // final snap should be the intersection of those two lines.
 
     // Lock to initial axis
-    if (inputs.keys.Shift) {
+    if (inputs.modifiers.shiftKey) {
       if (inputs.pointer.axis === "x") {
         delta[1] = 0
       } else {

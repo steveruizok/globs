@@ -36,8 +36,6 @@ function createDocument(data: Partial<IData>) {
     },
   }
 
-  data.theme = "dark"
-
   data.code = {
     0: {
       id: "0",
@@ -79,12 +77,6 @@ function createDocument(data: Partial<IData>) {
   saved = localStorage.getItem("globs_editor_theme")
 
   if (saved !== null) {
-    try {
-      const json = JSON.parse(saved)
-      data.theme = json.theme as IData["theme"]
-    } catch (e) {
-      console.warn("Could not parse saved theme.")
-    }
     localStorage.removeItem("globs_editor_theme")
   }
 
@@ -113,6 +105,19 @@ function supportShareUrls(data: IData) {
   }
 }
 
+function addPreferences(data: IData) {
+  // @ts-ignore
+  data.preferences = {
+    // @ts-ignore
+    theme: data.theme,
+    nudgeDistanceSmall: 1,
+    nudgeDistanceLarge: 10,
+  }
+
+  // @ts-ignore
+  delete data.theme
+}
+
 export default function migrate(data: IData) {
   if (!("version" in data) || Number(data.version) < 1) {
     if (data.globIds.length > 0 && "options" in data.globs[data.globIds[0]]) {
@@ -129,6 +134,11 @@ export default function migrate(data: IData) {
   if (Number(data.version) < 3) {
     supportShareUrls(data)
     data.version = "3"
+  }
+
+  if (Number(data.version) < 4) {
+    addPreferences(data)
+    data.version = "4"
   }
 
   return data

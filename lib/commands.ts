@@ -741,37 +741,46 @@ export function updateGlobOptions(data: IData, options: Partial<IGlob>) {
 }
 
 export function moveBounds(data: IData, delta: number[]) {
-  const sNodeIds = [...data.selectedNodes]
   const sGlobIds = [...data.selectedGlobs]
+
+  const nodeIdsToMove = new Set(data.selectedNodes)
+
+  for (const globId of sGlobIds) {
+    const glob = data.globs[globId]
+    nodeIdsToMove.add(glob.nodes[0])
+    nodeIdsToMove.add(glob.nodes[1])
+  }
 
   history.execute(
     data,
     new Command({
       type: CommandType.ChangeBounds,
       do(data) {
-        for (const nodeId of sNodeIds) {
+        nodeIdsToMove.forEach((nodeId) => {
           const node = data.nodes[nodeId]
           node.point = vec.add(node.point, delta)
-        }
+        })
 
         for (const globId of sGlobIds) {
           const glob = data.globs[globId]
           glob.D = vec.add(glob.D, delta)
           glob.Dp = vec.add(glob.Dp, delta)
         }
+
         updateGlobPoints(data)
       },
       undo(data) {
-        for (const nodeId of sNodeIds) {
+        nodeIdsToMove.forEach((nodeId) => {
           const node = data.nodes[nodeId]
           node.point = vec.sub(node.point, delta)
-        }
+        })
 
         for (const globId of sGlobIds) {
           const glob = data.globs[globId]
           glob.D = vec.sub(glob.D, delta)
           glob.Dp = vec.sub(glob.Dp, delta)
         }
+
         updateGlobPoints(data)
       },
     })

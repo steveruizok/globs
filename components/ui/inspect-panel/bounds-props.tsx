@@ -39,7 +39,7 @@ export default function BoundsProps() {
   )
 
   const handleLockedChange = useCallback(
-    (value: boolean) => state.send("LOCKED_NODES", { value }),
+    (value: boolean) => state.send("TOGGLED_LOCKED", { value }),
     []
   )
 

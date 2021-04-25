@@ -118,6 +118,10 @@ const state = createState({
                 SELECTED_ALL: "selectAll",
                 DELETED: ["deleteSelection"],
                 HARD_RESET: ["hardReset"],
+                NUDGED_UP: { if: "hasSelection", do: "nudgeUp" },
+                NUDGED_RIGHT: { if: "hasSelection", do: "nudgeRight" },
+                NUDGED_DOWN: { if: "hasSelection", do: "nudgeDown" },
+                NUDGED_LEFT: { if: "hasSelection", do: "nudgeLeft" },
                 // Pointer
                 TOGGLED_CAP: "toggleSelectedNodesCap",
                 HIGHLIT_GLOB: "pushHighlightGlob",
@@ -255,13 +259,13 @@ const state = createState({
                 SET_NODES_RADIUS: "setPointingToSelectedNodessRadius",
                 SET_NODES_CAP: "setPointingToSelectedNodessCap",
                 SET_NODES_LOCKED: "setPointingToSelectedNodessLocked",
+                TOGGLED_LOCKED: "toggleSelectedNodesLocked",
                 TOGGLED_NODE_LOCKED: "toggleSelectedNodesLocked",
                 SET_GLOB_OPTIONS: "setSelectedGlobOptions",
                 CHANGED_BOUNDS_X: "changeBoundsX",
                 CHANGED_BOUNDS_Y: "changeBoundsY",
                 CHANGED_BOUNDS_WIDTH: "changeBoundsWidth",
                 CHANGED_BOUNDS_HEIGHT: "changeBoundsHeight",
-                LOCKED_NODES: "toggleSelectedNodesLocked",
                 GENERATED_ITEMS: "setCanvasItems",
                 // Navigator
                 MOVED_NODE_ORDER: "moveNodeOrder",
@@ -600,12 +604,17 @@ const state = createState({
 
     // Display
     toggleTheme(data) {
-      data.theme = data.theme === "dark" ? "light" : "dark"
+      data.preferences.theme =
+        data.preferences.theme === "dark" ? "light" : "dark"
       history.save(data)
     },
     loadTheme(data) {
-      document.body.classList.remove(data.theme === "dark" ? "light" : dark)
-      document.body.classList.add(data.theme === "dark" ? dark : "light")
+      document.body.classList.remove(
+        data.preferences.theme === "dark" ? "light" : dark
+      )
+      document.body.classList.add(
+        data.preferences.theme === "dark" ? dark : "light"
+      )
     },
     toggleFill(data) {
       data.fill = !data.fill
@@ -765,6 +774,7 @@ const state = createState({
         (id) => id !== data.pointingId
       )
     },
+
     // Highlights
     pushHighlightNode(data, payload: { id: string }) {
       if (data.highlightNodes.includes(payload.id)) return
@@ -919,6 +929,34 @@ const state = createState({
     },
     clearSnaps(data) {
       data.snaps.active = []
+    },
+    nudgeUp(data, payload: { shiftKey: boolean }) {
+      const {
+        preferences: { nudgeDistanceLarge, nudgeDistanceSmall },
+      } = data
+      const dist = payload.shiftKey ? nudgeDistanceLarge : nudgeDistanceSmall
+      commands.moveBounds(data, [0, -dist])
+    },
+    nudgeRight(data, payload: { shiftKey: boolean }) {
+      const {
+        preferences: { nudgeDistanceLarge, nudgeDistanceSmall },
+      } = data
+      const dist = payload.shiftKey ? nudgeDistanceLarge : nudgeDistanceSmall
+      commands.moveBounds(data, [dist, 0])
+    },
+    nudgeDown(data, payload: { shiftKey: boolean }) {
+      const {
+        preferences: { nudgeDistanceLarge, nudgeDistanceSmall },
+      } = data
+      const dist = payload.shiftKey ? nudgeDistanceLarge : nudgeDistanceSmall
+      commands.moveBounds(data, [0, dist])
+    },
+    nudgeLeft(data, payload: { shiftKey: boolean }) {
+      const {
+        preferences: { nudgeDistanceLarge, nudgeDistanceSmall },
+      } = data
+      const dist = payload.shiftKey ? nudgeDistanceLarge : nudgeDistanceSmall
+      commands.moveBounds(data, [-dist, 0])
     },
 
     // Translations (from the panel)
@@ -1266,13 +1304,24 @@ function handleKeyDown(e: KeyboardEvent) {
   )
 
   if (eventName) {
-    state.send(eventName)
+    state.send(eventName, {
+      shiftKey: e.shiftKey,
+      optionKey: e.altKey,
+      ctrlKey: e.ctrlKey,
+      metaKey: e.metaKey || e.ctrlKey,
+    })
     e.preventDefault()
   }
 
-  state.send("PRESSED_KEY", { key: e.key })
+  state.send("PRESSED_KEY", {
+    key: e.key,
+    shiftKey: e.shiftKey,
+    optionKey: e.altKey,
+    ctrlKey: e.ctrlKey,
+    metaKey: e.metaKey || e.ctrlKey,
+  })
 
-  if (e.key === "s" && (isDarwin() ? e.metaKey : e.ctrlKey)) {
+  if (isDarwin() ? e.metaKey : e.ctrlKey) {
     e.preventDefault()
   }
 }
@@ -1291,11 +1340,22 @@ function handleKeyUp(e: KeyboardEvent) {
   }
 
   if (eventName) {
-    state.send(eventName)
+    state.send(eventName, {
+      shiftKey: e.shiftKey,
+      optionKey: e.altKey,
+      ctrlKey: e.ctrlKey,
+      metaKey: e.metaKey || e.ctrlKey,
+    })
     e.preventDefault()
   }
 
-  state.send("RELEASED_KEY", { key: e.key })
+  state.send("RELEASED_KEY", {
+    key: e.key,
+    shiftKey: e.shiftKey,
+    optionKey: e.altKey,
+    ctrlKey: e.ctrlKey,
+    metaKey: e.metaKey || e.ctrlKey,
+  })
 }
 
 export const useSelector = createSelectorHook(state)
