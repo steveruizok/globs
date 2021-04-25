@@ -7,10 +7,10 @@ import { PropContainer } from "./shared"
 interface Props {
   value: number | "mixed"
   label: string
+  readOnly: boolean
   min?: number
   max?: number
   step?: number
-  readOnly: boolean
   onPanStart?: () => void
   onPanEnd?: () => void
   onChange: (value: number) => void
@@ -22,17 +22,17 @@ function NumberInput({
   step = 1,
   value,
   label,
+  readOnly,
   onPanStart,
   onPanEnd,
-  readOnly,
   onChange,
 }: Props) {
   const rInput = useRef<HTMLInputElement>(null)
   const rPoint = useRef([0, 0])
   const [val, setVal] = useState(value === "mixed" ? 0 : value)
   const [isHovered, setIsHovered] = useState(false)
-  const [isPressed, setIsPressed] = useState(false)
-  const [isPanning, setIsPanning] = useState(false)
+  // const [isPressed, setIsPressed] = useState(false)
+  // const [isPanning, setIsPanning] = useState(false)
   const [isFocused, setIsFocused] = useState(false)
 
   const rWillEdit = useRef(true)
@@ -50,40 +50,12 @@ function NumberInput({
 
   function handlePointerDown() {
     rPoint.current = inputs.pointer.point
-    setIsPressed(true)
-  }
-
-  function handleEnd() {
-    onPanEnd && onPanEnd()
-    setIsPressed(false)
-    setIsPanning(false)
-
-    window.removeEventListener("pointerup", handleEnd)
-  }
-
-  function handePointerMove(e) {
-    if (
-      isPressed &&
-      !isPanning &&
-      Math.abs(inputs.pointer.point[0] - rPoint.current[0]) > 3
-    ) {
-      setIsPanning(true)
-      onPanStart && onPanStart()
-
-      window.addEventListener("pointerup", handleEnd)
-      e.preventDefault()
-      e.stopPropagation()
-    }
-
-    if (isPanning) {
-      e.preventDefault()
-      e.stopPropagation()
-    }
+    // setIsPressed(true)
   }
 
   function handlePointerUp() {
-    setIsPressed(false)
-    setIsPanning(false)
+    // setIsPressed(false)
+    // setIsPanning(false)
     rInput.current.focus()
   }
 
@@ -96,6 +68,34 @@ function NumberInput({
   //     setVal(next)
   //     onChange(min !== undefined ? clamp(next, min, max) : next)
   //   }
+  // }
+
+  // function handlePointerMove(e) {
+  //   if (
+  //     isPressed &&
+  //     !isPanning &&
+  //     Math.abs(inputs.pointer.point[0] - rPoint.current[0]) > 3
+  //   ) {
+  //     setIsPanning(true)
+  //     onPanStart && onPanStart()
+
+  //     window.addEventListener("pointerup", handleEnd)
+  //     e.preventDefault()
+  //     e.stopPropagation()
+  //   }
+
+  //   if (isPanning) {
+  //     e.preventDefault()
+  //     e.stopPropagation()
+  //   }
+  // }
+
+  // function handleEnd() {
+  //   onPanEnd && onPanEnd()
+  //   setIsPressed(false)
+  //   setIsPanning(false)
+
+  //   window.removeEventListener("pointerup", handleEnd)
   // }
 
   function handleChange({
@@ -140,18 +140,26 @@ function NumberInput({
 
   return (
     <PropContainer>
-      <label style={{ pointerEvents: "none" }}>{label}</label>
+      <label
+        style={{
+          pointerEvents: isHovered ? "none" : "all",
+        }}
+        htmlFor={label}
+      >
+        {label}
+      </label>
       <motion.div
         className="dragWrapper"
         onPointerEnter={() => setIsHovered(true)}
         onPointerLeave={() => setIsHovered(false)}
         onPointerDown={handlePointerDown}
         onPointerUp={handlePointerUp}
-        // onPointerMove={handePointerMove}
+        // onPointerMove={handlePointerMove}
         onTap={handleTap}
       >
         <input
           ref={rInput}
+          id={label}
           readOnly={readOnly}
           type="number"
           value={val}

@@ -16,8 +16,9 @@ function EnumInput({ children, value, label, readOnly, onChange }: Props) {
 
   return (
     <PropContainer>
-      <label>{label}</label>
+      <label htmlFor={label}>{label}</label>
       <select
+        id={label}
         value={value}
         disabled={readOnly}
         onKeyDown={handleKeyDown}

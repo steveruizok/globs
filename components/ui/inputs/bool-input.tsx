@@ -21,8 +21,9 @@ function BoolInput({ value, label, readOnly, onChange }: Props) {
 
   return (
     <PropContainer>
-      <label>{label}</label>
+      <label htmlFor={label}>{label}</label>
       <input
+        id={label}
         ref={rInput}
         type="checkbox"
         readOnly={readOnly}
