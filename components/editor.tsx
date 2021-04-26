@@ -21,7 +21,7 @@ import LearnPanel from "./ui/learn-panel"
 import CodePanel from "./ui/code-panel/code-panel"
 import ZoomPanel from "./ui/zoom-panel"
 import Thumbstick from "./ui/thumbstick"
-import Meta from "./meta"
+import SocialMeta from "./social-meta"
 import ReadOnlyPanel from "./ui/read-only"
 
 const DOT_RADIUS = 2,
@@ -249,7 +249,7 @@ export default function Editor({
       onPointerMove={handlePointerMove}
       onTap={handlePointerUp}
     >
-      <Meta uuid={uuid} />
+      <SocialMeta uuid={uuid} />
       <ContextMenuRoot>
         <EditorContainer ref={rContainer}>
           <Layout>
