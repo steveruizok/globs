@@ -76,6 +76,9 @@ module.exports = {
           stripPrefix: ["webpack://_N_E/"],
           urlPrefix: `~${basePath}/_next`,
           release: VERCEL_GIT_COMMIT_SHA,
+          authToken: SENTRY_AUTH_TOKEN,
+          org: "stephen-ruiz-ltd",
+          project: "stephen-ruiz-ltd",
         })
       )
     }
