@@ -54,8 +54,8 @@ module.exports = {
           urlPrefix: `~${basePath}/_next`,
           release: VERCEL_GIT_COMMIT_SHA,
           authToken: SENTRY_AUTH_TOKEN,
-          org: "stephen-ruiz-ltd",
-          project: "stephen-ruiz-ltd",
+          org: SENTRY_PROJECT,
+          project: SENTRY_ORG,
         })
       )
     }

@@ -1,7 +1,7 @@
 import Head from "next/head"
 
 export default function Meta({ uuid }: { uuid?: string }) {
-  const IMAGE = `https://globs.design/api/p/${uuid}/social-image`
+  const IMAGE = `http://globs.design/api/p/${uuid}/social-image`
 
   return (
     <Head>

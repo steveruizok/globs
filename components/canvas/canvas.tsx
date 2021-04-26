@@ -9,7 +9,7 @@ import { memo } from "react"
 
 function Canvas() {
   return (
-    <g>
+    <g id="canvas">
       <BoundsBg />
       <Contents />
       <Snaps />

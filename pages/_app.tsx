@@ -9,7 +9,7 @@ import Head from "next/head"
 
 const TITLE = "Globs Designer"
 const DESCRIPTION =
-  "Design with globs, a stretchy new design primitive. Tired of the pen tool? Need smarter curves? Want to design from code? Stretching for your og:description optimal word count? Get started with globs."
+  "Design with globs, a stretchy new design primitive. Tired of the pen tool? Need smarter curves? Want to design from code? Get started with globs."
 const URL = "https://globs.design/"
 
 init()

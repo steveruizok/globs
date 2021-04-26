@@ -26,7 +26,7 @@ export default async function sandbox(
   await page.setViewport({ width: 1200, height: 627 })
   await page.goto(url, { timeout: 15 * 1000 })
 
-  await page.waitForTimeout(3000)
+  await page.waitForSelector("#canvas")
 
   const imageBuffer = await page.screenshot({ type: "jpeg" })
 
