@@ -1,4 +1,3 @@
-import Head from "next/head"
 import dynamic from "next/dynamic"
 import useTheme from "hooks/useTheme"
 import Loading from "components/loading"

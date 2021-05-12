@@ -2,7 +2,7 @@ import { Intersection, ShapeInfo } from "kld-intersections"
 import { IBounds, IData, IGlob, INode } from "lib/types"
 import BaseSession from "./BaseSession"
 import inputs from "lib/inputs"
-import { screenToWorld, getBoundsBoundsIntersection } from "lib/utils"
+import { screenToWorld } from "lib/utils"
 import {
   getNodeBounds,
   getBoundsBetweenPoints,

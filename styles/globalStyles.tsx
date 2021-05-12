@@ -1,6 +1,10 @@
 import { global } from "stitches.config"
 
 export const globalStyles = global({
+  "*": {
+    boxSizing: "border-box",
+  },
+
   "html, body": {
     padding: "0",
     margin: "0",
@@ -11,13 +15,14 @@ export const globalStyles = global({
     color: "$text",
   },
 
+  ":root": {
+    "--zoomed": "2px",
+    "--zoom": "2px",
+  },
+
   a: {
     color: "inherit",
     textDecoration: "none",
-  },
-
-  "*": {
-    boxSizing: "border-box",
   },
 
   "svg text": {
@@ -25,11 +30,6 @@ export const globalStyles = global({
     MozUserSelect: "none",
     MsUserSelect: "none",
     userSelect: "none",
-  },
-
-  ":root": {
-    "--zoomed": "2px",
-    "--zoom": "2px",
   },
 
   // Strokes

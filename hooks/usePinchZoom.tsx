@@ -1,6 +1,5 @@
 import { useCallback, useRef, TouchEvent, RefObject } from "react"
 import usePreventZoom from "./usePreventZoom"
-import state from "lib/state"
 import * as Vec from "lib/vec"
 
 export default function usePinchZoom(ref: RefObject<HTMLDivElement>) {

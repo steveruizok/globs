@@ -202,6 +202,7 @@ export function ang(A: number[], B: number[]) {
 export function angle(A: number[], B: number[]) {
   return Math.atan2(B[1] - A[1], B[0] - A[0])
 }
+
 /**
  * Mean between two vectors or mid vector between two vectors
  * @param A
@@ -456,3 +457,4 @@ export function distanceToLineSegment(
 export function nudge(A: number[], B: number[], d: number) {
   return add(A, mul(uni(vec(A, B)), d))
 }
+

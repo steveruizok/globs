@@ -77,6 +77,7 @@ export function arcTo(C: number[], r: number, A: number[], B: number[]) {
     B[1],
   ].join(" ")
 }
+
 export function closePath() {
   return "Z"
 }
