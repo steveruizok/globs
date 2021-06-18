@@ -19,7 +19,7 @@
     "@sentry/tracing": "^6.3.1",
     "@sentry/webpack-plugin": "^1.15.1",
     "@state-designer/react": "^1.7.1",
-    "@stitches/react": "^0.1.9",
+    "@stitches/react": "^0.2.2",
     "@supabase/supabase-js": "^1.11.6",
     "add": "^2.0.6",
     "chrome-aws-lambda": "^8.0.2",
