@@ -8,6 +8,8 @@ const {
   SENTRY_AUTH_TOKEN,
   NODE_ENV,
   VERCEL_GIT_COMMIT_SHA,
+  NEXT_PUBLIC_SUPABASE_KEY,
+  NEXT_PUBLIC_SUPABASE_URL,
   SUPABASE_KEY,
   SUPABASE_URL,
   GA_MEASUREMENT_ID,
@@ -21,8 +23,8 @@ module.exports = {
   productionBrowserSourceMaps: true,
   env: {
     NEXT_PUBLIC_COMMIT_SHA: VERCEL_GIT_COMMIT_SHA,
-    SUPABASE_KEY: SUPABASE_KEY,
-    SUPABASE_URL: SUPABASE_URL,
+    NEXT_PUBLIC_SUPABASE_KEY: NEXT_PUBLIC_SUPABASE_KEY || SUPABASE_KEY,
+    NEXT_PUBLIC_SUPABASE_URL: NEXT_PUBLIC_SUPABASE_URL || SUPABASE_URL,
     GA_MEASUREMENT_ID: GA_MEASUREMENT_ID,
   },
   webpack: (config, options) => {
@@ -54,8 +56,8 @@ module.exports = {
           urlPrefix: `~${basePath}/_next`,
           release: VERCEL_GIT_COMMIT_SHA,
           authToken: SENTRY_AUTH_TOKEN,
-          org: SENTRY_PROJECT,
-          project: SENTRY_ORG,
+          org: SENTRY_ORG,
+          project: SENTRY_PROJECT,
         })
       )
     }

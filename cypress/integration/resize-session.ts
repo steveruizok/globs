@@ -3,6 +3,12 @@ import inputs from "lib/inputs"
 import ResizeSession from "lib/sessions/ResizeSession"
 
 describe("Resize Session.", () => {
+  beforeEach(() => {
+    inputs.keys = {}
+    inputs.modifiers = {}
+    inputs.pointer.point = [0, 0]
+  })
+
   it("Changes a node's radius.", () => {
     cy.fixture<IData>("project").then((data) => {
       const node = data.nodes["a"]
@@ -22,7 +28,7 @@ describe("Resize Session.", () => {
     })
   })
 
-  it("Changes a node's radius to absolute distance when shift is pressed .", () => {
+  it("Changes a node's radius to absolute distance when option is pressed.", () => {
     cy.fixture<IData>("project").then((data) => {
       const node = data.nodes["a"]
       data.selectedNodes = ["a"]
@@ -30,7 +36,7 @@ describe("Resize Session.", () => {
       expect(node.radius).equal(25)
 
       inputs.pointer.point = [10, 0]
-      inputs.modifiers.shiftKey = true
+      inputs.modifiers.optionKey = true
       const session = new ResizeSession(data, "a")
       inputs.pointer.point = [20, 0]
       session.update(data)
@@ -57,7 +63,7 @@ describe("Resize Session.", () => {
 
       session.complete(data)
       expect(node.point).to.deep.equal([0, 0])
-      expect(node.radius).to.equal(40)
+      expect(node.radius).to.equal(45)
     })
   })
 
@@ -77,7 +83,7 @@ describe("Resize Session.", () => {
 
       session.complete(data)
       expect(node.point).to.deep.equal([0, 0])
-      expect(node.radius).to.equal(10)
+      expect(node.radius).to.equal(30)
     })
   })
 })
