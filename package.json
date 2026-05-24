@@ -57,12 +57,15 @@
     "typescript": "5.9.3"
   },
   "resolutions": {
+    "**/ajv": "^6.14.0",
+    "**/brace-expansion": "^1.1.12",
     "**/braces": "^3.0.3",
     "**/cross-spawn": "^7.0.5",
     "**/flatted": "^3.3.2",
     "**/lodash": "^4.17.21",
     "**/lodash-es": "^4.17.21",
     "**/micromatch": "^4.0.8",
+    "**/minimatch": "^3.1.2",
     "**/node-fetch": "^2.6.7",
     "**/rollup": "^2.79.2",
     "**/semver": "^7.5.4",
