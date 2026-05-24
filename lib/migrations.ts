@@ -118,6 +118,17 @@ function addPreferences(data: IData) {
   delete data.theme
 }
 
+function addPanels(data: Partial<IData>) {
+  data.panels = {
+    objectList: {
+      isOpen: data.panels?.objectList?.isOpen ?? true,
+    },
+    inspector: {
+      isOpen: data.panels?.inspector?.isOpen ?? true,
+    },
+  }
+}
+
 export default function migrate(data: IData) {
   if (!("version" in data) || Number(data.version) < 1) {
     if (data.globIds.length > 0 && "options" in data.globs[data.globIds[0]]) {
@@ -140,6 +151,8 @@ export default function migrate(data: IData) {
     addPreferences(data)
     data.version = "4"
   }
+
+  addPanels(data)
 
   return data
 }

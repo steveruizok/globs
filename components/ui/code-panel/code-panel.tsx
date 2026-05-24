@@ -271,7 +271,7 @@ const Header = styled("div", {
     textAlign: "center",
     margin: "0",
     padding: "0",
-    fontSize: "16px",
+    fontSize: "12px",
     pointerEvents: "none",
   },
 })

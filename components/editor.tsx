@@ -57,6 +57,12 @@ export default function Editor({
   const isLoading = useSelector((state) => state.isIn("loading"))
   const isFilled = useSelector((state) => state.data.fill)
   const isReadOnly = useSelector((state) => state.data.readOnly)
+  const isObjectListOpen = useSelector(
+    (state) => state.data.panels.objectList.isOpen
+  )
+  const isInspectorOpen = useSelector(
+    (state) => state.data.panels.inspector.isOpen
+  )
 
   // When we zoom or pan, manually update the svg's viewbox
   // This is expensive, so we want to set this property
@@ -310,8 +316,8 @@ export default function Editor({
               <ContextMenu />
             </SVGWrapper>
             <Toolbar />
-            <ContentPanel />
-            <InspectPanel />
+            {isObjectListOpen && <ContentPanel />}
+            {isInspectorOpen && <InspectPanel />}
             <StatusBar />
             <Main ref={rMain}>
               <LearnPanel bounds={rMain} />

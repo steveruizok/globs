@@ -870,7 +870,6 @@ const StyledDocs = styled("div", {
   },
 
   "& h3": {
-    fontSize: 20,
     margin: "48px 0px 32px 0px",
   },
 
@@ -885,12 +884,11 @@ const StyledDocs = styled("div", {
 
   "& h4 > code": {
     font: "$monoheading",
-    fontSize: 16,
     userSelect: "all",
   },
 
   "& h4 > code > i": {
-    fontSize: 14,
+    fontSize: 12,
     color: "$muted",
   },
 

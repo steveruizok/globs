@@ -7,14 +7,14 @@ export const { styled, global, theme, getCssString } = createCss({
   },
   theme: {
     fonts: {
-      docs: '500 14px/20px "Inter", -apple-system, sans-serif',
+      docs: '500 12px/14px "Inter", -apple-system, sans-serif',
       ui: '500 12px/14px "Inter", -apple-system, sans-serif',
       section: '600 12px/14px "Inter", -apple-system, sans-serif',
-      mono: '500 14px/14px "IBM Plex Mono", monospace',
+      mono: '500 12px/14px "IBM Plex Mono", monospace',
       "mono-ui": '500 12px/14px "IBM Plex Mono", monospace',
-      code: '500 14px/18px "IBM Plex Mono", monospace',
-      monoheading: '600 20px/24px "IBM Plex Mono", monospace',
-      debug: '500 10px/10px "IBM Plex Mono", monospace',
+      code: '500 12px/14px "IBM Plex Mono", monospace',
+      monoheading: '600 12px/14px "IBM Plex Mono", monospace',
+      debug: '500 12px/14px "IBM Plex Mono", monospace',
     },
     colors: {
       left: "rgba(29, 144, 255, 1)",

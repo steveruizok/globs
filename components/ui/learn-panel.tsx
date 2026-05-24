@@ -323,7 +323,7 @@ const Content = styled("div", {
   p: {
     margin: "0",
     padding: "16px",
-    fontSize: "13px",
+    fontSize: "12px",
   },
 })
 
@@ -346,7 +346,7 @@ const Header = styled("div", {
     textAlign: "center",
     margin: "0",
     padding: "0",
-    fontSize: "16px",
+    fontSize: "12px",
   },
 })
 

@@ -9,10 +9,17 @@ export const globalStyles = global({
     padding: "0",
     margin: "0",
     fontFamily: '"Inter", -apple-system, sans-serif',
+    fontSize: "12px",
+    lineHeight: "14px",
     overflow: "hidden",
     overscrollBehavior: "none",
     boxSizing: "border-box",
     color: "$text",
+  },
+
+  "h1, h2, h3, h4, h5, h6": {
+    fontSize: "12px",
+    lineHeight: "14px",
   },
 
   ":root": {

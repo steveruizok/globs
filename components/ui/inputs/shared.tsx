@@ -50,7 +50,7 @@ export const PropContainer = styled(motion.div, {
     width: 'auto',
   },
   '& section > h2': {
-    fontSize: '13px',
+    fontSize: '12px',
     fontWeight: '600px',
   }
 })

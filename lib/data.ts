@@ -33,6 +33,14 @@ export const initialData: IData = {
     isOpen: false,
     fontSize: 13,
   },
+  panels: {
+    objectList: {
+      isOpen: true,
+    },
+    inspector: {
+      isOpen: true,
+    },
+  },
   viewport: {
     point: [0, 0],
     size: [0, 0],

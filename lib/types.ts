@@ -54,6 +54,14 @@ export interface IData extends IProject {
     isOpen: boolean
     fontSize: number
   }
+  panels: {
+    objectList: {
+      isOpen: boolean
+    }
+    inspector: {
+      isOpen: boolean
+    }
+  }
   shareUrls: string[]
   preferences: {
     theme: "dark" | "light"

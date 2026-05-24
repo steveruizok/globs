@@ -74,6 +74,8 @@ const state = createState({
     OPENED_SHARE_LINK_MODAL: { to: "shareLinkModal" },
     DOWNLOADED_SHARE_LINK: { do: "mergeSharedLinkToLocal" },
     TOGGLED_THEME: ["toggleTheme", "loadTheme"],
+    TOGGLED_OBJECT_LIST_PANEL: "toggleObjectListPanel",
+    TOGGLED_INSPECTOR_PANEL: "toggleInspectorPanel",
   },
   initial: "loading",
   states: {
@@ -618,6 +620,18 @@ const state = createState({
     },
     toggleFill(data) {
       data.fill = !data.fill
+    },
+    toggleObjectListPanel(data) {
+      data.panels.objectList.isOpen = !data.panels.objectList.isOpen
+      if (!data.readOnly) {
+        history.save(data)
+      }
+    },
+    toggleInspectorPanel(data) {
+      data.panels.inspector.isOpen = !data.panels.inspector.isOpen
+      if (!data.readOnly) {
+        history.save(data)
+      }
     },
     updateMvPointer(data) {
       mvPointer.screen.set(inputs.pointer.point)
