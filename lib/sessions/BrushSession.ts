@@ -11,17 +11,13 @@ import {
 } from "lib/bounds-utils"
 import * as vec from "lib/vec"
 
+type BrushIntersector = (rect: unknown) => number | undefined
+
 interface BrushSnapshot {
   selectedNodeIds: string[]
   selectedGlobIds: string[]
-  nodes: Record<
-    string,
-    { bounds: IBounds; intersector: (...lines: any[]) => boolean }
-  >
-  globs: Record<
-    string,
-    { bounds: IBounds; intersector: (...lines: any[]) => boolean }
-  >
+  nodes: Record<string, { bounds: IBounds; intersector: BrushIntersector }>
+  globs: Record<string, { bounds: IBounds; intersector: BrushIntersector }>
 }
 
 export default class BrushSession extends BaseSession {

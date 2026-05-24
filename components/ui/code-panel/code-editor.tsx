@@ -6,6 +6,7 @@ import codeAsString from "./code-as-string"
 import React, { useCallback, useEffect, useRef } from "react"
 import { styled } from "stitches.config"
 import { IMonaco, IMonacoEditor } from "types"
+import type * as MonacoEditor from "monaco-editor"
 
 interface Props {
   value: string
@@ -43,31 +44,37 @@ export default function CodeEditor({
     }
     rMonaco.current = monaco
 
-    monaco.languages.typescript.javascriptDefaults.setCompilerOptions({
+    const typescript = (
+      monaco as Monaco & {
+        typescript: typeof MonacoEditor.typescript
+      }
+    ).typescript
+
+    typescript.javascriptDefaults.setCompilerOptions({
       allowJs: true,
       checkJs: false,
       strict: false,
       noLib: true,
       lib: ["es6"],
-      target: monaco.languages.typescript.ScriptTarget.ES2015,
+      target: typescript.ScriptTarget.ES2015,
       allowNonTsExtensions: true,
     })
 
-    monaco.languages.typescript.typescriptDefaults.setEagerModelSync(true)
+    typescript.typescriptDefaults.setEagerModelSync(true)
 
-    monaco.languages.typescript.javascriptDefaults.setEagerModelSync(true)
+    typescript.javascriptDefaults.setEagerModelSync(true)
 
-    monaco.languages.typescript.javascriptDefaults.setDiagnosticsOptions({
+    typescript.javascriptDefaults.setDiagnosticsOptions({
       noSemanticValidation: true,
       noSyntaxValidation: true,
     })
 
-    monaco.languages.typescript.typescriptDefaults.setDiagnosticsOptions({
+    typescript.typescriptDefaults.setDiagnosticsOptions({
       noSemanticValidation: true,
       noSyntaxValidation: true,
     })
 
-    monaco.languages.typescript.javascriptDefaults.addExtraLib(codeAsString)
+    typescript.javascriptDefaults.addExtraLib(codeAsString)
 
     monaco.languages.registerDocumentFormattingEditProvider("javascript", {
       async provideDocumentFormattingEdits(model) {
@@ -97,10 +104,10 @@ export default function CodeEditor({
 
     editor.updateOptions({
       fontSize,
-      wordBasedSuggestions: false,
+      wordBasedSuggestions: "off",
       minimap: { enabled: false },
       lightbulb: {
-        enabled: false,
+        enabled: "off" as MonacoEditor.editor.ShowLightbulbIconMode,
       },
       readOnly,
     })
@@ -112,7 +119,7 @@ export default function CodeEditor({
 
   const handleKeydown = useCallback(
     (e: React.KeyboardEvent<HTMLDivElement>) => {
-      onKey && onKey()
+      onKey?.()
       e.stopPropagation()
       const metaKey = navigator.platform.match("Mac") ? e.metaKey : e.ctrlKey
       if (e.key === "s" && metaKey) {
@@ -142,7 +149,7 @@ export default function CodeEditor({
     []
   )
 
-  const rDecorations = useRef<any>([])
+  const rDecorations = useRef<string[]>([])
 
   useEffect(() => {
     const monaco = rMonaco.current

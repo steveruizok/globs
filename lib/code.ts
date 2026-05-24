@@ -562,8 +562,10 @@ class Vector {
     return Vector.isLeft(center, a, b) > 0
   }
 
-  static cast(v: Point | Vector) {
-    return "cast" in v ? v : new Vector(v)
+  static cast(v: Vector): Vector
+  static cast(v: Point): Vector
+  static cast(v: Point | Vector): Vector {
+    return v instanceof Vector ? v : new Vector(v)
   }
 
   static from(v: Vector) {

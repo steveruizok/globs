@@ -5,7 +5,6 @@ import * as vec from "lib/vec"
 import * as svg from "lib/svg"
 import { motion } from "framer-motion"
 import { getGlob, getGlobOutline, getOuterTangents } from "lib/utils"
-import inputs from "lib/inputs"
 
 export default function GhostBranchGlob() {
   const fill = useSelector((s) => s.data.fill)

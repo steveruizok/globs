@@ -4,7 +4,7 @@ import state from "lib/state"
 
 export default function ContextMenu() {
   return (
-    <StyledContent disableOutsidePointerEvents={false}>
+    <StyledContent>
       <StyledItem onSelect={() => state.send("COPIED")}>Copy</StyledItem>
       <StyledItem onSelect={() => state.send("PASTED")}>Paste</StyledItem>
       <StyledItem onSelect={() => state.send("EXPORTED")}>Copy SVG</StyledItem>

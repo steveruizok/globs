@@ -3,8 +3,9 @@
   "compilerOptions": {
     "baseUrl": "../",
     "isolatedModules": false,
+    "rootDir": "../",
     "types": ["cypress"]
   },
-  "include": ["../**/*.ts", "cypress"],
+  "include": ["../**/*.ts", "../**/*.tsx", "."],
   "exclude": []
 }

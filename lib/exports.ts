@@ -34,7 +34,7 @@ class Exports {
       try {
         const copy = elements[globId].current.cloneNode(true)
         svg.appendChild(copy)
-      } catch (e) {
+      } catch {
         console.warn("Could not copy id", globId)
       }
     }
@@ -50,8 +50,8 @@ class Exports {
       try {
         const copy = elements[nodeId].current.cloneNode(true)
         svg.appendChild(copy)
-      } catch (e) {
-        console.warn("Could not copy id: " + e)
+      } catch {
+        console.warn("Could not copy id: " + nodeId)
       }
     }
 
@@ -95,7 +95,7 @@ class Exports {
     // Copy to clipboard!
     try {
       navigator.clipboard.writeText(svgString)
-    } catch (e) {
+    } catch {
       Exports.copyStringToClipboard(svgString)
     }
   }
@@ -127,8 +127,8 @@ class Exports {
 
       textarea.setSelectionRange(0, textarea.value.length)
       result = document.execCommand("copy")
-    } catch (err) {
-      console.error(err)
+    } catch {
+      console.error("Could not copy to clipboard")
       result = null
     } finally {
       document.body.removeChild(textarea)

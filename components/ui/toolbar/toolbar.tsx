@@ -6,11 +6,8 @@ import {
   ArrowRight,
   Copy,
   Sun,
-  ArrowUp,
   X,
-  Menu,
   Circle,
-  Share,
 } from "react-feather"
 import { styled } from "stitches.config"
 import useTheme from "hooks/useTheme"

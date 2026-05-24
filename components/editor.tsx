@@ -42,7 +42,6 @@ export default function Editor({
   isShareLink = false,
   uuid,
   project,
-  clean,
 }: Props) {
   const rContainer = useRef<HTMLDivElement>(null)
   const rSvg = useRef<SVGSVGElement>(null)

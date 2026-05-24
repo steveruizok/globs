@@ -1,4 +1,4 @@
-import { ArrowRight, ArrowUp, Disc, X } from "react-feather"
+import { ArrowRight, Disc, X } from "react-feather"
 
 export default function Docs() {
   return (

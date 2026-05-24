@@ -89,7 +89,7 @@ function createDocument(data: Partial<IData>) {
       const json = JSON.parse(saved)
       data.code["0"].code = json.code
       data.codePanel.fontSize = json.style.fontSize
-    } catch (e) {
+    } catch {
       console.warn("Could not parse code.")
     }
     localStorage.removeItem("__globs_code")

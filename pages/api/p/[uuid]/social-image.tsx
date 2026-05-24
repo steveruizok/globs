@@ -1,5 +1,6 @@
-import chromium from "chrome-aws-lambda"
+import chromium from "@sparticuz/chromium"
 import { NextApiRequest, NextApiResponse } from "next"
+import puppeteer from "puppeteer-core"
 
 // Adapted from https://github.com/samrobbins85/next-og-image
 
@@ -15,31 +16,34 @@ export default async function sandbox(
     process.env.NEXT_PUBLIC_BASE_API_URL
   }/p/${uuid.toString()}/clean`
 
-  const browser = await chromium.puppeteer.launch({
+  const browser = await puppeteer.launch({
     args: chromium.args,
-    defaultViewport: chromium.defaultViewport,
-    executablePath: await chromium.executablePath,
-    ignoreHTTPSErrors: true,
+    defaultViewport: { width: 1200, height: 627 },
+    executablePath: await chromium.executablePath(),
+    acceptInsecureCerts: true,
+    headless: true,
   })
 
-  const page = await browser.newPage()
-  await page.setViewport({ width: 1200, height: 627 })
-  await page.goto(url, { timeout: 15 * 1000 })
+  try {
+    const page = await browser.newPage()
+    await page.setViewport({ width: 1200, height: 627 })
+    await page.goto(url, { timeout: 15 * 1000 })
 
-  await page.waitForSelector("#canvas")
+    await page.waitForSelector("#canvas")
 
-  const imageBuffer = await page.screenshot({ type: "jpeg" })
+    const imageBuffer = await page.screenshot({ type: "jpeg" })
 
-  await browser.close()
+    res.setHeader("Content-Type", "image/jpg")
 
-  res.setHeader("Content-Type", "image/jpg")
+    res.setHeader(
+      "Cache-Control",
+      `s-maxage=${30 * 60 * 1000}, stale-while-revalidate`
+    )
 
-  res.setHeader(
-    "Cache-Control",
-    `s-maxage=${30 * 60 * 1000}, stale-while-revalidate`
-  )
-
-  res.status(200).send(imageBuffer)
+    res.status(200).send(imageBuffer)
+  } finally {
+    await browser.close()
+  }
 
   return {}
 }

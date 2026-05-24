@@ -1,11 +1,10 @@
-import { INode } from "types"
 import state, { useSelector } from "lib/state"
 
 import NumberInput from "../inputs/number-input"
 import EnumInput from "../inputs/enum-input"
 import BoolInput from "../inputs/bool-input"
 import { useCallback } from "react"
-import { deepCompare, deepCompareArrays } from "lib/utils"
+import { deepCompareArrays } from "lib/utils"
 
 export default function NodesProps() {
   const selectedNodes = useSelector(

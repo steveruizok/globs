@@ -1,8 +1,6 @@
-import { INode } from "types"
 import state, { useSelector } from "lib/state"
 
 import NumberInput from "../inputs/number-input"
-import EnumInput from "../inputs/enum-input"
 import BoolInput from "../inputs/bool-input"
 import { useCallback } from "react"
 import { deepCompare, round, deepCompareArrays } from "lib/utils"

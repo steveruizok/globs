@@ -135,7 +135,7 @@ export default function useSplitDebugger(glob: IGlob) {
       newGlobB = getGlob(C, r, C1, r1, D1, D1p, a1, b1, a1p, b1p)
       newOutlineA = getGlobOutline(newGlobA)
       newOutlineB = getGlobOutline(newGlobB)
-    } catch (e) {
+    } catch {
       return ""
     }
 

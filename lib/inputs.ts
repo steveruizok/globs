@@ -81,7 +81,7 @@ class Inputs {
     " ": [{ eventName: "RELEASED_SPACE", modifiers: [] }],
     Shift: [{ eventName: "RELEASED_SHIFT", modifiers: [] }],
     Option: [{ eventName: "RELEASED_OPTION", modifiers: [] }],
-    Alt: [{ eventName: "PRESSED_OPTION", modifiers: [] }],
+    Alt: [{ eventName: "RELEASED_OPTION", modifiers: [] }],
     Meta: [{ eventName: "RELEASED_META", modifiers: [] }],
   }
 
@@ -222,7 +222,7 @@ class Inputs {
     this.keys[key] = true
 
     if (shiftKey && !this.modifiers.shiftKey) state.send("PRESSED_SHIFT")
-    if (altKey && !this.modifiers.altKey) state.send("PRESSED_OPTION")
+    if (altKey && !this.modifiers.optionKey) state.send("PRESSED_OPTION")
     if (ctrlKey && !this.modifiers.ctrlKey) state.send("PRESSED_CONTROL")
     if (metaKey && !this.modifiers.metaKey) state.send("PRESSED_META")
 
@@ -258,7 +258,7 @@ class Inputs {
     this.keys[key] = false
 
     if (shiftKey && !this.modifiers.shiftKey) state.send("RELEASED_SHIFT")
-    if (altKey && !this.modifiers.altKey) state.send("RELEASED_OPTION")
+    if (altKey && !this.modifiers.optionKey) state.send("RELEASED_OPTION")
     if (ctrlKey && !this.modifiers.ctrlKey) state.send("RELEASED_CONTROL")
     if (metaKey && !this.modifiers.metaKey) state.send("RELEASED_META")
 
@@ -273,7 +273,7 @@ class Inputs {
 
     if (key in this.upCommands) {
       for (const { modifiers, eventName } of this.upCommands[key]) {
-        if (modifiers.every((command) => modifiers[command])) {
+        if (modifiers.every((command) => this.modifiers[command])) {
           return eventName
         }
       }
@@ -292,8 +292,8 @@ class Inputs {
   handleThumbstickMove = (x: number, y: number) => {
     this.pointer.delta = [x, y]
     this.pointer.point = vec.add(this.pointer.point, [x, y])
-    const ox = Math.abs(this.pointer[0] - this.pointer.origin[0])
-    const oy = Math.abs(this.pointer[1] - this.pointer.origin[1])
+    const ox = Math.abs(this.pointer.point[0] - this.pointer.origin[0])
+    const oy = Math.abs(this.pointer.point[1] - this.pointer.origin[1])
     this.pointer.axis = ox > oy ? "x" : "y"
   }
 }

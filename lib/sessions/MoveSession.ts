@@ -146,7 +146,7 @@ export default class MoveSession extends BaseSession {
     if (this.nodeSnapper && !inputs.modifiers.metaKey) {
       const snapResults = this.nodeSnapper(this.delta, camera, document)
       this.delta = snapResults.delta
-      data.snaps.active = snapResults.snaps as any
+      data.snaps.active = snapResults.snaps as unknown as IData["snaps"]["active"]
     } else {
       data.snaps.active = []
     }

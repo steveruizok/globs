@@ -26,7 +26,7 @@ export enum CommandType {
  * A command makes changes to some applicate state. Every command has an "undo"
  * method to reverse its changes. The apps history is a series of commands.
  */
-class BaseCommand<T extends any> {
+class BaseCommand<T> {
   timestamp = Date.now()
   private undoFn: CommandFn<T>
   private doFn: CommandFn<T>
@@ -44,12 +44,8 @@ class BaseCommand<T extends any> {
     this.doFn = options.do
     this.undoFn = options.undo
     this.manualSelection = options.manualSelection || false
-    this.restoreBeforeSelectionState = () => () => {
-      null
-    }
-    this.restoreAfterSelectionState = () => () => {
-      null
-    }
+    this.restoreBeforeSelectionState = () => () => {}
+    this.restoreAfterSelectionState = () => () => {}
   }
 
   undo = (data: T) => {

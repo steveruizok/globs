@@ -1,4 +1,4 @@
-import { IBounds, IData } from "lib/types"
+import { IData } from "lib/types"
 import BaseSession from "./BaseSession"
 import * as vec from "lib/vec"
 import {
@@ -76,6 +76,4 @@ export default class RotateSession extends BaseSession {
       })
     }
   }
-
-  // static getSnapshot(data: IData) {}
 }

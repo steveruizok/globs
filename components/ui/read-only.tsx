@@ -1,6 +1,5 @@
 import { styled } from "stitches.config"
-import state, { useSelector } from "lib/state"
-import IconButton from "./icon-button"
+import state from "lib/state"
 import { Download } from "react-feather"
 import Button from "./button"
 

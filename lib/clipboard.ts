@@ -44,7 +44,7 @@ class Clipboard {
         if ("nodes" in copied && "globs" in copied) {
           toPaste = copied
         }
-      } catch (e) {
+      } catch {
         console.warn(
           "Could not parse the pasted text. It's probably not from around here."
         )

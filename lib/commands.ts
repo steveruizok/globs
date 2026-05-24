@@ -152,7 +152,7 @@ export function createGlobBetweenNodes(data: IData, targetId: string) {
         }
 
         data.selectedGlobs = []
-        data.selectedNodes[targetId]
+        data.selectedNodes = [targetId]
       },
       undo(data) {
         for (const glob of newGlobs) {
@@ -391,7 +391,7 @@ export function moveHandle(
         try {
           // Rebuild the glob points
           glob.points = getGlobPoints(glob, start, end)
-        } catch (e) {
+        } catch {
           glob.points = null
         }
       },
@@ -403,7 +403,7 @@ export function moveHandle(
 
         try {
           glob.points = getGlobPoints(glob, start, end)
-        } catch (e) {
+        } catch {
           glob.points = null
         }
       },
@@ -541,7 +541,7 @@ export function splitGlob(data: IData, id: string) {
       // will be the same to either point.
       C = intB
       r = vec.dist(P, C)
-    } catch (e) {
+    } catch {
       // If the lines are parallel, we won't have an intersection.
       // In this case, create a circle between the two points.
       C = vec.med(P, Pp)
@@ -1303,14 +1303,3 @@ export function setCanvasItems(
   )
 }
 
-// export function template(data: IData) {
-//   const snapshot = current(data)
-//   history.execute(
-//     data,
-//     new Command({
-//       type: CommandType.CreateNode,
-//       do(data) {},
-//       undo(data) {},
-//     })
-//   )
-// }

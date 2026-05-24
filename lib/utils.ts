@@ -159,64 +159,13 @@ export function getBezierCurveSegments(points: number[][], tension = 0.4) {
   return results
 }
 
-export function cubicBezier(
-  tx: number,
-  x1: number,
-  y1: number,
-  x2: number,
-  y2: number
-) {
-  // Inspired by Don Lancaster's two articles
-  // http://www.tinaja.com/glib/cubemath.pdf
-  // http://www.tinaja.com/text/bezmath.html
-
-  // Set start and end point
-  const x0 = 0,
-    y0 = 0,
-    x3 = 1,
-    y3 = 1,
-    // Convert the coordinates to equation space
-    A = x3 - 3 * x2 + 3 * x1 - x0,
-    B = 3 * x2 - 6 * x1 + 3 * x0,
-    C = 3 * x1 - 3 * x0,
-    D = x0,
-    E = y3 - 3 * y2 + 3 * y1 - y0,
-    F = 3 * y2 - 6 * y1 + 3 * y0,
-    G = 3 * y1 - 3 * y0,
-    H = y0,
-    // Variables for the loop below
-    iterations = 5
-
-  let i: number,
-    slope: number,
-    x: number,
-    t = tx
-
-  // Loop through a few times to get a more accurate time value, according to the Newton-Raphson method
-  // http://en.wikipedia.org/wiki/Newton's_method
-  for (i = 0; i < iterations; i++) {
-    // The curve's x equation for the current time value
-    x = A * t * t * t + B * t * t + C * t + D
-
-    // The slope we want is the inverse of the derivate of x
-    slope = 1 / (3 * A * t * t + 2 * B * t + C)
-
-    // Get the next estimated time value, which will be more accurate than the one before
-    t -= (x - tx) * slope
-    t = t > 1 ? 1 : t < 0 ? 0 : t
-  }
-
-  // Find the y value through the curve's y equation, with the now more accurate time value
-  return Math.abs(E * t * t * t + F * t * t + G * t * H)
-}
-
 export function copyToClipboard(string: string) {
   let textarea: HTMLTextAreaElement
   let result: boolean
 
   try {
     navigator.clipboard.writeText(string)
-  } catch (e) {
+  } catch {
     try {
       textarea = document.createElement("textarea")
       textarea.setAttribute("position", "fixed")
@@ -240,7 +189,7 @@ export function copyToClipboard(string: string) {
 
       textarea.setSelectionRange(0, textarea.value.length)
       result = document.execCommand("copy")
-    } catch (err) {
+    } catch {
       result = null
     } finally {
       document.body.removeChild(textarea)
@@ -581,49 +530,15 @@ export function arrsIntersect<T>(
   return a.some((item) => b.includes(fn ? fn(item) : item))
 }
 
-// /**
-//  * Will mutate an array to remove items.
-//  * @param arr
-//  * @param item
-//  */
-// export function pull<T>(arr: T[], ...items: T[]) {
-//   for (let item of items) {
-//     arr.splice(arr.indexOf(item), 1)
-//   }
-//   return arr
-// }
-
-// /**
-//  * Will mutate an array to remove items, based on a function
-//  * @param arr
-//  * @param fn
-//  * @returns
-//  */
-// export function pullWith<T>(arr: T[], fn: (item: T) => boolean) {
-//   pull(arr, ...arr.filter((item) => fn(item)))
-//   return arr
-// }
-
-// export function rectContainsRect(
-//   x0: number,
-//   y0: number,
-//   x1: number,
-//   y1: number,
-//   box: { x: number; y: number; width: number; height: number }
-// ) {
-//   return !(
-//     x0 > box.x ||
-//     x1 < box.x + box.width ||
-//     y0 > box.y ||
-//     y1 < box.y + box.height
-//   )
-// }
-
 export function getTouchDisplay() {
+  const navigatorWithMsTouch = navigator as Navigator & {
+    msMaxTouchPoints?: number
+  }
+
   return (
     "ontouchstart" in window ||
     navigator.maxTouchPoints > 0 ||
-    navigator.msMaxTouchPoints > 0
+    (navigatorWithMsTouch.msMaxTouchPoints || 0) > 0
   )
 }
 
@@ -770,7 +685,9 @@ export function getClosestPointOnPath(
         point
       )) < bestDist
     ) {
-      ;(best = scan), (bestLen = scanLen), (bestDist = scanDist)
+      best = scan
+      bestLen = scanLen
+      bestDist = scanDist
     }
   }
 
@@ -783,13 +700,17 @@ export function getClosestPointOnPath(
       (bd = distance2((before = pathNode.getPointAtLength(bl)), point)) <
         bestDist
     ) {
-      ;(best = before), (bestLen = bl), (bestDist = bd)
+      best = before
+      bestLen = bl
+      bestDist = bd
     } else if (
       (al = bestLen + p) <= pathLen &&
       (ad = distance2((after = pathNode.getPointAtLength(al)), point)) <
         bestDist
     ) {
-      ;(best = after), (bestLen = al), (bestDist = ad)
+      best = after
+      bestLen = al
+      bestDist = ad
     } else {
       p /= 2
     }
@@ -989,7 +910,11 @@ export function getEdgeTransform(
   ) {
     const [x, y] = point
     if (edge === 0 || edge === 2) {
-      edge === 0 ? (y0 = y) : (y1 = y)
+      if (edge === 0) {
+        y0 = y
+      } else {
+        y1 = y
+      }
       my = y0 < y1 ? y0 : y1
       mh = Math.abs(y1 - y0)
 
@@ -1027,7 +952,11 @@ export function getEdgeTransform(
         }
       }
     } else {
-      edge === 1 ? (x1 = x) : (x0 = x)
+      if (edge === 1) {
+        x1 = x
+      } else {
+        x0 = x
+      }
       mx = x0 < x1 ? x0 : x1
       mw = Math.abs(x1 - x0)
       for (const node of nodes) {
@@ -1103,11 +1032,19 @@ export function getCornerTransform(
     preserveRadii = false
   ) {
     const [x, y] = point
-    corner < 2 ? (y0 = y) : (y1 = y)
+    if (corner < 2) {
+      y0 = y
+    } else {
+      y1 = y
+    }
     my = y0 < y1 ? y0 : y1
     mh = Math.abs(y1 - y0)
 
-    corner === 1 || corner === 2 ? (x1 = x) : (x0 = x)
+    if (corner === 1 || corner === 2) {
+      x1 = x
+    } else {
+      x0 = x
+    }
     mx = x0 < x1 ? x0 : x1
     mw = Math.abs(x1 - x0)
 
@@ -1231,10 +1168,6 @@ export function pointInCircle(A: number[], C: number[], r: number) {
   return vec.dist(A, C) <= r
 }
 
-export function sign(value: number): number {
-  return value < 0 ? -1 : 1
-}
-
 export function getBoundsBoundsIntersection(a: IBounds, b: IBounds) {
   const dx = a.minX - b.minX
   const px = b.minX + b.width / 2 + a.minX + a.width / 2 - Math.abs(dx)
@@ -1245,22 +1178,6 @@ export function getBoundsBoundsIntersection(a: IBounds, b: IBounds) {
   if (py <= 0) return null
 
   return true
-
-  const hit = {} as { delta: number[]; normal: number[]; point: number[] }
-
-  if (px < py) {
-    const sx = sign(dx)
-    hit.delta[0] = px * sx
-    hit.normal[0] = sx
-    hit.point[0] = a.minX + (a.width / 2) * sx
-    hit.point[1] = b.minY
-  } else {
-    const sy = sign(dy)
-    hit.delta[1] = py * sy
-    hit.normal[1] = sy
-    hit.point[0] = b.minX
-    hit.point[1] = a.minY + (a.height / 2) * sy
-  }
 }
 
 export function getCircleBoundsIntersection(
@@ -1306,89 +1223,6 @@ export function getBezierLineSegmentIntersections(
     ShapeInfo.line({ p1: start, p2: end })
   )
 }
-
-// // Generate a lookup table by sampling the curve.
-// function getBezierCurveLUT(points: number[][], samples = 100) {
-//   return Array.from(Array(samples)).map((_, i) =>
-//     computePointOnCurve(i / (samples - 1 - i), points)
-//   )
-// }
-
-// // Find the closest point among points in a lookup table
-// function closestPointInLUT(A: number[], LUT: number[][]) {
-//   let mdist = Math.pow(2, 63),
-//     mpos: number,
-//     d: number
-//   LUT.forEach(function(p, idx) {
-//     d = vec.dist(A, p)
-
-//     if (d < mdist) {
-//       mdist = d
-//       mpos = idx
-//     }
-//   })
-//   return {
-//     mdist: mdist,
-//     mpos: mpos,
-//   }
-// }
-
-// export function getClosestPointOnCurve(A: number[], points: number[][]) {
-//   // Create lookup table
-//   const LUT = getBezierCurveLUT(points)
-
-//   // step 1: coarse check
-//   const l = LUT.length - 1,
-//     closest = closestPointInLUT(A, LUT),
-//     mpos = closest.mpos,
-//     t1 = (mpos - 1) / l,
-//     t2 = (mpos + 1) / l,
-//     step = 0.1 / l // step 2: fine check
-
-//   let mdist = closest.mdist,
-//     t = t1,
-//     ft = t,
-//     p: number[]
-//   mdist += 1
-
-//   for (let d: number; t < t2 + step; t += step) {
-//     p = computePointOnCurve(t, points)
-//     d = vec.dist(A, p)
-
-//     if (d < mdist) {
-//       mdist = d
-//       ft = t
-//     }
-//   }
-
-//   ft = ft < 0 ? 0 : ft > 1 ? 1 : ft
-//   p = computePointOnCurve(ft, points)
-//   // p.t = ft
-//   // p.d = mdist
-//   return p
-// }
-
-// function lineIntersection(P: number[], r: number, Q: number[], s: number) {
-//   // line1 = P + lambda1 * r
-//   // line2 = Q + lambda2 * s
-//   // r and s must be normalized (length = 1)
-//   // returns intersection point O of line1 with line2 = [ Ox, Oy ]
-//   // returns null if lines do not intersect or are identical
-//   const PQx = Q[0] - P[0]
-//   const PQy = Q[1] - P[1]
-//   const rx = r[0]
-//   const ry = r[1]
-//   const rxt = -ry
-//   const ryt = rx
-//   const qx = PQx * rx + PQy * ry
-//   const qy = PQx * rxt + PQy * ryt
-//   const sx = s[0] * rx + s[1] * ry
-//   const sy = s[0] * rxt + s[1] * ryt
-//   // if lines are identical or do not cross...
-//   if (sy == 0) return null
-//   const a = qx - (qy * sx) / sy
-//   return [P[0] + a * rx, P[1] + a * ry]
-// }
 
 export function getLineLineIntersection(
   A: number[],
@@ -1766,7 +1600,7 @@ export function updateGlobPoints(data: IData) {
     const [start, end] = glob.nodes.map((id) => nodes[id])
     try {
       glob.points = getGlobPoints(glob, start, end)
-    } catch (e) {
+    } catch {
       glob.points = null
     }
   })

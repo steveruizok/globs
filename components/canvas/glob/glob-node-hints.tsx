@@ -1,11 +1,10 @@
 import classNames from "classnames"
 import { IGlob } from "lib/types"
-import * as svg from "lib/svg"
 
 export default function GlobNodeHints({ glob }: { glob: IGlob }) {
   if (!glob.points) return null
 
-  const { C0, r0, E0, E0p, C1, r1, E1, E1p } = glob.points
+  const { C0, r0, C1, r1 } = glob.points
 
   return (
     <g

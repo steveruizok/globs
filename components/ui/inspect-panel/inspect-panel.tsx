@@ -1,5 +1,5 @@
 import { styled } from "stitches.config"
-import { motion, useMotionValue, useTransform } from "framer-motion"
+import { useMotionValue, useTransform } from "framer-motion"
 import PropsList from "./props-list"
 import {
   PanelInnerContainer,

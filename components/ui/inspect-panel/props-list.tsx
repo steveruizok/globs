@@ -1,7 +1,5 @@
 import { useSelector } from "lib/state"
-import { deepCompareArrays } from "lib/utils"
 import { styled } from "stitches.config"
-import Docs from "./docs"
 import NodesProps from "./nodes-props"
 import GlobsProps from "./globs-props"
 import BoundsProps from "./bounds-props"

@@ -23,8 +23,6 @@ function NumberInput({
   value,
   label,
   readOnly,
-  onPanStart,
-  onPanEnd,
   onChange,
 }: Props) {
   const rInput = useRef<HTMLInputElement>(null)

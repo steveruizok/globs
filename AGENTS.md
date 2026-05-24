@@ -2,11 +2,11 @@
 
 ## Project Structure & Module Organization
 
-This is a Next.js 10 TypeScript app for editing and sharing globs. Route pages and API endpoints live in `pages/`, including `pages/api/p/[uuid]/social-image.tsx` for generated social images. Shared editor logic is in `lib/`, with interaction sessions under `lib/sessions/`. React UI is split between `components/`, `components/canvas/`, and `components/ui/`. Reusable hooks are in `hooks/`, global styling lives in `styles/` and `stitches.config.ts`, static assets are in `public/`, and Cypress fixtures/tests are in `cypress/`.
+This is a Next.js 15 TypeScript app for editing and sharing globs. Route pages and API endpoints live in `pages/`, including `pages/api/p/[uuid]/social-image.tsx` for generated social images. Shared editor logic is in `lib/`, with interaction sessions under `lib/sessions/`. React UI is split between `components/`, `components/canvas/`, and `components/ui/`. Reusable hooks are in `hooks/`, global styling lives in `styles/` and `stitches.config.ts`, static assets are in `public/`, and Cypress fixtures/tests are in `cypress/`.
 
 ## Build, Test, and Development Commands
 
-Use Yarn, since `yarn.lock` is committed. This legacy stack builds on Node 16; run `nvm use` before installing or building.
+Use Yarn, since `yarn.lock` is committed. This stack builds on Node 22; run `nvm use` before installing or building.
 
 - `yarn dev`: start the local Next.js development server at `http://localhost:3000`.
 - `yarn build`: create a production Next.js build.
