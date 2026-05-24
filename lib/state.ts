@@ -1361,5 +1361,3 @@ function handleKeyUp(e: KeyboardEvent) {
 export const useSelector = createSelectorHook(state)
 
 export default state
-
-// state.onUpdate((s) => console.log(s.active, s.log[0]))

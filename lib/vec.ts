@@ -329,47 +329,6 @@ export function round(a: number[], d = 2) {
 }
 
 /**
- * Get the minimum distance from a point P to a line with a segment AB.
- * @param A The start of the line.
- * @param B The end of the line.
- * @param P A point.
- * @returns
- */
-// export function distanceToLine(A: number[], B: number[], P: number[]) {
-//   const delta = sub(B, A)
-//   const angle = Math.atan2(delta[1], delta[0])
-//   const dir = rot(sub(P, A), -angle)
-//   return dir[1]
-// }
-
-/**
- * Get the nearest point on a line segment AB.
- * @param A The start of the line.
- * @param B The end of the line.
- * @param P A point.
- * @param clamp Whether to clamp the resulting point to the segment.
- * @returns
- */
-// export function nearestPointOnLine(
-//   A: number[],
-//   B: number[],
-//   P: number[],
-//   clamp = true
-// ) {
-//   const delta = sub(B, A)
-//   const length = len(delta)
-//   const angle = Math.atan2(delta[1], delta[0])
-//   const dir = rot(sub(P, A), -angle)
-
-//   if (clamp) {
-//     if (dir[0] < 0) return A
-//     if (dir[0] > length) return B
-//   }
-
-//   return add(A, div(mul(delta, dir[0]), length))
-// }
-
-/**
  * Get the nearest point on a line with a known unit vector that passes through point A
  * @param A Any point on the line
  * @param u The unit vector for the line.
