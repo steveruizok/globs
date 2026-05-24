@@ -272,6 +272,7 @@ const Header = styled("div", {
     margin: "0",
     padding: "0",
     fontSize: "16px",
+    pointerEvents: "none",
   },
 })
 
